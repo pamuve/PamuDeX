@@ -1,0 +1,25 @@
+# --- Etapa 1: build del frontend (Vite) ---
+FROM node:22-alpine AS frontend-build
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# --- Etapa 2: backend + frontend compilado ---
+FROM node:22-alpine
+WORKDIR /app
+
+COPY backend/package*.json ./backend/
+RUN cd backend && npm install --omit=dev
+
+COPY backend/ ./backend/
+COPY --from=frontend-build /app/frontend/dist ./frontend/dist
+
+WORKDIR /app/backend
+ENV PORT=4000
+EXPOSE 4000
+
+# La siembra de la base de datos se ejecuta automáticamente en el primer arranque
+# si /app/backend/db/pamudex.sqlite no existe (ver server.js)
+CMD ["node", "server.js"]

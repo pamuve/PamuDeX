@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: #0A1425;
+}
+
+/* Foco visible para navegación por teclado (accesibilidad) */
+:focus-visible {
+  outline: 2px solid #6890F0;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbar discreta, coherente con el tema OLED */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0A1425; }
+::-webkit-scrollbar-thumb { background: #1C3350; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #24406b; }
+
+/* Modo alto contraste */
+.high-contrast {
+  --tw-text-opacity: 1;
+}
+.high-contrast body {
+  background-color: #000000;
+}
+.high-contrast .panel-surface {
+  border: 1px solid #F5F7FA;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -31,6 +31,43 @@ El objetivo es ofrecer una herramienta rápida, instalable y que funcione **100%
 **Despliegue:**
 *   Docker & Docker Compose
 
+## Estructura del repositorio
+
+```
+pamudex/
+├── backend/
+│   ├── data/              # JSON semilla: types, type_chart, pokemon, moves, abilities
+│   ├── db/
+│   │   ├── schema.sql     # esquema SQLite completo (núcleo + tablas Fase 2+)
+│   │   └── seed.js        # recrea la DB desde los JSON de /data
+│   ├── lib/
+│   │   └── effectiveness.js   # motor de cálculo de tipos (x4/x2/x1/x0.5/x0.25/x0)
+│   ├── routes/             # types.js, pokemon.js, moves.js, abilities.js, search.js
+│   ├── server.js
+│   └── package.json
+├── frontend/
+│   ├── public/icons/       # iconos PWA (192/512) — placeholder, sustituir por arte oficial
+│   ├── src/
+│   │   ├── components/     # TopBar, SearchBar, TypeBadge, EffectivenessPanel
+│   │   ├── pages/          # Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail
+│   │   ├── i18n/            # es.json, en.json, index.tsx (contexto)
+│   │   ├── lib/api.ts
+│   │   ├── types.ts
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── vite.config.ts       # config PWA (manifest + service worker)
+│   ├── tailwind.config.js   # paleta OLED exacta del proyecto
+│   └── package.json
+├── docs/
+│   ├── ROADMAP.md           # todas las fases (2-9), divididas en tareas pequeñas
+│   ├── AI_TASK_TEMPLATE.md  # plantilla para crear nuevos encargos de IA autocontenidos
+│   └── tasks/
+│       └── fase2/           # encargos ya redactados y listos para pegar en cualquier IA
+├── Dockerfile
+├── docker-compose.yml
+└── .gitignore
+```
+
 ## 🚀 Instalación y Despliegue
 
 La forma más rápida de levantar PamuDeX es mediante Docker.
@@ -88,3 +125,11 @@ El código fuente de esta aplicación se distribuye bajo la licencia **MIT** (ve
 PamuDeX es una aplicación creada por fans y con fines estrictamente educativos y tácticos. 
 © 1995–2026 Nintendo/Creatures Inc./GAME FREAK inc. Pokémon, los nombres de los personajes, sprites y recursos visuales son marcas registradas de Nintendo. 
 Este proyecto **NO** tiene afiliación, patrocinio ni está respaldado por Nintendo, Creatures Inc. o GAME FREAK. Todos los recursos visuales oficiales se utilizan bajo el principio de *Uso Justo (Fair Use)* y el proyecto no tiene fines comerciales.
+
+## ⚙️ Estado del proyecto
+
+> Estado actual: **Fase 1 completa y verificada** (núcleo de datos + consulta + PWA offline + Docker). Ver [`docs/ROADMAP.md`](docs/ROADMAP.md) para las fases siguientes.
+
+## Roadmap
+
+Todo el trabajo pendiente está dividido en fases y tareas pequeñas, pensadas para cerrarse una por una. Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).

@@ -1,0 +1,121 @@
+[
+  { "dex": 1, "name_es": "Bulbasaur", "name_en": "Bulbasaur", "generation": 1, "types": ["planta", "veneno"],
+    "abilities": ["Espesura"], "hidden_ability": "Clorofila",
+    "stats": { "hp": 45, "atk": 49, "def": 49, "spa": 65, "spd": 65, "spe": 45 },
+    "height_m": 0.7, "weight_kg": 6.9 },
+
+  { "dex": 3, "name_es": "Venusaur", "name_en": "Venusaur", "generation": 1, "types": ["planta", "veneno"],
+    "abilities": ["Espesura"], "hidden_ability": "Clorofila",
+    "stats": { "hp": 80, "atk": 82, "def": 83, "spa": 100, "spd": 100, "spe": 80 },
+    "height_m": 2.0, "weight_kg": 100.0 },
+
+  { "dex": 4, "name_es": "Charmander", "name_en": "Charmander", "generation": 1, "types": ["fuego"],
+    "abilities": ["Mar Llamas"], "hidden_ability": "Poder Solar",
+    "stats": { "hp": 39, "atk": 52, "def": 43, "spa": 60, "spd": 50, "spe": 65 },
+    "height_m": 0.6, "weight_kg": 8.5 },
+
+  { "dex": 6, "name_es": "Charizard", "name_en": "Charizard", "generation": 1, "types": ["fuego", "volador"],
+    "abilities": ["Mar Llamas"], "hidden_ability": "Poder Solar",
+    "stats": { "hp": 78, "atk": 84, "def": 78, "spa": 109, "spd": 85, "spe": 100 },
+    "height_m": 1.7, "weight_kg": 90.5 },
+
+  { "dex": 7, "name_es": "Squirtle", "name_en": "Squirtle", "generation": 1, "types": ["agua"],
+    "abilities": ["Torrente"], "hidden_ability": "Cura Lluvia",
+    "stats": { "hp": 44, "atk": 48, "def": 65, "spa": 50, "spd": 64, "spe": 43 },
+    "height_m": 0.5, "weight_kg": 9.0 },
+
+  { "dex": 9, "name_es": "Blastoise", "name_en": "Blastoise", "generation": 1, "types": ["agua"],
+    "abilities": ["Torrente"], "hidden_ability": "Cura Lluvia",
+    "stats": { "hp": 79, "atk": 83, "def": 100, "spa": 85, "spd": 105, "spe": 78 },
+    "height_m": 1.6, "weight_kg": 85.5 },
+
+  { "dex": 25, "name_es": "Pikachu", "name_en": "Pikachu", "generation": 1, "types": ["electrico"],
+    "abilities": ["Elec. Estática"], "hidden_ability": "Pararrayos",
+    "stats": { "hp": 35, "atk": 55, "def": 40, "spa": 50, "spd": 50, "spe": 90 },
+    "height_m": 0.4, "weight_kg": 6.0 },
+
+  { "dex": 38, "name_es": "Ninetales", "name_en": "Ninetales", "generation": 1, "types": ["fuego"],
+    "abilities": ["Absorbe Fuego"], "hidden_ability": "Sequía",
+    "stats": { "hp": 73, "atk": 76, "def": 75, "spa": 81, "spd": 100, "spe": 100 },
+    "height_m": 1.1, "weight_kg": 19.9 },
+
+  { "dex": 39, "name_es": "Jigglypuff", "name_en": "Jigglypuff", "generation": 1, "types": ["normal", "hada"],
+    "abilities": ["Encanto", "Competitividad"], "hidden_ability": "Escudo Amigo",
+    "stats": { "hp": 115, "atk": 45, "def": 20, "spa": 45, "spd": 25, "spe": 20 },
+    "height_m": 0.5, "weight_kg": 5.5 },
+
+  { "dex": 65, "name_es": "Alakazam", "name_en": "Alakazam", "generation": 1, "types": ["psiquico"],
+    "abilities": ["Sincronía", "Foco Interno"], "hidden_ability": "Muro Mágico",
+    "stats": { "hp": 55, "atk": 50, "def": 45, "spa": 135, "spd": 95, "spe": 120 },
+    "height_m": 1.5, "weight_kg": 48.0 },
+
+  { "dex": 68, "name_es": "Machamp", "name_en": "Machamp", "generation": 1, "types": ["lucha"],
+    "abilities": ["Agallas", "Sin Guardia"], "hidden_ability": "Firmeza",
+    "stats": { "hp": 90, "atk": 130, "def": 80, "spa": 65, "spd": 85, "spe": 55 },
+    "height_m": 1.6, "weight_kg": 130.0 },
+
+  { "dex": 76, "name_es": "Golem", "name_en": "Golem", "generation": 1, "types": ["roca", "tierra"],
+    "abilities": ["Cabeza Roca", "Robustez"], "hidden_ability": "Velo Arena",
+    "stats": { "hp": 80, "atk": 120, "def": 130, "spa": 55, "spd": 65, "spe": 45 },
+    "height_m": 1.4, "weight_kg": 300.0 },
+
+  { "dex": 94, "name_es": "Gengar", "name_en": "Gengar", "generation": 1, "types": ["fantasma", "veneno"],
+    "abilities": ["Cuerpo Maldito"], "hidden_ability": null,
+    "stats": { "hp": 60, "atk": 65, "def": 60, "spa": 130, "spd": 75, "spe": 110 },
+    "height_m": 1.5, "weight_kg": 40.5 },
+
+  { "dex": 95, "name_es": "Onix", "name_en": "Onix", "generation": 1, "types": ["roca", "tierra"],
+    "abilities": ["Cabeza Roca", "Robustez"], "hidden_ability": "Armadura Frágil",
+    "stats": { "hp": 35, "atk": 45, "def": 160, "spa": 30, "spd": 45, "spe": 70 },
+    "height_m": 8.8, "weight_kg": 210.0 },
+
+  { "dex": 123, "name_es": "Scyther", "name_en": "Scyther", "generation": 1, "types": ["bicho", "volador"],
+    "abilities": ["Enjambre", "Técnico"], "hidden_ability": "Firmeza",
+    "stats": { "hp": 70, "atk": 110, "def": 80, "spa": 55, "spd": 80, "spe": 105 },
+    "height_m": 1.5, "weight_kg": 56.0 },
+
+  { "dex": 130, "name_es": "Gyarados", "name_en": "Gyarados", "generation": 1, "types": ["agua", "volador"],
+    "abilities": ["Intimidación"], "hidden_ability": "Personalidad Fuerte",
+    "stats": { "hp": 95, "atk": 125, "def": 79, "spa": 60, "spd": 100, "spe": 81 },
+    "height_m": 6.5, "weight_kg": 235.0 },
+
+  { "dex": 131, "name_es": "Lapras", "name_en": "Lapras", "generation": 1, "types": ["agua", "hielo"],
+    "abilities": ["Absorbe Agua", "Coraza"], "hidden_ability": "Hidratación",
+    "stats": { "hp": 130, "atk": 85, "def": 80, "spa": 85, "spd": 95, "spe": 60 },
+    "height_m": 2.5, "weight_kg": 220.0 },
+
+  { "dex": 133, "name_es": "Eevee", "name_en": "Eevee", "generation": 1, "types": ["normal"],
+    "abilities": ["Fuga", "Adaptable"], "hidden_ability": "Anticipación",
+    "stats": { "hp": 55, "atk": 55, "def": 50, "spa": 45, "spd": 65, "spe": 55 },
+    "height_m": 0.3, "weight_kg": 6.5 },
+
+  { "dex": 134, "name_es": "Vaporeon", "name_en": "Vaporeon", "generation": 1, "types": ["agua"],
+    "abilities": ["Absorbe Agua"], "hidden_ability": "Hidratación",
+    "stats": { "hp": 130, "atk": 65, "def": 60, "spa": 110, "spd": 95, "spe": 65 },
+    "height_m": 1.0, "weight_kg": 29.0 },
+
+  { "dex": 135, "name_es": "Jolteon", "name_en": "Jolteon", "generation": 1, "types": ["electrico"],
+    "abilities": ["Absorbe Electricidad"], "hidden_ability": "Pies Rápidos",
+    "stats": { "hp": 65, "atk": 65, "def": 60, "spa": 110, "spd": 95, "spe": 130 },
+    "height_m": 0.8, "weight_kg": 24.5 },
+
+  { "dex": 136, "name_es": "Flareon", "name_en": "Flareon", "generation": 1, "types": ["fuego"],
+    "abilities": ["Mar Llamas"], "hidden_ability": "Agallas",
+    "stats": { "hp": 65, "atk": 130, "def": 60, "spa": 95, "spd": 110, "spe": 65 },
+    "height_m": 0.9, "weight_kg": 25.0 },
+
+  { "dex": 143, "name_es": "Snorlax", "name_en": "Snorlax", "generation": 1, "types": ["normal"],
+    "abilities": ["Inmunidad", "Sebo"], "hidden_ability": "Glotonería",
+    "stats": { "hp": 160, "atk": 110, "def": 65, "spa": 65, "spd": 110, "spe": 30 },
+    "height_m": 2.1, "weight_kg": 460.0 },
+
+  { "dex": 149, "name_es": "Dragonite", "name_en": "Dragonite", "generation": 1, "types": ["dragon", "volador"],
+    "abilities": ["Foco Interno"], "hidden_ability": "Multiescamas",
+    "stats": { "hp": 91, "atk": 134, "def": 95, "spa": 100, "spd": 100, "spe": 80 },
+    "height_m": 2.2, "weight_kg": 210.0 },
+
+  { "dex": 150, "name_es": "Mewtwo", "name_en": "Mewtwo", "generation": 1, "types": ["psiquico"],
+    "abilities": ["Presión"], "hidden_ability": "Nerviosismo",
+    "stats": { "hp": 106, "atk": 110, "def": 90, "spa": 154, "spd": 90, "spe": 130 },
+    "height_m": 2.0, "weight_kg": 122.0 }
+]
