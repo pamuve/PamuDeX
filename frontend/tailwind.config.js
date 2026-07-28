@@ -12,9 +12,10 @@ export default {
         "ink-soft": "#A9BDD2", // texto secundario
       },
       fontFamily: {
-        display: ["'Space Grotesk'", "sans-serif"],
-        body: ["'Inter'", "sans-serif"],
-        mono: ["'JetBrains Mono'", "monospace"],
+        // Pilas de fuentes de sistema (sin CDNs externos) para no romper el uso offline de la PWA.
+        display: ["'Segoe UI'", "system-ui", "-apple-system", "sans-serif"],
+        body: ["system-ui", "-apple-system", "'Segoe UI'", "sans-serif"],
+        mono: ["'SFMono-Regular'", "'JetBrains Mono'", "Consolas", "monospace"],
       },
       boxShadow: {
         card: "0 4px 20px -4px rgba(0,0,0,0.45)",

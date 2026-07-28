@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings, UserCircle2, Layers, ChevronDown } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 
 function ComingSoonMenu({ label, items }: { label: string; items: string[] }) {
