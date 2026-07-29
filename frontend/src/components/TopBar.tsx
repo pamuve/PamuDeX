@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 
 function ComingSoonMenu({ label, items }: { label: string; items: string[] }) {
@@ -69,6 +69,15 @@ export function TopBar() {
             P
           </span>
           <span className="font-display font-bold tracking-tight text-lg text-ink">{t("app.name")}</span>
+        </Link>
+
+        <Link
+          to="/equipo"
+          className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors text-sm"
+          title={t("team.title")}
+        >
+          <Swords size={16} />
+          <span className="hidden sm:inline">{t("team.title")}</span>
         </Link>
 
         <ComingSoonMenu label={t("nav.profile")} items={["Perfil 1", "Perfil 2", "+ Nuevo perfil"]} />

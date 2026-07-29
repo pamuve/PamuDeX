@@ -5,6 +5,7 @@ import { PokemonDetail } from "./pages/PokemonDetail";
 import { TypeDetail } from "./pages/TypeDetail";
 import { MoveDetail } from "./pages/MoveDetail";
 import { AbilityDetail } from "./pages/AbilityDetail";
+import { TeamBuilder } from "./pages/TeamBuilder";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/tipo/:id" element={<TypeDetail />} />
         <Route path="/movimiento/:id" element={<MoveDetail />} />
         <Route path="/habilidad/:id" element={<AbilityDetail />} />
+        <Route path="/equipo" element={<TeamBuilder />} />
       </Routes>
     </div>
   );

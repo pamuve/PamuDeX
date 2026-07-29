@@ -12,17 +12,19 @@ Tipos, Pokémon, movimientos, habilidades, buscador con autocompletado, PWA offl
 
 ---
 
-## 🔜 Fase 2 — Comparador de equipos táctico
+## ✅ Fase 2 — Comparador de equipos táctico (completada)
 
-Encargos ya redactados en `docs/tasks/fase2/`.
+Encargos originales en `docs/tasks/fase2/` (ya implementados en el código).
 
-| # | Tarea | Tamaño | Depende de |
-|---|-------|--------|------------|
-| 2.1 | Modelo de datos de equipo (hasta 6 Pokémon, objeto/habilidad/naturaleza/movimientos) + UI de construcción de "Mi equipo" | Media | Fase 1 |
-| 2.2 | Panel de "Equipo rival": introducir Pokémon rival con habilidad/objeto/movimientos conocidos y sospechados | Pequeña | 2.1 |
-| 2.3 | Motor de estimación de daño (fórmula simplificada: ataque/defensa, STAB, tipo, sin aleatoriedad de daño) | Media | 2.1, 2.2 |
-| 2.4 | Analizador "Mejor respuesta": qué Pokémon propio entra mejor contra cada rival, con motivos (✓/✗) | Media | 2.3 |
-| 2.5 | Mapa de cobertura del equipo (debilidad global, tipos sin resistencia, tipos repetidos, cobertura ofensiva/defensiva) | Media | 2.1 |
+| # | Tarea | Estado |
+|---|-------|--------|
+| 2.1 | Modelo de datos de equipo (hasta 6 Pokémon, objeto/habilidad/naturaleza/movimientos) + UI "Mi equipo" | ✅ `lib/team.ts`, `components/TeamSlotCard.tsx` |
+| 2.2 | Panel "Equipo rival": habilidad/objeto/movimientos conocidos y sospechados | ✅ `components/RivalSlotCard.tsx` |
+| 2.3 | Motor de estimación de daño (ataque/defensa, STAB, tipo) | ✅ `lib/damage.ts` |
+| 2.4 | Analizador "Mejor respuesta" con motivos (✓) y peligros (✗) | ✅ `lib/recommendation.ts`, `components/RecommendationCard.tsx` |
+| 2.5 | Mapa de cobertura del equipo | ✅ `lib/coverage.ts`, `components/CoverageMap.tsx` |
+
+Todo integrado en la página `/equipo` (`pages/TeamBuilder.tsx`), accesible desde el icono de espadas en la barra superior. El equipo propio y el rival se guardan en `localStorage` (no hay backend de equipos todavía — eso llega con la Fase 5, perfiles de usuario).
 
 ---
 

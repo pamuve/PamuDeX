@@ -9,7 +9,8 @@ export const AVAILABLE_LANGS = [
   { code: "en", flag: "🇬🇧", label: "English" },
 ];
 
-type Ctx = { lang: string; setLang: (l: string) => void; t: (key: string) => string };
+type TParams = Record<string, string | number>;
+type Ctx = { lang: string; setLang: (l: string) => void; t: (key: string, params?: TParams) => string };
 const I18nContext = createContext<Ctx | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const t = useMemo(() => {
     const dict = DICTS[lang] || DICTS.es;
-    return (key: string) => dict[key] ?? key;
+    return (key: string, params?: TParams) => {
+      let str = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          str = str.replace(new RegExp(`{{${k}}}`, "g"), String(v));
+        });
+      }
+      return str;
+    };
   }, [lang]);
 
   return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;
