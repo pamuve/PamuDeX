@@ -1,0 +1,22 @@
+[
+  { "name_es": "Espesura", "name_en": "Overgrow", "generation": 3, "effect_es": "Potencia los movimientos de tipo Planta un 50% cuando los PS bajan de 1/3." },
+  { "name_es": "Mar Llamas", "name_en": "Blaze", "generation": 3, "effect_es": "Potencia los movimientos de tipo Fuego un 50% cuando los PS bajan de 1/3." },
+  { "name_es": "Torrente", "name_en": "Torrent", "generation": 3, "effect_es": "Potencia los movimientos de tipo Agua un 50% cuando los PS bajan de 1/3." },
+  { "name_es": "Clorofila", "name_en": "Chlorophyll", "generation": 3, "effect_es": "Duplica la Velocidad con Día Soleado activo." },
+  { "name_es": "Poder Solar", "name_en": "Solar Power", "generation": 4, "effect_es": "Sube el Ataque Especial un 50% con sol, pero pierde PS cada turno." },
+  { "name_es": "Cura Lluvia", "name_en": "Rain Dish", "generation": 3, "effect_es": "Recupera PS cada turno mientras llueve." },
+  { "name_es": "Elec. Estática", "name_en": "Static", "generation": 3, "effect_es": "30% de posibilidad de paralizar al atacante en contacto físico." },
+  { "name_es": "Pararrayos", "name_en": "Lightning Rod", "generation": 3, "effect_es": "Atrae los movimientos Eléctricos y sube el Ataque Especial en vez de recibir daño." },
+  { "name_es": "Intimidación", "name_en": "Intimidate", "generation": 3, "effect_es": "Baja el Ataque del rival al entrar en combate." },
+  { "name_es": "Multiescamas", "name_en": "Multiscale", "generation": 5, "effect_es": "Reduce el daño recibido a la mitad si los PS están al máximo." },
+  { "name_es": "Cuerpo Maldito", "name_en": "Cursed Body", "generation": 5, "effect_es": "30% de posibilidad de anular el movimiento con el que fue golpeado." },
+  { "name_es": "Sincronía", "name_en": "Synchronize", "generation": 3, "effect_es": "Traspasa quemadura, veneno o parálisis a quien las causó." },
+  { "name_es": "Muro Mágico", "name_en": "Magic Guard", "generation": 4, "effect_es": "Solo recibe daño de ataques directos, nunca de efectos indirectos." },
+  { "name_es": "Agallas", "name_en": "Guts", "generation": 3, "effect_es": "Sube el Ataque si sufre un problema de estado (ignora el perjuicio del físico)." },
+  { "name_es": "Cabeza Roca", "name_en": "Rock Head", "generation": 3, "effect_es": "Evita el daño de retroceso de movimientos como Doble Filo." },
+  { "name_es": "Robustez", "name_en": "Sturdy", "generation": 3, "effect_es": "Sobrevive con 1 PS a un golpe que lo debilitaría estando a PS máximos." },
+  { "name_es": "Presión", "name_en": "Pressure", "generation": 3, "effect_es": "Los rivales gastan 1 PP extra al atacar a este Pokémon." },
+  { "name_es": "Absorbe Agua", "name_en": "Water Absorb", "generation": 3, "effect_es": "Los movimientos de tipo Agua curan en vez de dañar." },
+  { "name_es": "Absorbe Electricidad", "name_en": "Volt Absorb", "generation": 3, "effect_es": "Los movimientos Eléctricos curan en vez de dañar." },
+  { "name_es": "Absorbe Fuego", "name_en": "Flash Fire", "generation": 3, "effect_es": "Los movimientos de Fuego no hacen daño y potencian los propios." }
+]

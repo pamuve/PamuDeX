@@ -1,0 +1,32 @@
+# Encargos para IA
+
+Cada archivo es una tarea del tamaño de **una sola conversación**, pensada para no agotar los límites de un plan gratuito.
+
+## Cómo usarlo
+
+1. Abre una conversación nueva con la IA (Claude, ChatGPT, Gemini, la que sea).
+2. Pega el contenido de **`_CONTEXTO_BASE.md`**.
+3. Pega el contenido del **archivo de la tarea** que toque.
+4. Adjunta los archivos fuente concretos que la tarea mencione, si los pide.
+5. Copia el código generado a tu repositorio y haz commit.
+
+Con esos dos archivos, la IA no necesita saber nada más del proyecto.
+
+## Índice
+
+| Fase | Tareas | Estado |
+|------|--------|--------|
+| 2 — Comparador de equipos | `fase2/` (5) | ✅ Implementada |
+| 3 — Sesiones + editor visual | `fase3/` (5) | 🔜 |
+| 4 — Import / export | `fase4/` (4) | 🔜 |
+| 5 — Usuarios y perfiles | `fase5/` (4) | 🔜 |
+| 6 — Pokémon Champions | `fase6/` (3) | 🔜 |
+| 7 — Multi-generación | `fase7/` (3) | 🔜 |
+| 8 — Accesibilidad y rendimiento | `fase8/` (4) | 🔜 |
+| 9 — Ampliaciones | `fase9/` (5) | 🔜 |
+
+Las tareas de una fase están ordenadas por dependencia: haz la `-01` antes que la `-02`. Entre fases distintas hay más libertad, salvo que la propia tarea diga de qué depende.
+
+Los archivos de `fase2/` se conservan aunque ya esté implementada: sirven de referencia del estilo y para rehacer alguna pieza si hiciera falta.
+
+Para crear tareas nuevas que no estén en el roadmap, usa `docs/AI_TASK_TEMPLATE.md`.

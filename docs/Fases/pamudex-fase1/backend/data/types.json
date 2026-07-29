@@ -1,0 +1,20 @@
+[
+  { "id": "normal",   "es": "Normal",    "en": "Normal",   "color": "#A8A878" },
+  { "id": "fuego",    "es": "Fuego",     "en": "Fire",     "color": "#F08030" },
+  { "id": "agua",     "es": "Agua",      "en": "Water",    "color": "#6890F0" },
+  { "id": "electrico","es": "Eléctrico", "en": "Electric", "color": "#F8D030" },
+  { "id": "planta",   "es": "Planta",    "en": "Grass",    "color": "#78C850" },
+  { "id": "hielo",     "es": "Hielo",     "en": "Ice",      "color": "#98D8D8" },
+  { "id": "lucha",    "es": "Lucha",     "en": "Fighting", "color": "#C03028" },
+  { "id": "veneno",   "es": "Veneno",    "en": "Poison",   "color": "#A040A0" },
+  { "id": "tierra",   "es": "Tierra",    "en": "Ground",   "color": "#E0C068" },
+  { "id": "volador",  "es": "Volador",   "en": "Flying",   "color": "#A890F0" },
+  { "id": "psiquico", "es": "Psíquico",  "en": "Psychic",  "color": "#F85888" },
+  { "id": "bicho",    "es": "Bicho",     "en": "Bug",      "color": "#A8B820" },
+  { "id": "roca",     "es": "Roca",      "en": "Rock",     "color": "#B8A038" },
+  { "id": "fantasma", "es": "Fantasma",  "en": "Ghost",    "color": "#705898" },
+  { "id": "dragon",   "es": "Dragón",    "en": "Dragon",   "color": "#7038F8" },
+  { "id": "siniestro","es": "Siniestro", "en": "Dark",     "color": "#705848" },
+  { "id": "acero",    "es": "Acero",     "en": "Steel",    "color": "#B8B8D0" },
+  { "id": "hada",     "es": "Hada",      "en": "Fairy",    "color": "#EE99AC" }
+]

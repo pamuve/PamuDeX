@@ -1,0 +1,156 @@
+{
+  "sessions": {
+    "nav": "Sessions",
+    "title": "Sessions",
+    "subtitle": "Each session is its own game: Radical Red, Elite Redux, your own ROM hack…",
+    "new": "New session",
+    "nameLabel": "Name",
+    "namePlaceholder": "Radical Red",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What you use this session for (optional)",
+    "create": "Create session",
+    "save": "Save",
+    "cancel": "Cancel",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "use": "Use this session",
+    "edit": "Edit data",
+    "active": "In use",
+    "global": "Global data",
+    "globalHint": "The original Pokédex, unmodified.",
+    "loading": "Loading sessions…",
+    "empty": "No sessions yet.",
+    "emptyHint": "Create one to start adapting the data to your ROM hack.",
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "confirmDeleteHint": "Its custom data is lost. This can't be undone.",
+    "loadError": "Couldn't load the sessions. Check that the server is running.",
+    "saveError": "Couldn't save. Try again.",
+    "deleteError": "Couldn't delete the session."
+  },
+
+  "editor": {
+    "nav": "Editor",
+    "title": "Session editor",
+    "pokemonTitle": "Pokémon editor",
+    "subtitle": "Change the data without touching the original Pokédex.",
+    "editingIn": "Editing in \"{{name}}\".",
+    "noSession": "No session is active.",
+    "noSessionHint": "Global data is never edited. Create or pick a session and every change is stored inside it.",
+    "goToSessions": "Go to sessions",
+    "loading": "Loading…",
+    "loadError": "Couldn't load the data.",
+    "saveError": "Couldn't save the change.",
+    "save": "Save changes",
+    "restore": "Restore original values",
+    "modified": "modified",
+    "noResults": "No results",
+    "searchPokemon": "Search Pokémon",
+    "searchType": "Search type",
+    "searchMove": "Search move",
+    "searchAbility": "Search ability",
+
+    "tabs": {
+      "pokemon": "Pokémon",
+      "types": "Types",
+      "moves": "Moves",
+      "abilities": "Abilities",
+      "relations": "Relations",
+      "theme": "Theme"
+    },
+
+    "fields": {
+      "nameEs": "Name (ES)",
+      "nameEn": "Name (EN)",
+      "dex": "Pokédex no.",
+      "generation": "Generation",
+      "types": "Types",
+      "type1": "Primary type",
+      "type2": "Secondary type",
+      "abilities": "Abilities",
+      "hiddenAbility": "Hidden ability",
+      "stats": "Base stats",
+      "height": "Height (m)",
+      "weight": "Weight (kg)",
+      "sprite": "Sprite path",
+      "color": "Colour",
+      "type": "Type",
+      "category": "Category",
+      "power": "Power",
+      "accuracy": "Accuracy",
+      "pp": "PP",
+      "priority": "Priority",
+      "contact": "Contact",
+      "contactHint": "The move makes physical contact",
+      "effect": "Effect"
+    },
+
+    "stats": {
+      "hp": "HP",
+      "atk": "Atk",
+      "def": "Def",
+      "spa": "SpA",
+      "spd": "SpD",
+      "spe": "Spe"
+    },
+
+    "categories": {
+      "physical": "Physical",
+      "special": "Special",
+      "status": "Status"
+    },
+
+    "hints": {
+      "commaSeparated": "Comma separated.",
+      "statRange": "Each stat between 1 and 255.",
+      "sprite": "Image path or URL. File uploads arrive in Phase 9.",
+      "emptyIsNone": "Leave empty if it doesn't apply."
+    },
+
+    "error": {
+      "required": "This field can't be empty.",
+      "dex": "The Pokédex number must be greater than 0.",
+      "generation": "Generation goes from 1 to 9.",
+      "typesMin": "Pick at least one type.",
+      "typesRepeated": "The two types can't be the same.",
+      "stats": "Each stat goes from 1 to 255.",
+      "positive": "This can't be negative.",
+      "hex": "Use a colour in #RRGGBB format.",
+      "range": "Value out of range.",
+      "accuracy": "Accuracy goes from 0 to 100.",
+      "priority": "Priority goes from -7 to 7."
+    },
+
+    "relations": {
+      "hint": "Tap a cell to cycle x0 → x0.25 → x0.5 → x1 → x2 → x4. Rows attack, columns defend.",
+      "resetAll": "Restore the whole table",
+      "caption": "Effectiveness table: the row type attacks the column type.",
+      "corner": "Atk / Def",
+      "cell": "{{attacker}} against {{defender}}: {{value}}"
+    }
+  },
+
+  "theme": {
+    "hint": "Give this session its own look. Pure black (#000000) isn't allowed: on OLED screens it smears when content moves.",
+    "reset": "Back to the original palette",
+    "colors": {
+      "base": "Main background",
+      "panel": "Panels and cards",
+      "hover": "Hover state",
+      "ink": "Main text",
+      "inkSoft": "Secondary text"
+    },
+    "error": {
+      "black": "Pure black isn't allowed. Try a very dark blue, like #0A1425.",
+      "hex": "Use a colour in #RRGGBB format."
+    },
+    "warning": {
+      "nearBlack": "Almost black: OLED smearing may still show."
+    },
+    "preview": {
+      "title": "Preview",
+      "body": "This is how the app's secondary text will look.",
+      "button": "Button"
+    }
+  }
+}

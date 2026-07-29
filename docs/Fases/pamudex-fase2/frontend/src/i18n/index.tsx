@@ -1,0 +1,44 @@
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import es from "./es.json";
+import en from "./en.json";
+
+// Añadir un idioma nuevo = añadir su JSON aquí. Nada más del código cambia.
+const DICTS: Record<string, Record<string, string>> = { es, en };
+export const AVAILABLE_LANGS = [
+  { code: "es", flag: "🇪🇸", label: "Español" },
+  { code: "en", flag: "🇬🇧", label: "English" },
+];
+
+type TParams = Record<string, string | number>;
+type Ctx = { lang: string; setLang: (l: string) => void; t: (key: string, params?: TParams) => string };
+const I18nContext = createContext<Ctx | null>(null);
+
+export function I18nProvider({ children }: { children: React.ReactNode }) {
+  const [lang, setLang] = useState(() => localStorage.getItem("pamudex_lang") || "es");
+
+  useEffect(() => {
+    localStorage.setItem("pamudex_lang", lang);
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  const t = useMemo(() => {
+    const dict = DICTS[lang] || DICTS.es;
+    return (key: string, params?: TParams) => {
+      let str = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          str = str.replace(new RegExp(`{{${k}}}`, "g"), String(v));
+        });
+      }
+      return str;
+    };
+  }, [lang]);
+
+  return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;
+}
+
+export function useI18n() {
+  const ctx = useContext(I18nContext);
+  if (!ctx) throw new Error("useI18n debe usarse dentro de <I18nProvider>");
+  return ctx;
+}

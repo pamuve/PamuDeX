@@ -1,0 +1,13 @@
+services:
+  pamudex:
+    build: .
+    image: pamudex:latest
+    container_name: pamudex
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - pamudex_db:/app/backend/db
+
+volumes:
+  pamudex_db:

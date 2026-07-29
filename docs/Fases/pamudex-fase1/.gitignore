@@ -1,0 +1,19 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Base de datos generada (se siembra automáticamente al arrancar)
+backend/db/*.sqlite
+backend/db/*.sqlite-journal
+
+# Vite PWA generado
+frontend/dev-dist/
+
+.DS_Store
+.env
+.env.*
+!.env.example
+
+*.log
+npm-debug.log*
