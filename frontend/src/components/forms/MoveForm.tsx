@@ -21,15 +21,21 @@ interface Props {
   onReset: () => void | Promise<void>;
 }
 
-const CATEGORIES = ["physical", "special", "status"];
+/**
+ * El formato canónico del proyecto es el de la semilla (`backend/data/moves.json`)
+ * y el de `types.ts`: "fisico" | "especial" | "estado". `lib/damage.ts` compara
+ * contra esos valores, así que el override tiene que guardarlos igual o el motor
+ * de daño dejaría de reconocer la categoría.
+ */
+const CATEGORIES = ["fisico", "especial", "estado"];
 
-/** La semilla puede usar "fisico"/"physical"; se acepta lo que venga. */
+/** Acepta lo que venga (semilla, inglés, con tilde) y lo lleva al formato canónico. */
 function normalizeCategory(value: unknown): string {
   const raw = String(value ?? "").toLowerCase();
-  if (["fisico", "físico", "physical"].includes(raw)) return "physical";
-  if (["especial", "special"].includes(raw)) return "special";
-  if (["estado", "status"].includes(raw)) return "status";
-  return raw || "physical";
+  if (["fisico", "físico", "physical"].includes(raw)) return "fisico";
+  if (["especial", "special"].includes(raw)) return "especial";
+  if (["estado", "status"].includes(raw)) return "estado";
+  return raw || "fisico";
 }
 
 function str(value: unknown): string {

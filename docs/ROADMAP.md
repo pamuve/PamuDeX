@@ -37,7 +37,9 @@ Todo integrado en la página `/equipo` (`pages/TeamBuilder.tsx`), accesible desd
 | 3.3 | Editor visual de Pokémon | ✅ `components/forms/PokemonForm.tsx`, `pages/EditorPokemon.tsx` |
 | 3.4 | Editores de tipos, movimientos, habilidades y relaciones | ✅ `components/forms/*`, `pages/Editor.tsx` |
 | 3.5 | Editor de colores/tema por sesión | ✅ `lib/theme.ts`, `components/forms/ThemeForm.tsx` |
-```
+
+El editor escribe overrides en `sessions.data_json`; el middleware `backend/middleware/sessionOverrides.js` los aplica cuando la petición lleva `?session=<id>`. `frontend/src/lib/api.ts` añade ese parámetro automáticamente cuando hay sesión activa, así que la Pokédex, los tipos y `/equipo` también ven los datos editados.
+
 ---
 
 ## 🔜 Fase 4 — Importación / Exportación

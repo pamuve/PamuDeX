@@ -75,6 +75,37 @@ function toNameList(value: unknown): string[] {
     .filter(Boolean);
 }
 
+/**
+ * El campo se edita como texto ("Espesura, Clorofila"), pero `/api/pokemon/:id`
+ * devuelve las habilidades como objetos `{ name_es, name_en, effect_es, is_hidden }`
+ * y `PokemonDetail.tsx` lee `.name_es` / `.effect_es`. El override tiene que
+ * conservar esa forma o la ficha se rompería al leerla dentro de la sesión.
+ *
+ * Si el nombre ya existía se reutiliza el objeto original tal cual (así el
+ * `JSON.stringify` de `compare` coincide y no se guarda un patch fantasma);
+ * si es nuevo, se crea el objeto mínimo con la misma forma.
+ */
+function toAbilityObjects(names: string[], original: unknown, isHidden: 0 | 1): unknown[] {
+  const list: unknown[] = Array.isArray(original) ? original : original ? [original] : [];
+  const originals = list.filter(
+    (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object"
+  );
+
+  return names.map((name) => {
+    const previous = originals.find(
+      (item) => item.name_es === name || item.name_en === name || item.name === name
+    );
+    if (previous) return previous;
+    return { name_es: name, name_en: name, effect_es: "", is_hidden: isHidden };
+  });
+}
+
+/** `hidden_ability` es un objeto suelto o `null`, nunca un array. */
+function toHiddenAbility(names: string[], original: unknown): unknown {
+  if (!names.length) return null;
+  return toAbilityObjects(names.slice(0, 1), original, 1)[0];
+}
+
 function str(value: unknown): string {
   return value === null || value === undefined ? "" : String(value);
 }
@@ -166,8 +197,6 @@ export default function PokemonForm({
   function buildPatch(): EntityPatch {
     const patch: EntityPatch = {};
     const baseTypes = toTypeIds(base.types, types);
-    const baseAbilities = toNameList(base.abilities);
-    const baseHidden = toNameList(base.hidden_ability);
 
     const compare = (field: string, value: unknown, baseValue: unknown) => {
       if (JSON.stringify(value) !== JSON.stringify(baseValue)) patch[field] = value;
@@ -179,15 +208,16 @@ export default function PokemonForm({
     compare("dex", Number(draft.dex), Number(base.dex));
     compare("generation", Number(draft.generation), Number(base.generation));
     compare("types", draft.types.filter(Boolean), baseTypes);
+    const splitNames = (value: string) => value.split(",").map((a) => a.trim()).filter(Boolean);
     compare(
       "abilities",
-      draft.abilities.split(",").map((a) => a.trim()).filter(Boolean),
-      baseAbilities
+      toAbilityObjects(splitNames(draft.abilities), base.abilities, 0),
+      Array.isArray(base.abilities) ? base.abilities : toAbilityObjects(toNameList(base.abilities), base.abilities, 0)
     );
     compare(
       "hidden_ability",
-      draft.hidden_ability.split(",").map((a) => a.trim()).filter(Boolean),
-      baseHidden
+      toHiddenAbility(splitNames(draft.hidden_ability), base.hidden_ability),
+      base.hidden_ability ?? null
     );
     compare("height_m", Number(draft.height_m), Number(base.height_m));
     compare("weight_kg", Number(draft.weight_kg), Number(base.weight_kg));
