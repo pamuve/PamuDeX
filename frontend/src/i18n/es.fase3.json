@@ -1,0 +1,156 @@
+{
+  "sessions": {
+    "nav": "Sesiones",
+    "title": "Sesiones",
+    "subtitle": "Cada sesión es un juego aparte: Radical Red, Elite Redux, tu propia ROM Hack…",
+    "new": "Nueva sesión",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Radical Red",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Para qué usas esta sesión (opcional)",
+    "create": "Crear sesión",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "rename": "Renombrar",
+    "duplicate": "Duplicar",
+    "delete": "Borrar",
+    "use": "Usar esta sesión",
+    "edit": "Editar datos",
+    "active": "En uso",
+    "global": "Datos globales",
+    "globalHint": "La Pokédex original, sin modificaciones.",
+    "loading": "Cargando sesiones…",
+    "empty": "Todavía no hay ninguna sesión.",
+    "emptyHint": "Crea una para empezar a adaptar los datos a tu ROM Hack.",
+    "confirmDelete": "¿Borrar «{{name}}»?",
+    "confirmDeleteHint": "Se pierden sus datos personalizados. No se puede deshacer.",
+    "loadError": "No se han podido cargar las sesiones. Comprueba que el servidor está en marcha.",
+    "saveError": "No se ha podido guardar. Inténtalo otra vez.",
+    "deleteError": "No se ha podido borrar la sesión."
+  },
+
+  "editor": {
+    "nav": "Editor",
+    "title": "Editor de la sesión",
+    "pokemonTitle": "Editor de Pokémon",
+    "subtitle": "Cambia los datos sin tocar la Pokédex original.",
+    "editingIn": "Editando en «{{name}}».",
+    "noSession": "No hay ninguna sesión activa.",
+    "noSessionHint": "Los datos globales no se editan. Crea o selecciona una sesión y todos los cambios quedarán guardados dentro de ella.",
+    "goToSessions": "Ir a sesiones",
+    "loading": "Cargando…",
+    "loadError": "No se han podido cargar los datos.",
+    "saveError": "No se ha podido guardar el cambio.",
+    "save": "Guardar cambios",
+    "restore": "Restaurar valores originales",
+    "modified": "modificado",
+    "noResults": "Sin resultados",
+    "searchPokemon": "Buscar Pokémon",
+    "searchType": "Buscar tipo",
+    "searchMove": "Buscar movimiento",
+    "searchAbility": "Buscar habilidad",
+
+    "tabs": {
+      "pokemon": "Pokémon",
+      "types": "Tipos",
+      "moves": "Movimientos",
+      "abilities": "Habilidades",
+      "relations": "Relaciones",
+      "theme": "Tema"
+    },
+
+    "fields": {
+      "nameEs": "Nombre (ES)",
+      "nameEn": "Nombre (EN)",
+      "dex": "Nº de Pokédex",
+      "generation": "Generación",
+      "types": "Tipos",
+      "type1": "Tipo principal",
+      "type2": "Tipo secundario",
+      "abilities": "Habilidades",
+      "hiddenAbility": "Habilidad oculta",
+      "stats": "Estadísticas base",
+      "height": "Altura (m)",
+      "weight": "Peso (kg)",
+      "sprite": "Ruta del sprite",
+      "color": "Color",
+      "type": "Tipo",
+      "category": "Categoría",
+      "power": "Potencia",
+      "accuracy": "Precisión",
+      "pp": "PP",
+      "priority": "Prioridad",
+      "contact": "Contacto",
+      "contactHint": "El movimiento hace contacto físico",
+      "effect": "Efecto"
+    },
+
+    "stats": {
+      "hp": "PS",
+      "atk": "Ata",
+      "def": "Def",
+      "spa": "AtE",
+      "spd": "DeE",
+      "spe": "Vel"
+    },
+
+    "categories": {
+      "physical": "Físico",
+      "special": "Especial",
+      "status": "Estado"
+    },
+
+    "hints": {
+      "commaSeparated": "Separadas por comas.",
+      "statRange": "Cada estadística entre 1 y 255.",
+      "sprite": "Ruta o URL de la imagen. La subida de archivos llega en la Fase 9.",
+      "emptyIsNone": "Déjalo vacío si no aplica."
+    },
+
+    "error": {
+      "required": "Este campo no puede quedar vacío.",
+      "dex": "El número de Pokédex tiene que ser mayor que 0.",
+      "generation": "La generación va de 1 a 9.",
+      "typesMin": "Elige al menos un tipo.",
+      "typesRepeated": "Los dos tipos no pueden ser el mismo.",
+      "stats": "Cada estadística va de 1 a 255.",
+      "positive": "No puede ser un valor negativo.",
+      "hex": "Usa un color en formato #RRGGBB.",
+      "range": "Valor fuera de rango.",
+      "accuracy": "La precisión va de 0 a 100.",
+      "priority": "La prioridad va de -7 a 7."
+    },
+
+    "relations": {
+      "hint": "Pulsa una celda para recorrer x0 → x0,25 → x0,5 → x1 → x2 → x4. Las filas atacan, las columnas defienden.",
+      "resetAll": "Restaurar toda la tabla",
+      "caption": "Tabla de efectividad: el tipo de la fila ataca al tipo de la columna.",
+      "corner": "Ata / Def",
+      "cell": "{{attacker}} contra {{defender}}: {{value}}"
+    }
+  },
+
+  "theme": {
+    "hint": "Dale a esta sesión su propia identidad visual. El negro puro (#000000) no está permitido: en pantallas OLED provoca estelas al desplazar el contenido.",
+    "reset": "Volver a la paleta original",
+    "colors": {
+      "base": "Fondo principal",
+      "panel": "Paneles y tarjetas",
+      "hover": "Estado hover",
+      "ink": "Texto principal",
+      "inkSoft": "Texto secundario"
+    },
+    "error": {
+      "black": "El negro puro no está permitido. Prueba con un azul muy oscuro, como #0A1425.",
+      "hex": "Usa un color en formato #RRGGBB."
+    },
+    "warning": {
+      "nearBlack": "Casi negro: puede seguir notándose el efecto estela en pantallas OLED."
+    },
+    "preview": {
+      "title": "Previsualización",
+      "body": "Así se verán los textos secundarios de la aplicación.",
+      "button": "Botón"
+    }
+  }
+}

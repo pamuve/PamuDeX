@@ -28,16 +28,16 @@ Todo integrado en la página `/equipo` (`pages/TeamBuilder.tsx`), accesible desd
 
 ---
 
-## 🔜 Fase 3 — Sesiones personalizadas + Editor visual
+## ✅ Fase 3 — Sesiones personalizadas + Editor visual (completada)
 
-| # | Tarea | Tamaño |
+| # | Tarea | Estado |
 |---|-------|--------|
-| 3.1 | Tabla `sessions` ya existe en el esquema → CRUD de sesiones (crear/renombrar/duplicar/eliminar "Radical Red", "Mi ROM Hack"...) | Pequeña |
-| 3.2 | Mecanismo de "overrides": una sesión puede sobreescribir tipos/Pokémon/movimientos/habilidades/relaciones sin tocar los datos globales | Media |
-| 3.3 | Editor visual de Pokémon (formulario: stats, tipos, habilidades, sprite, altura/peso) | Media |
-| 3.4 | Editor visual de tipos, movimientos, habilidades y relaciones (formularios genéricos reutilizando 3.3) | Media |
-| 3.5 | Editor visual de colores/tema por sesión | Pequeña |
-
+| 3.1 | CRUD de sesiones | ✅ `backend/routes/sessions.js`, `pages/Sessions.tsx` |
+| 3.2 | Mecanismo de overrides | ✅ `backend/lib/overrides.js`, `middleware/sessionOverrides.js` |
+| 3.3 | Editor visual de Pokémon | ✅ `components/forms/PokemonForm.tsx`, `pages/EditorPokemon.tsx` |
+| 3.4 | Editores de tipos, movimientos, habilidades y relaciones | ✅ `components/forms/*`, `pages/Editor.tsx` |
+| 3.5 | Editor de colores/tema por sesión | ✅ `lib/theme.ts`, `components/forms/ThemeForm.tsx` |
+```
 ---
 
 ## 🔜 Fase 4 — Importación / Exportación

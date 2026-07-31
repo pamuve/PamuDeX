@@ -6,8 +6,14 @@ import { TypeDetail } from "./pages/TypeDetail";
 import { MoveDetail } from "./pages/MoveDetail";
 import { AbilityDetail } from "./pages/AbilityDetail";
 import { TeamBuilder } from "./pages/TeamBuilder";
+import Sessions from "./pages/Sessions";
+import Editor from "./pages/Editor";
+import EditorPokemon from "./pages/EditorPokemon";
+import { useSessionTheme } from "./lib/theme";
+  
 
 export default function App() {
+  useSessionTheme();          // aplica el tema de la sesión activa
   return (
     <div className="min-h-full bg-base">
       <TopBar />
@@ -18,7 +24,10 @@ export default function App() {
         <Route path="/movimiento/:id" element={<MoveDetail />} />
         <Route path="/habilidad/:id" element={<AbilityDetail />} />
         <Route path="/equipo" element={<TeamBuilder />} />
-      </Routes>
+        <Route path="/sesiones" element={<Sessions />} />
+        <Route path="/editor" element={<Editor />} />
+        <Route path="/editor/pokemon" element={<EditorPokemon />} />
+        </Routes>
     </div>
   );
 }

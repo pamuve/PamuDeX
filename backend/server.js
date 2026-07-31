@@ -13,6 +13,19 @@ const db = new Database(DB_PATH);
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const sessionOverrides = require("./middleware/sessionOverrides");
+const sessionsRoutes = require("./routes/sessions");
+const chartRoutes = require("./routes/chart");
+
+app.use(express.json());               // si no lo tenías ya
+
+// IMPORTANTE: el middleware va ANTES de las rutas de datos.
+app.use("/api", sessionOverrides(db));
+
+app.use("/api/sessions", sessionsRoutes(db));
+app.use("/api/chart", chartRoutes(db));
+
+
 app.use(express.json());
 
 app.use("/api/types", require("./routes/types")(db));
