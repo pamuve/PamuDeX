@@ -1,22 +1,1874 @@
 [
-  { "name_es": "Espesura", "name_en": "Overgrow", "generation": 3, "effect_es": "Potencia los movimientos de tipo Planta un 50% cuando los PS bajan de 1/3." },
-  { "name_es": "Mar Llamas", "name_en": "Blaze", "generation": 3, "effect_es": "Potencia los movimientos de tipo Fuego un 50% cuando los PS bajan de 1/3." },
-  { "name_es": "Torrente", "name_en": "Torrent", "generation": 3, "effect_es": "Potencia los movimientos de tipo Agua un 50% cuando los PS bajan de 1/3." },
-  { "name_es": "Clorofila", "name_en": "Chlorophyll", "generation": 3, "effect_es": "Duplica la Velocidad con Día Soleado activo." },
-  { "name_es": "Poder Solar", "name_en": "Solar Power", "generation": 4, "effect_es": "Sube el Ataque Especial un 50% con sol, pero pierde PS cada turno." },
-  { "name_es": "Cura Lluvia", "name_en": "Rain Dish", "generation": 3, "effect_es": "Recupera PS cada turno mientras llueve." },
-  { "name_es": "Elec. Estática", "name_en": "Static", "generation": 3, "effect_es": "30% de posibilidad de paralizar al atacante en contacto físico." },
-  { "name_es": "Pararrayos", "name_en": "Lightning Rod", "generation": 3, "effect_es": "Atrae los movimientos Eléctricos y sube el Ataque Especial en vez de recibir daño." },
-  { "name_es": "Intimidación", "name_en": "Intimidate", "generation": 3, "effect_es": "Baja el Ataque del rival al entrar en combate." },
-  { "name_es": "Multiescamas", "name_en": "Multiscale", "generation": 5, "effect_es": "Reduce el daño recibido a la mitad si los PS están al máximo." },
-  { "name_es": "Cuerpo Maldito", "name_en": "Cursed Body", "generation": 5, "effect_es": "30% de posibilidad de anular el movimiento con el que fue golpeado." },
-  { "name_es": "Sincronía", "name_en": "Synchronize", "generation": 3, "effect_es": "Traspasa quemadura, veneno o parálisis a quien las causó." },
-  { "name_es": "Muro Mágico", "name_en": "Magic Guard", "generation": 4, "effect_es": "Solo recibe daño de ataques directos, nunca de efectos indirectos." },
-  { "name_es": "Agallas", "name_en": "Guts", "generation": 3, "effect_es": "Sube el Ataque si sufre un problema de estado (ignora el perjuicio del físico)." },
-  { "name_es": "Cabeza Roca", "name_en": "Rock Head", "generation": 3, "effect_es": "Evita el daño de retroceso de movimientos como Doble Filo." },
-  { "name_es": "Robustez", "name_en": "Sturdy", "generation": 3, "effect_es": "Sobrevive con 1 PS a un golpe que lo debilitaría estando a PS máximos." },
-  { "name_es": "Presión", "name_en": "Pressure", "generation": 3, "effect_es": "Los rivales gastan 1 PP extra al atacar a este Pokémon." },
-  { "name_es": "Absorbe Agua", "name_en": "Water Absorb", "generation": 3, "effect_es": "Los movimientos de tipo Agua curan en vez de dañar." },
-  { "name_es": "Absorbe Electricidad", "name_en": "Volt Absorb", "generation": 3, "effect_es": "Los movimientos Eléctricos curan en vez de dañar." },
-  { "name_es": "Absorbe Fuego", "name_en": "Flash Fire", "generation": 3, "effect_es": "Los movimientos de Fuego no hacen daño y potencian los propios." }
+  {
+    "name_es": "Espesura",
+    "name_en": "Overgrow",
+    "generation": 3,
+    "effect_es": "Potencia los movimientos de tipo Planta un 50% cuando los PS bajan de 1/3."
+  },
+  {
+    "name_es": "Mar Llamas",
+    "name_en": "Blaze",
+    "generation": 3,
+    "effect_es": "Potencia los movimientos de tipo Fuego un 50% cuando los PS bajan de 1/3."
+  },
+  {
+    "name_es": "Torrente",
+    "name_en": "Torrent",
+    "generation": 3,
+    "effect_es": "Potencia los movimientos de tipo Agua un 50% cuando los PS bajan de 1/3."
+  },
+  {
+    "name_es": "Clorofila",
+    "name_en": "Chlorophyll",
+    "generation": 3,
+    "effect_es": "Duplica la Velocidad con Día Soleado activo."
+  },
+  {
+    "name_es": "Poder Solar",
+    "name_en": "Solar Power",
+    "generation": 4,
+    "effect_es": "Sube el Ataque Especial un 50% con sol, pero pierde PS cada turno."
+  },
+  {
+    "name_es": "Cura Lluvia",
+    "name_en": "Rain Dish",
+    "generation": 3,
+    "effect_es": "Recupera PS cada turno mientras llueve."
+  },
+  {
+    "name_es": "Elec. Estática",
+    "name_en": "Static",
+    "generation": 3,
+    "effect_es": "30% de posibilidad de paralizar al atacante en contacto físico."
+  },
+  {
+    "name_es": "Pararrayos",
+    "name_en": "Lightning Rod",
+    "generation": 3,
+    "effect_es": "Atrae los movimientos Eléctricos y sube el Ataque Especial en vez de recibir daño."
+  },
+  {
+    "name_es": "Intimidación",
+    "name_en": "Intimidate",
+    "generation": 3,
+    "effect_es": "Baja el Ataque del rival al entrar en combate."
+  },
+  {
+    "name_es": "Multiescamas",
+    "name_en": "Multiscale",
+    "generation": 5,
+    "effect_es": "Reduce el daño recibido a la mitad si los PS están al máximo."
+  },
+  {
+    "name_es": "Cuerpo Maldito",
+    "name_en": "Cursed Body",
+    "generation": 5,
+    "effect_es": "30% de posibilidad de anular el movimiento con el que fue golpeado."
+  },
+  {
+    "name_es": "Sincronía",
+    "name_en": "Synchronize",
+    "generation": 3,
+    "effect_es": "Traspasa quemadura, veneno o parálisis a quien las causó."
+  },
+  {
+    "name_es": "Muro Mágico",
+    "name_en": "Magic Guard",
+    "generation": 4,
+    "effect_es": "Solo recibe daño de ataques directos, nunca de efectos indirectos."
+  },
+  {
+    "name_es": "Agallas",
+    "name_en": "Guts",
+    "generation": 3,
+    "effect_es": "Sube el Ataque si sufre un problema de estado (ignora el perjuicio del físico)."
+  },
+  {
+    "name_es": "Cabeza Roca",
+    "name_en": "Rock Head",
+    "generation": 3,
+    "effect_es": "Evita el daño de retroceso de movimientos como Doble Filo."
+  },
+  {
+    "name_es": "Robustez",
+    "name_en": "Sturdy",
+    "generation": 3,
+    "effect_es": "Sobrevive con 1 PS a un golpe que lo debilitaría estando a PS máximos."
+  },
+  {
+    "name_es": "Presión",
+    "name_en": "Pressure",
+    "generation": 3,
+    "effect_es": "Los rivales gastan 1 PP extra al atacar a este Pokémon."
+  },
+  {
+    "name_es": "Absorbe Agua",
+    "name_en": "Water Absorb",
+    "generation": 3,
+    "effect_es": "Los movimientos de tipo Agua curan en vez de dañar."
+  },
+  {
+    "name_es": "Absorbe Electricidad",
+    "name_en": "Volt Absorb",
+    "generation": 3,
+    "effect_es": "Los movimientos Eléctricos curan en vez de dañar."
+  },
+  {
+    "name_es": "Absorbe Fuego",
+    "name_en": "Flash Fire",
+    "generation": 3,
+    "effect_es": "Los movimientos de Fuego no hacen daño y potencian los propios."
+  },
+  {
+    "name_es": "Hedor",
+    "name_en": "Stench",
+    "generation": 3,
+    "effect_es": "Es posible que el rival retroceda por el mal olor."
+  },
+  {
+    "name_es": "Llovizna",
+    "name_en": "Drizzle",
+    "generation": 3,
+    "effect_es": "Hace que llueva cuando entra en combate."
+  },
+  {
+    "name_es": "Impulso",
+    "name_en": "Speed Boost",
+    "generation": 3,
+    "effect_es": "Aumenta la Velocidad gradualmente."
+  },
+  {
+    "name_es": "Armadura Batalla",
+    "name_en": "Battle Armor",
+    "generation": 3,
+    "effect_es": "Bloquea golpes críticos."
+  },
+  {
+    "name_es": "Humedad",
+    "name_en": "Damp",
+    "generation": 3,
+    "effect_es": "Evita que un Pokémon pueda autodestruirse."
+  },
+  {
+    "name_es": "Flexibilidad",
+    "name_en": "Limber",
+    "generation": 3,
+    "effect_es": "Evita ser paralizado."
+  },
+  {
+    "name_es": "Velo Arena",
+    "name_en": "Sand Veil",
+    "generation": 3,
+    "effect_es": "Aumenta la Evasión en las tormentas de arena."
+  },
+  {
+    "name_es": "Despiste",
+    "name_en": "Oblivious",
+    "generation": 3,
+    "effect_es": "Evita que el Pokémon sea atraído o provocado."
+  },
+  {
+    "name_es": "Aclimatación",
+    "name_en": "Cloud Nine",
+    "generation": 3,
+    "effect_es": "Anula los efectos del tiempo atmosférico."
+  },
+  {
+    "name_es": "Ojo Compuesto",
+    "name_en": "Compound Eyes",
+    "generation": 3,
+    "effect_es": "Aumenta la Precisión del Pokémon."
+  },
+  {
+    "name_es": "Insomnio",
+    "name_en": "Insomnia",
+    "generation": 3,
+    "effect_es": "Evita el quedarse dormido."
+  },
+  {
+    "name_es": "Cambio Color",
+    "name_en": "Color Change",
+    "generation": 3,
+    "effect_es": "Adopta el tipo del último movimiento del que sea blanco."
+  },
+  {
+    "name_es": "Inmunidad",
+    "name_en": "Immunity",
+    "generation": 3,
+    "effect_es": "Evita el envenenamiento."
+  },
+  {
+    "name_es": "Polvo Escudo",
+    "name_en": "Shield Dust",
+    "generation": 3,
+    "effect_es": "Anula el efecto secundario del ataque sufrido."
+  },
+  {
+    "name_es": "Ritmo Propio",
+    "name_en": "Own Tempo",
+    "generation": 3,
+    "effect_es": "Evita ser confundido."
+  },
+  {
+    "name_es": "Ventosas",
+    "name_en": "Suction Cups",
+    "generation": 3,
+    "effect_es": "Anula movimientos y objetos que fuerzan el relevo."
+  },
+  {
+    "name_es": "Sombra Trampa",
+    "name_en": "Shadow Tag",
+    "generation": 3,
+    "effect_es": "Evita que el enemigo huya."
+  },
+  {
+    "name_es": "Piel Tosca",
+    "name_en": "Rough Skin",
+    "generation": 3,
+    "effect_es": "Hiere al tacto."
+  },
+  {
+    "name_es": "Superguarda",
+    "name_en": "Wonder Guard",
+    "generation": 3,
+    "effect_es": "Solo le hacen daño los movimientos supereficaces."
+  },
+  {
+    "name_es": "Levitación",
+    "name_en": "Levitate",
+    "generation": 3,
+    "effect_es": "Proporciona inmunidad frente a los ataques de tipo Tierra."
+  },
+  {
+    "name_es": "Efecto Espora",
+    "name_en": "Effect Spore",
+    "generation": 3,
+    "effect_es": "Puede dormir, envenenar o paralizar al contacto."
+  },
+  {
+    "name_es": "Cuerpo Puro",
+    "name_en": "Clear Body",
+    "generation": 3,
+    "effect_es": "Evita que bajen las características."
+  },
+  {
+    "name_es": "Cura Natural",
+    "name_en": "Natural Cure",
+    "generation": 3,
+    "effect_es": "Cura problemas de estado al cambiar de Pokémon."
+  },
+  {
+    "name_es": "Dicha",
+    "name_en": "Serene Grace",
+    "generation": 3,
+    "effect_es": "Aumenta la probabilidad de que haya efectos secundarios."
+  },
+  {
+    "name_es": "Nado Rápido",
+    "name_en": "Swift Swim",
+    "generation": 3,
+    "effect_es": "Sube la Velocidad cuando hay lluvia."
+  },
+  {
+    "name_es": "Iluminación",
+    "name_en": "Illuminate",
+    "generation": 3,
+    "effect_es": "Aumenta la probabilidad de encontrar Pokémon."
+  },
+  {
+    "name_es": "Calco",
+    "name_en": "Trace",
+    "generation": 3,
+    "effect_es": "Copia la habilidad del rival."
+  },
+  {
+    "name_es": "Potencia",
+    "name_en": "Huge Power",
+    "generation": 3,
+    "effect_es": "Aumenta el Ataque."
+  },
+  {
+    "name_es": "Punto Tóxico",
+    "name_en": "Poison Point",
+    "generation": 3,
+    "effect_es": "Puede envenenar al mínimo contacto."
+  },
+  {
+    "name_es": "Fuerza Mental",
+    "name_en": "Inner Focus",
+    "generation": 3,
+    "effect_es": "Evita el retroceso."
+  },
+  {
+    "name_es": "Escudo Magma",
+    "name_en": "Magma Armor",
+    "generation": 3,
+    "effect_es": "Evita la congelación."
+  },
+  {
+    "name_es": "Velo Agua",
+    "name_en": "Water Veil",
+    "generation": 3,
+    "effect_es": "Evita las quemaduras."
+  },
+  {
+    "name_es": "Imán",
+    "name_en": "Magnet Pull",
+    "generation": 3,
+    "effect_es": "Impide huir a los Pokémon de tipo Acero."
+  },
+  {
+    "name_es": "Insonorizar",
+    "name_en": "Soundproof",
+    "generation": 3,
+    "effect_es": "Evita ataques de sonido."
+  },
+  {
+    "name_es": "Chorro Arena",
+    "name_en": "Sand Stream",
+    "generation": 3,
+    "effect_es": "Crea una tormenta de arena en el combate."
+  },
+  {
+    "name_es": "Sebo",
+    "name_en": "Thick Fat",
+    "generation": 3,
+    "effect_es": "Atenúa los ataques de tipo Fuego y Hielo."
+  },
+  {
+    "name_es": "Madrugar",
+    "name_en": "Early Bird",
+    "generation": 3,
+    "effect_es": "Si se duerme, tardará la mitad de tiempo en despertarse."
+  },
+  {
+    "name_es": "Cuerpo Llama",
+    "name_en": "Flame Body",
+    "generation": 3,
+    "effect_es": "Puede quemar al mínimo contacto."
+  },
+  {
+    "name_es": "Fuga",
+    "name_en": "Run Away",
+    "generation": 3,
+    "effect_es": "Permite escapar de todos los Pokémon salvajes."
+  },
+  {
+    "name_es": "Vista Lince",
+    "name_en": "Keen Eye",
+    "generation": 3,
+    "effect_es": "Evita que disminuya la Precisión."
+  },
+  {
+    "name_es": "Corte Fuerte",
+    "name_en": "Hyper Cutter",
+    "generation": 3,
+    "effect_es": "Evita que disminuya el Ataque."
+  },
+  {
+    "name_es": "Recogida",
+    "name_en": "Pickup",
+    "generation": 3,
+    "effect_es": "El Pokémon puede encontrar objetos."
+  },
+  {
+    "name_es": "Ausente",
+    "name_en": "Truant",
+    "generation": 3,
+    "effect_es": "El Pokémon no atacará en turnos consecutivos."
+  },
+  {
+    "name_es": "Entusiasmo",
+    "name_en": "Hustle",
+    "generation": 3,
+    "effect_es": "Aumenta el Ataque, pero reduce la Precisión."
+  },
+  {
+    "name_es": "Gran Encanto",
+    "name_en": "Cute Charm",
+    "generation": 3,
+    "effect_es": "Tocar al Pokémon puede causar enamoramiento."
+  },
+  {
+    "name_es": "Más",
+    "name_en": "Plus",
+    "generation": 3,
+    "effect_es": "Potencia el At. Esp. si algún otro Pokémon tiene Más o Menos."
+  },
+  {
+    "name_es": "Menos",
+    "name_en": "Minus",
+    "generation": 3,
+    "effect_es": "Potencia el At. Esp. si algún otro Pokémon tiene Más o Menos."
+  },
+  {
+    "name_es": "Predicción",
+    "name_en": "Forecast",
+    "generation": 3,
+    "effect_es": "Se transforma según el tiempo atmosférico."
+  },
+  {
+    "name_es": "Viscosidad",
+    "name_en": "Sticky Hold",
+    "generation": 3,
+    "effect_es": "Protege al Pokémon del robo de objetos."
+  },
+  {
+    "name_es": "Mudar",
+    "name_en": "Shed Skin",
+    "generation": 3,
+    "effect_es": "Cura los problemas de estado mudando la piel."
+  },
+  {
+    "name_es": "Escama Especial",
+    "name_en": "Marvel Scale",
+    "generation": 3,
+    "effect_es": "Sube la Defensa si sufre un problema de estado."
+  },
+  {
+    "name_es": "Lodo Líquido",
+    "name_en": "Liquid Ooze",
+    "generation": 3,
+    "effect_es": "Hiere a los Pokémon que drenan PS."
+  },
+  {
+    "name_es": "Enjambre",
+    "name_en": "Swarm",
+    "generation": 3,
+    "effect_es": "Potencia los ataques de tipo Bicho en un apuro."
+  },
+  {
+    "name_es": "Sequía",
+    "name_en": "Drought",
+    "generation": 3,
+    "effect_es": "El sol sale si el Pokémon entra en combate."
+  },
+  {
+    "name_es": "Trampa Arena",
+    "name_en": "Arena Trap",
+    "generation": 3,
+    "effect_es": "Evita que el rival huya."
+  },
+  {
+    "name_es": "Espíritu Vital",
+    "name_en": "Vital Spirit",
+    "generation": 3,
+    "effect_es": "Evita el quedarse dormido."
+  },
+  {
+    "name_es": "Humo Blanco",
+    "name_en": "White Smoke",
+    "generation": 3,
+    "effect_es": "Evita que bajen las características."
+  },
+  {
+    "name_es": "Energía Pura",
+    "name_en": "Pure Power",
+    "generation": 3,
+    "effect_es": "Aumenta el Ataque."
+  },
+  {
+    "name_es": "Caparazón",
+    "name_en": "Shell Armor",
+    "generation": 3,
+    "effect_es": "Bloquea los golpes críticos."
+  },
+  {
+    "name_es": "Bucle Aire",
+    "name_en": "Air Lock",
+    "generation": 3,
+    "effect_es": "Anula los efectos del tiempo atmosférico."
+  },
+  {
+    "name_es": "Tumbos",
+    "name_en": "Tangled Feet",
+    "generation": 4,
+    "effect_es": "Sube la Evasión si el Pokémon está confuso."
+  },
+  {
+    "name_es": "Electromotor",
+    "name_en": "Motor Drive",
+    "generation": 4,
+    "effect_es": "Sube la Velocidad si le alcanza un ataque eléctrico."
+  },
+  {
+    "name_es": "Rivalidad",
+    "name_en": "Rivalry",
+    "generation": 4,
+    "effect_es": "Si el objetivo es del mismo sexo, inflige más daño."
+  },
+  {
+    "name_es": "Impasible",
+    "name_en": "Steadfast",
+    "generation": 4,
+    "effect_es": "Cada vez que retrocede sube su Velocidad."
+  },
+  {
+    "name_es": "Manto Níveo",
+    "name_en": "Snow Cloak",
+    "generation": 4,
+    "effect_es": "Sube la Evasión durante una tormenta de granizo."
+  },
+  {
+    "name_es": "Gula",
+    "name_en": "Gluttony",
+    "generation": 4,
+    "effect_es": "Fomenta el uso rápido de la baya que porte."
+  },
+  {
+    "name_es": "Irascible",
+    "name_en": "Anger Point",
+    "generation": 4,
+    "effect_es": "Sube el Ataque al máximo tras un golpe crítico."
+  },
+  {
+    "name_es": "Liviano",
+    "name_en": "Unburden",
+    "generation": 4,
+    "effect_es": "Sube la Velocidad si usa o pierde el objeto que lleve."
+  },
+  {
+    "name_es": "Ignífugo",
+    "name_en": "Heatproof",
+    "generation": 4,
+    "effect_es": "Atenúa los movimientos de tipo Fuego."
+  },
+  {
+    "name_es": "Simple",
+    "name_en": "Simple",
+    "generation": 4,
+    "effect_es": "Aumenta los cambios en las características."
+  },
+  {
+    "name_es": "Piel Seca",
+    "name_en": "Dry Skin",
+    "generation": 4,
+    "effect_es": "Pierde PS si hace calor. Los recupera con agua."
+  },
+  {
+    "name_es": "Descarga",
+    "name_en": "Download",
+    "generation": 4,
+    "effect_es": "Adapta su fuerza para cada rival."
+  },
+  {
+    "name_es": "Puño Férreo",
+    "name_en": "Iron Fist",
+    "generation": 4,
+    "effect_es": "Aumenta la fuerza de los puñetazos."
+  },
+  {
+    "name_es": "Antídoto",
+    "name_en": "Poison Heal",
+    "generation": 4,
+    "effect_es": "Recupera PS si el Pokémon ha sido envenenado."
+  },
+  {
+    "name_es": "Adaptable",
+    "name_en": "Adaptability",
+    "generation": 4,
+    "effect_es": "Potencia los movimientos del mismo tipo del Pokémon."
+  },
+  {
+    "name_es": "Encadenado",
+    "name_en": "Skill Link",
+    "generation": 4,
+    "effect_es": "Aumenta la frecuencia de los movimientos múltiples."
+  },
+  {
+    "name_es": "Hidratación",
+    "name_en": "Hydration",
+    "generation": 4,
+    "effect_es": "Cura los problemas de estado si está lloviendo."
+  },
+  {
+    "name_es": "Pies Rápidos",
+    "name_en": "Quick Feet",
+    "generation": 4,
+    "effect_es": "Potencia la Velocidad si hay problemas de estado."
+  },
+  {
+    "name_es": "Normalidad",
+    "name_en": "Normalize",
+    "generation": 4,
+    "effect_es": "Todos los movimientos se vuelven de tipo Normal."
+  },
+  {
+    "name_es": "Francotirador",
+    "name_en": "Sniper",
+    "generation": 4,
+    "effect_es": "Potencia los movimientos si se vuelven críticos."
+  },
+  {
+    "name_es": "Indefenso",
+    "name_en": "No Guard",
+    "generation": 4,
+    "effect_es": "El movimiento del Pokémon y el del rival acertarán."
+  },
+  {
+    "name_es": "Rezagado",
+    "name_en": "Stall",
+    "generation": 4,
+    "effect_es": "El Pokémon se mueve tras todos los demás."
+  },
+  {
+    "name_es": "Experto",
+    "name_en": "Technician",
+    "generation": 4,
+    "effect_es": "Potencia los movimientos más débiles del Pokémon."
+  },
+  {
+    "name_es": "Defensa Hoja",
+    "name_en": "Leaf Guard",
+    "generation": 4,
+    "effect_es": "Evita los problemas de estado si hace sol."
+  },
+  {
+    "name_es": "Zoquete",
+    "name_en": "Klutz",
+    "generation": 4,
+    "effect_es": "El Pokémon no puede usar objetos equipados."
+  },
+  {
+    "name_es": "Rompemoldes",
+    "name_en": "Mold Breaker",
+    "generation": 4,
+    "effect_es": "Usa movimientos sin que importen las habilidades del objetivo."
+  },
+  {
+    "name_es": "Afortunado",
+    "name_en": "Super Luck",
+    "generation": 4,
+    "effect_es": "Aumenta la probabilidad de dar golpes críticos."
+  },
+  {
+    "name_es": "Detonación",
+    "name_en": "Aftermath",
+    "generation": 4,
+    "effect_es": "Daña al agresor que le ha dado el golpe de gracia."
+  },
+  {
+    "name_es": "Anticipación",
+    "name_en": "Anticipation",
+    "generation": 4,
+    "effect_es": "Prevé los movimientos peligrosos del rival."
+  },
+  {
+    "name_es": "Alerta",
+    "name_en": "Forewarn",
+    "generation": 4,
+    "effect_es": "Determina el movimiento más potente del rival."
+  },
+  {
+    "name_es": "Ignorante",
+    "name_en": "Unaware",
+    "generation": 4,
+    "effect_es": "No tiene en cuenta las mejoras en las características del rival."
+  },
+  {
+    "name_es": "Cromolente",
+    "name_en": "Tinted Lens",
+    "generation": 4,
+    "effect_es": "Potencia los movimientos que no son muy eficaces."
+  },
+  {
+    "name_es": "Filtro",
+    "name_en": "Filter",
+    "generation": 4,
+    "effect_es": "Mitiga los movimientos supereficaces."
+  },
+  {
+    "name_es": "Inicio Lento",
+    "name_en": "Slow Start",
+    "generation": 4,
+    "effect_es": "Baja a la mitad el Ataque y la Velocidad durante un rato."
+  },
+  {
+    "name_es": "Intrépido",
+    "name_en": "Scrappy",
+    "generation": 4,
+    "effect_es": "Movimientos tipo Normal y Lucha golpean a Pokémon Fantasma."
+  },
+  {
+    "name_es": "Colector",
+    "name_en": "Storm Drain",
+    "generation": 4,
+    "effect_es": "Atrae y neutraliza los movimientos de tipo Agua y sube el At. Esp."
+  },
+  {
+    "name_es": "Gélido",
+    "name_en": "Ice Body",
+    "generation": 4,
+    "effect_es": "Recupera algunos PS cuando hay tormentas de granizo."
+  },
+  {
+    "name_es": "Roca Sólida",
+    "name_en": "Solid Rock",
+    "generation": 4,
+    "effect_es": "Mitiga los movimientos supereficaces."
+  },
+  {
+    "name_es": "Nevada",
+    "name_en": "Snow Warning",
+    "generation": 4,
+    "effect_es": "El Pokémon invoca una tormenta de granizo."
+  },
+  {
+    "name_es": "Recogemiel",
+    "name_en": "Honey Gather",
+    "generation": 4,
+    "effect_es": "El Pokémon recoge Miel de donde puede."
+  },
+  {
+    "name_es": "Cacheo",
+    "name_en": "Frisk",
+    "generation": 4,
+    "effect_es": "El Pokémon puede ver el objeto que lleva el rival."
+  },
+  {
+    "name_es": "Audaz",
+    "name_en": "Reckless",
+    "generation": 4,
+    "effect_es": "Potencia los movimientos que dañan al usuario."
+  },
+  {
+    "name_es": "Multitipo",
+    "name_en": "Multitype",
+    "generation": 4,
+    "effect_es": "Cambia el tipo al de la tabla que lleve."
+  },
+  {
+    "name_es": "Don Floral",
+    "name_en": "Flower Gift",
+    "generation": 4,
+    "effect_es": "Potencia los Pokémon del equipo si está soleado."
+  },
+  {
+    "name_es": "Mal Sueño",
+    "name_en": "Bad Dreams",
+    "generation": 4,
+    "effect_es": "Reduce los PS de cualquier rival que esté dormido."
+  },
+  {
+    "name_es": "Hurto",
+    "name_en": "Pickpocket",
+    "generation": 5,
+    "effect_es": "Al ser golpeado, roba el objeto del objetivo."
+  },
+  {
+    "name_es": "Potencia Bruta",
+    "name_en": "Sheer Force",
+    "generation": 5,
+    "effect_es": "Sube la potencia y anula los efectos secundarios."
+  },
+  {
+    "name_es": "Respondón",
+    "name_en": "Contrary",
+    "generation": 5,
+    "effect_es": "Invierte los cambios en las características."
+  },
+  {
+    "name_es": "Nerviosismo",
+    "name_en": "Unnerve",
+    "generation": 5,
+    "effect_es": "Pone nervioso al rival y le impide usar bayas."
+  },
+  {
+    "name_es": "Competitivo",
+    "name_en": "Defiant",
+    "generation": 5,
+    "effect_es": "Sube el Ataque cuando el rival le baja las características."
+  },
+  {
+    "name_es": "Flaqueza",
+    "name_en": "Defeatist",
+    "generation": 5,
+    "effect_es": "Baja las características al llegar a la mitad los PS."
+  },
+  {
+    "name_es": "Alma Cura",
+    "name_en": "Healer",
+    "generation": 5,
+    "effect_es": "A veces cura los cambios de estado de un aliado."
+  },
+  {
+    "name_es": "Compiescolta",
+    "name_en": "Friend Guard",
+    "generation": 5,
+    "effect_es": "Reduce el daño que sufren los aliados."
+  },
+  {
+    "name_es": "Armadura Frágil",
+    "name_en": "Weak Armor",
+    "generation": 5,
+    "effect_es": "Un ataque físico baja la Defensa y sube la Velocidad."
+  },
+  {
+    "name_es": "Metal Pesado",
+    "name_en": "Heavy Metal",
+    "generation": 5,
+    "effect_es": "Duplica su peso."
+  },
+  {
+    "name_es": "Metal Liviano",
+    "name_en": "Light Metal",
+    "generation": 5,
+    "effect_es": "Reduce a la mitad el peso del Pokémon."
+  },
+  {
+    "name_es": "Ímpetu Tóxico",
+    "name_en": "Toxic Boost",
+    "generation": 5,
+    "effect_es": "Aumenta la potencia física si está envenenado."
+  },
+  {
+    "name_es": "Ímpetu Ardiente",
+    "name_en": "Flare Boost",
+    "generation": 5,
+    "effect_es": "Potencia los ataques especiales cuando el Pokémon se quema."
+  },
+  {
+    "name_es": "Cosecha",
+    "name_en": "Harvest",
+    "generation": 5,
+    "effect_es": "Permite reutilizar varias veces una misma baya."
+  },
+  {
+    "name_es": "Telepatía",
+    "name_en": "Telepathy",
+    "generation": 5,
+    "effect_es": "Elude los ataques de aliados en batalla."
+  },
+  {
+    "name_es": "Veleta",
+    "name_en": "Moody",
+    "generation": 5,
+    "effect_es": "Sube una característica mucho, pero baja otra."
+  },
+  {
+    "name_es": "Funda",
+    "name_en": "Overcoat",
+    "generation": 5,
+    "effect_es": "Protege del polvo, la arena y el granizo."
+  },
+  {
+    "name_es": "Toque Tóxico",
+    "name_en": "Poison Touch",
+    "generation": 5,
+    "effect_es": "Puede envenenar al objetivo con solo tocarlo."
+  },
+  {
+    "name_es": "Regeneración",
+    "name_en": "Regenerator",
+    "generation": 5,
+    "effect_es": "Recupera unos pocos PS al cambiar de Pokémon."
+  },
+  {
+    "name_es": "Sacapecho",
+    "name_en": "Big Pecks",
+    "generation": 5,
+    "effect_es": "Protege de los ataques que bajan la Defensa."
+  },
+  {
+    "name_es": "Ímpetu Arena",
+    "name_en": "Sand Rush",
+    "generation": 5,
+    "effect_es": "Aumenta la Velocidad durante las tormentas de arena."
+  },
+  {
+    "name_es": "Piel Milagro",
+    "name_en": "Wonder Skin",
+    "generation": 5,
+    "effect_es": "Dificulta que le afecten los ataques de estado."
+  },
+  {
+    "name_es": "Cálculo Final",
+    "name_en": "Analytic",
+    "generation": 5,
+    "effect_es": "Potencia el movimiento si es el último en atacar."
+  },
+  {
+    "name_es": "Ilusión",
+    "name_en": "Illusion",
+    "generation": 5,
+    "effect_es": "Se convierte en el último Pokémon del equipo."
+  },
+  {
+    "name_es": "Impostor",
+    "name_en": "Imposter",
+    "generation": 5,
+    "effect_es": "Se transforma en el Pokémon que tiene enfrente."
+  },
+  {
+    "name_es": "Allanamiento",
+    "name_en": "Infiltrator",
+    "generation": 5,
+    "effect_es": "Ataca rodeando la barrera del rival."
+  },
+  {
+    "name_es": "Momia",
+    "name_en": "Mummy",
+    "generation": 5,
+    "effect_es": "Contagia Momia al rival que lo toque."
+  },
+  {
+    "name_es": "Autoestima",
+    "name_en": "Moxie",
+    "generation": 5,
+    "effect_es": "Potencia el Ataque al debilitar a un objetivo."
+  },
+  {
+    "name_es": "Justiciero",
+    "name_en": "Justified",
+    "generation": 5,
+    "effect_es": "Sube el Ataque al recibir uno de tipo Siniestro."
+  },
+  {
+    "name_es": "Cobardía",
+    "name_en": "Rattled",
+    "generation": 5,
+    "effect_es": "El miedo a algunos ataques sube su Velocidad."
+  },
+  {
+    "name_es": "Espejo Mágico",
+    "name_en": "Magic Bounce",
+    "generation": 5,
+    "effect_es": "Permite devolver los ataques de estado."
+  },
+  {
+    "name_es": "Herbívoro",
+    "name_en": "Sap Sipper",
+    "generation": 5,
+    "effect_es": "Neutraliza los movimientos de tipo Planta y sube el Ataque."
+  },
+  {
+    "name_es": "Bromista",
+    "name_en": "Prankster",
+    "generation": 5,
+    "effect_es": "Permite lanzar ataques de estado en primer lugar."
+  },
+  {
+    "name_es": "Poder Arena",
+    "name_en": "Sand Force",
+    "generation": 5,
+    "effect_es": "Potencia algunos movimientos durante las tormentas de arena."
+  },
+  {
+    "name_es": "Punta Acero",
+    "name_en": "Iron Barbs",
+    "generation": 5,
+    "effect_es": "Hiere al hacer contacto."
+  },
+  {
+    "name_es": "Modo Daruma",
+    "name_en": "Zen Mode",
+    "generation": 5,
+    "effect_es": "Cambia de forma en un apuro."
+  },
+  {
+    "name_es": "Tinovictoria",
+    "name_en": "Victory Star",
+    "generation": 5,
+    "effect_es": "Sube la Precisión de todo el equipo."
+  },
+  {
+    "name_es": "Turbollama",
+    "name_en": "Turboblaze",
+    "generation": 5,
+    "effect_es": "Usa movimientos sin que importen las habilidades."
+  },
+  {
+    "name_es": "Terravoltaje",
+    "name_en": "Teravolt",
+    "generation": 5,
+    "effect_es": "Usa movimientos sin que importen las habilidades."
+  },
+  {
+    "name_es": "Velo Aroma",
+    "name_en": "Aroma Veil",
+    "generation": 6,
+    "effect_es": "Protege al equipo de ataques que impiden elegir movimientos."
+  },
+  {
+    "name_es": "Velo Flor",
+    "name_en": "Flower Veil",
+    "generation": 6,
+    "effect_es": "Evita que bajen las características de Pokémon tipo Planta aliados."
+  },
+  {
+    "name_es": "Carrillo",
+    "name_en": "Cheek Pouch",
+    "generation": 6,
+    "effect_es": "Recupera PS al comer bayas."
+  },
+  {
+    "name_es": "Mutatipo",
+    "name_en": "Protean",
+    "generation": 6,
+    "effect_es": "Cambia su tipo al del movimiento que acaba de usar."
+  },
+  {
+    "name_es": "Pelaje Recio",
+    "name_en": "Fur Coat",
+    "generation": 6,
+    "effect_es": "Reduce a la mitad el daño recibido por ataques físicos."
+  },
+  {
+    "name_es": "Prestidigitador",
+    "name_en": "Magician",
+    "generation": 6,
+    "effect_es": "Roba el objeto del Pokémon al que alcance con un movimiento."
+  },
+  {
+    "name_es": "Antibalas",
+    "name_en": "Bulletproof",
+    "generation": 6,
+    "effect_es": "No le afectan las bombas ni algunos proyectiles."
+  },
+  {
+    "name_es": "Tenacidad",
+    "name_en": "Competitive",
+    "generation": 6,
+    "effect_es": "Aumenta su At. Esp. cuando disminuyen otras características."
+  },
+  {
+    "name_es": "Mandíbula Fuerte",
+    "name_en": "Strong Jaw",
+    "generation": 6,
+    "effect_es": "Su robusta mandíbula le confiere una potente mordedura."
+  },
+  {
+    "name_es": "Piel Helada",
+    "name_en": "Refrigerate",
+    "generation": 6,
+    "effect_es": "Convierte movimientos de tipo Normal en tipo Hielo."
+  },
+  {
+    "name_es": "Velo Dulce",
+    "name_en": "Sweet Veil",
+    "generation": 6,
+    "effect_es": "Evita que tu equipo Pokémon se duerma."
+  },
+  {
+    "name_es": "Cambio Táctico",
+    "name_en": "Stance Change",
+    "generation": 6,
+    "effect_es": "Cambia de forma según su estilo de combate."
+  },
+  {
+    "name_es": "Alas Vendaval",
+    "name_en": "Gale Wings",
+    "generation": 6,
+    "effect_es": "Da prioridad a los movimientos de tipo Volador."
+  },
+  {
+    "name_es": "Megadisparador",
+    "name_en": "Mega Launcher",
+    "generation": 6,
+    "effect_es": "Aumenta la potencia de algunos movimientos de pulsos y auras."
+  },
+  {
+    "name_es": "Manto Frondoso",
+    "name_en": "Grass Pelt",
+    "generation": 6,
+    "effect_es": "Aumenta la Defensa mientras dura el efecto de Campo de Hierba."
+  },
+  {
+    "name_es": "Simbiosis",
+    "name_en": "Symbiosis",
+    "generation": 6,
+    "effect_es": "El Pokémon puede pasar su objeto a un aliado."
+  },
+  {
+    "name_es": "Garra Dura",
+    "name_en": "Tough Claws",
+    "generation": 6,
+    "effect_es": "Aumenta la potencia de los movimientos de contacto directo."
+  },
+  {
+    "name_es": "Piel Feérica",
+    "name_en": "Pixilate",
+    "generation": 6,
+    "effect_es": "Convierte movimientos de tipo Normal en tipo Hada."
+  },
+  {
+    "name_es": "Baba",
+    "name_en": "Gooey",
+    "generation": 6,
+    "effect_es": "Baja la Velocidad del Pokémon con el que entra en contacto."
+  },
+  {
+    "name_es": "Piel Celeste",
+    "name_en": "Aerilate",
+    "generation": 6,
+    "effect_es": "Convierte movimientos de tipo Normal en tipo Volador."
+  },
+  {
+    "name_es": "Amor Filial",
+    "name_en": "Parental Bond",
+    "generation": 6,
+    "effect_es": "Ataque en familia."
+  },
+  {
+    "name_es": "Aura Oscura",
+    "name_en": "Dark Aura",
+    "generation": 6,
+    "effect_es": "Aumenta la potencia de todos los movimientos de tipo Siniestro."
+  },
+  {
+    "name_es": "Aura Feérica",
+    "name_en": "Fairy Aura",
+    "generation": 6,
+    "effect_es": "Aumenta la potencia de todos los movimientos de tipo Hada."
+  },
+  {
+    "name_es": "Rompeaura",
+    "name_en": "Aura Break",
+    "generation": 6,
+    "effect_es": "Invierte los efectos que causan las auras."
+  },
+  {
+    "name_es": "Mar del Albor",
+    "name_en": "Primordial Sea",
+    "generation": 6,
+    "effect_es": "Altera el clima para anular los ataques de tipo Fuego."
+  },
+  {
+    "name_es": "Tierra del Ocaso",
+    "name_en": "Desolate Land",
+    "generation": 6,
+    "effect_es": "Altera el clima para anular los ataques de tipo Agua."
+  },
+  {
+    "name_es": "Ráfaga Delta",
+    "name_en": "Delta Stream",
+    "generation": 6,
+    "effect_es": "Altera el clima para anular las vulnerabilidades del tipo Volador."
+  },
+  {
+    "name_es": "Firmeza",
+    "name_en": "Stamina",
+    "generation": 7,
+    "effect_es": "Aumenta la Defensa al recibir un ataque físico."
+  },
+  {
+    "name_es": "Huida",
+    "name_en": "Wimp Out",
+    "generation": 7,
+    "effect_es": "Se asusta y abandona el terreno de combate cuando sus PS se ven reducidos a la mitad."
+  },
+  {
+    "name_es": "Retirada",
+    "name_en": "Emergency Exit",
+    "generation": 7,
+    "effect_es": "Abandona el terreno de combate cuando sus PS se ven reducidos a la mitad para evitar males mayores."
+  },
+  {
+    "name_es": "Hidrorrefuerzo",
+    "name_en": "Water Compaction",
+    "generation": 7,
+    "effect_es": "Aumenta mucho la Defensa si le alcanza un movimiento de tipo Agua."
+  },
+  {
+    "name_es": "Ensañamiento",
+    "name_en": "Merciless",
+    "generation": 7,
+    "effect_es": "Hace que los movimientos asesten siempre un golpe crítico si el rival está envenenado."
+  },
+  {
+    "name_es": "Escudo Limitado",
+    "name_en": "Shields Down",
+    "generation": 7,
+    "effect_es": "Rompe su coraza cuando sus PS se ven reducidos a la mitad y adopta una forma ofensiva."
+  },
+  {
+    "name_es": "Vigilante",
+    "name_en": "Stakeout",
+    "generation": 7,
+    "effect_es": "Duplica el daño infligido a un Pokémon que se haya incorporado al combate mediante un cambio."
+  },
+  {
+    "name_es": "Pompa",
+    "name_en": "Water Bubble",
+    "generation": 7,
+    "effect_es": "Reduce el daño que le provocan los movimientos de tipo Fuego e impide que sufra quemaduras."
+  },
+  {
+    "name_es": "Acero Templado",
+    "name_en": "Steelworker",
+    "generation": 7,
+    "effect_es": "Potencia los movimientos de tipo Acero."
+  },
+  {
+    "name_es": "Cólera",
+    "name_en": "Berserk",
+    "generation": 7,
+    "effect_es": "Aumenta el Ataque Especial si los ataques del oponente le reducen los PS a la mitad."
+  },
+  {
+    "name_es": "Quitanieves",
+    "name_en": "Slush Rush",
+    "generation": 7,
+    "effect_es": "Aumenta su Velocidad si está granizando."
+  },
+  {
+    "name_es": "Remoto",
+    "name_en": "Long Reach",
+    "generation": 7,
+    "effect_es": "Permite usar cualquier movimiento sin entrar en contacto con el rival."
+  },
+  {
+    "name_es": "Voz Fluida",
+    "name_en": "Liquid Voice",
+    "generation": 7,
+    "effect_es": "Hace que todos los movimientos del Pokémon basados en sonido pasen a ser de tipo Agua."
+  },
+  {
+    "name_es": "Primer Auxilio",
+    "name_en": "Triage",
+    "generation": 7,
+    "effect_es": "Da prioridad a los movimientos que curan PS directamente al Pokémon."
+  },
+  {
+    "name_es": "Piel Eléctrica",
+    "name_en": "Galvanize",
+    "generation": 7,
+    "effect_es": "Convierte los movimientos de tipo Normal en tipo Eléctrico y aumenta ligeramente su potencia."
+  },
+  {
+    "name_es": "Cola Surf",
+    "name_en": "Surge Surfer",
+    "generation": 7,
+    "effect_es": "Duplica la Velocidad si hay un campo eléctrico en el terreno de combate."
+  },
+  {
+    "name_es": "Banco",
+    "name_en": "Schooling",
+    "generation": 7,
+    "effect_es": "Forma bancos con sus congéneres cuando tiene muchos PS, lo cual le otorga más fuerza. Cuando le quedan pocos PS, el banco se dispersa."
+  },
+  {
+    "name_es": "Disfraz",
+    "name_en": "Disguise",
+    "generation": 7,
+    "effect_es": "Permite eludir un único ataque valiéndose de la tela que le cubre el cuerpo."
+  },
+  {
+    "name_es": "Fuerte Afecto",
+    "name_en": "Battle Bond",
+    "generation": 7,
+    "effect_es": "Al derrotar a un rival, los vínculos con su Entrenador se refuerzan y se convierte en Greninja Ash. Su Shuriken de Agua también se ve potenciado."
+  },
+  {
+    "name_es": "Agrupamiento",
+    "name_en": "Power Construct",
+    "generation": 7,
+    "effect_es": "Cuando sus PS se ven reducidos a la mitad, las células se reagrupan y adopta su Forma Completa."
+  },
+  {
+    "name_es": "Corrosión",
+    "name_en": "Corrosion",
+    "generation": 7,
+    "effect_es": "Permite envenenar incluso a rivales de tipo Acero o Veneno."
+  },
+  {
+    "name_es": "Letargo Perenne",
+    "name_en": "Comatose",
+    "generation": 7,
+    "effect_es": "No despierta jamás de su profundo letargo e incluso ataca dormido."
+  },
+  {
+    "name_es": "Regia Presencia",
+    "name_en": "Queenly Majesty",
+    "generation": 7,
+    "effect_es": "Intimida al rival y le impide usar movimientos con prioridad dirigidos al Pokémon."
+  },
+  {
+    "name_es": "Revés",
+    "name_en": "Innards Out",
+    "generation": 7,
+    "effect_es": "Al caer debilitado, inflige al rival un daño equivalente a los PS que le quedaran."
+  },
+  {
+    "name_es": "Pareja de Baile",
+    "name_en": "Dancer",
+    "generation": 7,
+    "effect_es": "Permite copiar inmediatamente cualquier movimiento de baile que haya usado otro Pokémon presente en el combate."
+  },
+  {
+    "name_es": "Batería",
+    "name_en": "Battery",
+    "generation": 7,
+    "effect_es": "Potencia los movimientos especiales de los aliados."
+  },
+  {
+    "name_es": "Peluche",
+    "name_en": "Fluffy",
+    "generation": 7,
+    "effect_es": "Reduce a la mitad el daño provocado por los movimientos de contacto, pero duplica el infligido por los de tipo Fuego."
+  },
+  {
+    "name_es": "Cuerpo Vívido",
+    "name_en": "Dazzling",
+    "generation": 7,
+    "effect_es": "Desconcierta al rival y le impide utilizar movimientos con prioridad contra el usuario."
+  },
+  {
+    "name_es": "Coránima",
+    "name_en": "Soul-Heart",
+    "generation": 7,
+    "effect_es": "Aumenta el Ataque Especial cada vez que un Pokémon cae debilitado."
+  },
+  {
+    "name_es": "Rizos Rebeldes",
+    "name_en": "Tangling Hair",
+    "generation": 7,
+    "effect_es": "Baja la Velocidad del rival cuando este ataca al Pokémon con un movimiento de contacto."
+  },
+  {
+    "name_es": "Receptor",
+    "name_en": "Receiver",
+    "generation": 7,
+    "effect_es": "Adquiere la habilidad de un aliado debilitado."
+  },
+  {
+    "name_es": "Reacción Química",
+    "name_en": "Power of Alchemy",
+    "generation": 7,
+    "effect_es": "Reacciona copiando la habilidad de un aliado debilitado."
+  },
+  {
+    "name_es": "Ultraimpulso",
+    "name_en": "Beast Boost",
+    "generation": 7,
+    "effect_es": "Si el Pokémon derrota a un rival en ese turno, aumenta su característica más fuerte."
+  },
+  {
+    "name_es": "Sistema Alfa",
+    "name_en": "RKS System",
+    "generation": 7,
+    "effect_es": "Cambia su tipo según el disco que lleve instalado."
+  },
+  {
+    "name_es": "Electrogénesis",
+    "name_en": "Electric Surge",
+    "generation": 7,
+    "effect_es": "Crea un campo eléctrico al entrar en combate."
+  },
+  {
+    "name_es": "Psicogénesis",
+    "name_en": "Psychic Surge",
+    "generation": 7,
+    "effect_es": "Crea un campo psíquico al entrar en combate."
+  },
+  {
+    "name_es": "Nebulogénesis",
+    "name_en": "Misty Surge",
+    "generation": 7,
+    "effect_es": "Crea un campo de niebla al entrar en combate."
+  },
+  {
+    "name_es": "Herbogénesis",
+    "name_en": "Grassy Surge",
+    "generation": 7,
+    "effect_es": "Crea un campo de hierba al entrar en combate."
+  },
+  {
+    "name_es": "Guardia Metálica",
+    "name_en": "Full Metal Body",
+    "generation": 7,
+    "effect_es": "Evita que bajen sus características a causa de movimientos o habilidades de otros Pokémon."
+  },
+  {
+    "name_es": "Guardia Espectro",
+    "name_en": "Shadow Shield",
+    "generation": 7,
+    "effect_es": "Reduce el daño sufrido si los PS están al máximo."
+  },
+  {
+    "name_es": "Armadura Prisma",
+    "name_en": "Prism Armor",
+    "generation": 7,
+    "effect_es": "Mitiga el daño que le infligen los movimientos supereficaces."
+  },
+  {
+    "name_es": "Fuerza Cerebral",
+    "name_en": "Neuroforce",
+    "generation": 7,
+    "effect_es": "Potencia los ataques supereficaces."
+  },
+  {
+    "name_es": "Espada Indómita",
+    "name_en": "Intrepid Sword",
+    "generation": 8,
+    "effect_es": "Aumenta su Ataque al entrar en combate."
+  },
+  {
+    "name_es": "Escudo Recio",
+    "name_en": "Dauntless Shield",
+    "generation": 8,
+    "effect_es": "Aumenta su Defensa al entrar en combate."
+  },
+  {
+    "name_es": "Líbero",
+    "name_en": "Libero",
+    "generation": 8,
+    "effect_es": "Cambia su tipo al del movimiento que va a usar."
+  },
+  {
+    "name_es": "Recogebolas",
+    "name_en": "Ball Fetch",
+    "generation": 8,
+    "effect_es": "Si no lleva equipado ningún objeto, recupera la Poké Ball del primer intento de captura fallido."
+  },
+  {
+    "name_es": "Pelusa",
+    "name_en": "Cotton Down",
+    "generation": 8,
+    "effect_es": "Al ser alcanzado por un ataque, suelta una pelusa de algodón que reduce la Velocidad de todos los demás Pokémon."
+  },
+  {
+    "name_es": "Hélice Caudal",
+    "name_en": "Propeller Tail",
+    "generation": 8,
+    "effect_es": "Impide que el rival pueda atraer ataques hacia sí mismo por efecto de su habilidad o sus movimientos."
+  },
+  {
+    "name_es": "Coraza Reflejo",
+    "name_en": "Mirror Armor",
+    "generation": 8,
+    "effect_es": "Refleja los efectos que reducen las características."
+  },
+  {
+    "name_es": "Tragamisil",
+    "name_en": "Gulp Missile",
+    "generation": 8,
+    "effect_es": "Tras usar Surf o Buceo, emerge con una presa en la boca. Al recibir daño, ataca escupiéndola al rival."
+  },
+  {
+    "name_es": "Acérrimo",
+    "name_en": "Stalwart",
+    "generation": 8,
+    "effect_es": "Impide que el rival pueda atraer ataques hacia sí mismo por efecto de su habilidad o sus movimientos."
+  },
+  {
+    "name_es": "Combustible",
+    "name_en": "Steam Engine",
+    "generation": 8,
+    "effect_es": "Si le alcanza un movimiento de tipo Fuego o Agua, le sube muchísimo la Velocidad."
+  },
+  {
+    "name_es": "Punk Rock",
+    "name_en": "Punk Rock",
+    "generation": 8,
+    "effect_es": "Potencia los movimientos que usan sonido y reduce a la mitad el daño que le infligen dichos movimientos."
+  },
+  {
+    "name_es": "Expulsarena",
+    "name_en": "Sand Spit",
+    "generation": 8,
+    "effect_es": "Provoca una tormenta de arena al recibir un ataque."
+  },
+  {
+    "name_es": "Escama de Hielo",
+    "name_en": "Ice Scales",
+    "generation": 8,
+    "effect_es": "Las gélidas escamas que protegen su cuerpo reducen a la mitad el daño que le infligen los ataques especiales."
+  },
+  {
+    "name_es": "Maduración",
+    "name_en": "Ripen",
+    "generation": 8,
+    "effect_es": "Hace madurar las bayas, por lo que duplica sus efectos."
+  },
+  {
+    "name_es": "Cara de Hielo",
+    "name_en": "Ice Face",
+    "generation": 8,
+    "effect_es": "Absorbe el daño de un ataque físico con el hielo de la cabeza, tras lo cual cambia de forma. El hielo se regenerará la próxima vez que granice."
+  },
+  {
+    "name_es": "Fuente Energía",
+    "name_en": "Power Spot",
+    "generation": 8,
+    "effect_es": "Potencia los movimientos de los Pokémon adyacentes."
+  },
+  {
+    "name_es": "Mimetismo",
+    "name_en": "Mimicry",
+    "generation": 8,
+    "effect_es": "Cambia su tipo según el campo que haya en el terreno de combate."
+  },
+  {
+    "name_es": "Antibarrera",
+    "name_en": "Screen Cleaner",
+    "generation": 8,
+    "effect_es": "Anula los efectos de Pantalla de Luz, Reflejo y Velo Aurora tanto de rivales como de aliados al entrar en combate."
+  },
+  {
+    "name_es": "Alma Acerada",
+    "name_en": "Steely Spirit",
+    "generation": 8,
+    "effect_es": "Potencia los movimientos de tipo Acero de los aliados."
+  },
+  {
+    "name_es": "Cuerpo Mortal",
+    "name_en": "Perish Body",
+    "generation": 8,
+    "effect_es": "Si le alcanza un movimiento de contacto, se debilitará al cabo de 3 turnos, así como su agresor, a menos que abandonen el terreno de combate."
+  },
+  {
+    "name_es": "Alma Errante",
+    "name_en": "Wandering Spirit",
+    "generation": 8,
+    "effect_es": "Si le alcanza un movimiento de contacto, intercambia su habilidad con la del agresor."
+  },
+  {
+    "name_es": "Monotema",
+    "name_en": "Gorilla Tactics",
+    "generation": 8,
+    "effect_es": "Potencia su Ataque, pero solo puede usar el primer movimiento escogido."
+  },
+  {
+    "name_es": "Gas Reactivo",
+    "name_en": "Neutralizing Gas",
+    "generation": 8,
+    "effect_es": "Anula los efectos de las habilidades de los demás Pokémon presentes mientras esté en el terreno de combate."
+  },
+  {
+    "name_es": "Velo Pastel",
+    "name_en": "Pastel Veil",
+    "generation": 8,
+    "effect_es": "Se protege a sí mismo y a sus aliados del envenenamiento."
+  },
+  {
+    "name_es": "Mutapetito",
+    "name_en": "Hunger Switch",
+    "generation": 8,
+    "effect_es": "Alterna entre su Forma Saciada y Forma Voraz al final de cada turno."
+  },
+  {
+    "name_es": "Mano Rápida",
+    "name_en": "Quick Draw",
+    "generation": 8,
+    "effect_es": "A veces, puede atacar el primero."
+  },
+  {
+    "name_es": "Puño Invisible",
+    "name_en": "Unseen Fist",
+    "generation": 8,
+    "effect_es": "Si usa un movimiento de contacto, puede infligir daño al objetivo aunque este se proteja."
+  },
+  {
+    "name_es": "Medicina Extraña",
+    "name_en": "Curious Medicine",
+    "generation": 8,
+    "effect_es": "Al entrar en combate, rezuma una substancia medicinal por la caracola que revierte los cambios en las características de los aliados."
+  },
+  {
+    "name_es": "Transistor",
+    "name_en": "Transistor",
+    "generation": 8,
+    "effect_es": "Potencia los movimientos de tipo Eléctrico."
+  },
+  {
+    "name_es": "Mandíbula Dragón",
+    "name_en": "Dragon’s Maw",
+    "generation": 8,
+    "effect_es": "Potencia los movimientos de tipo Dragón."
+  },
+  {
+    "name_es": "Relincho Blanco",
+    "name_en": "Chilling Neigh",
+    "generation": 8,
+    "effect_es": "Al derrotar a un objetivo, emite un relincho gélido y aumenta su Ataque."
+  },
+  {
+    "name_es": "Relincho Negro",
+    "name_en": "Grim Neigh",
+    "generation": 8,
+    "effect_es": "Al derrotar a un objetivo, emite un relincho aterrador y aumenta su Ataque Especial."
+  },
+  {
+    "name_es": "Unidad Ecuestre",
+    "name_en": "As One",
+    "generation": 8,
+    "effect_es": "El Pokémon tiene dos habilidades: Relincho Blanco de Glastrier y Nerviosismo de Calyrex."
+  },
+  {
+    "name_es": "Olor Persistente",
+    "name_en": "Lingering Aroma",
+    "generation": 9,
+    "effect_es": "Contact changes the attacker's Ability to Lingering Aroma."
+  },
+  {
+    "name_es": "Disemillar",
+    "name_en": "Seed Sower",
+    "generation": 9,
+    "effect_es": "Turns the ground into Grassy Terrain when the Pokémon is hit by an attack."
+  },
+  {
+    "name_es": "Termoconversión",
+    "name_en": "Thermal Exchange",
+    "generation": 9,
+    "effect_es": "Raises Attack when hit by a Fire-type move. Cannot be burned."
+  },
+  {
+    "name_es": "Coraza Ira",
+    "name_en": "Anger Shell",
+    "generation": 9,
+    "effect_es": "When the Pokémon's HP drops below half, Anger Shell lowers its Defense and Special Defense but its Attack, Special Attack and Speed are raised."
+  },
+  {
+    "name_es": "Sal Purificadora",
+    "name_en": "Purifying Salt",
+    "generation": 9,
+    "effect_es": "Protects from status conditions and halves damage from Ghost-type moves."
+  },
+  {
+    "name_es": "Cuerpo Horneado",
+    "name_en": "Well-Baked Body",
+    "generation": 9,
+    "effect_es": "Immune to Fire-type moves, and Defense is sharply boosted."
+  },
+  {
+    "name_es": "Surcavientos",
+    "name_en": "Wind Rider",
+    "generation": 9,
+    "effect_es": "Gives immunity to wind moves, and causes the Pokémon's Attack to increase by one stage when hit by one."
+  },
+  {
+    "name_es": "Perro Guardián",
+    "name_en": "Guard Dog",
+    "generation": 9,
+    "effect_es": "Boosts Attack if intimidated, and prevents being forced to switch out."
+  },
+  {
+    "name_es": "Transportarrocas",
+    "name_en": "Rocky Payload",
+    "generation": 9,
+    "effect_es": "Powers up Rock-type moves."
+  },
+  {
+    "name_es": "Energía Eólica",
+    "name_en": "Wind Power",
+    "generation": 9,
+    "effect_es": "When hit by a wind move, the power of the next Electric-type move it uses is doubled."
+  },
+  {
+    "name_es": "Cambio Heroico",
+    "name_en": "Zero to Hero",
+    "generation": 9,
+    "effect_es": "Transforms into its Hero Form when switching out."
+  },
+  {
+    "name_es": "Comandar",
+    "name_en": "Commander",
+    "generation": 9,
+    "effect_es": "Goes inside the mouth of an ally Dondozo if one is on the field."
+  },
+  {
+    "name_es": "Dinamo",
+    "name_en": "Electromorphosis",
+    "generation": 9,
+    "effect_es": "When hit by an attack, the power of the next Electric-type move it uses is doubled."
+  },
+  {
+    "name_es": "Paleosíntesis",
+    "name_en": "Protosynthesis",
+    "generation": 9,
+    "effect_es": "Raises highest stat in harsh sunlight, or if holding Booster Energy."
+  },
+  {
+    "name_es": "Carga Cuark",
+    "name_en": "Quark Drive",
+    "generation": 9,
+    "effect_es": "Raises highest stat on Electric Terrain, or if holding Booster Energy."
+  },
+  {
+    "name_es": "Cuerpo Áureo",
+    "name_en": "Good as Gold",
+    "generation": 9,
+    "effect_es": "Gives immunity to status moves."
+  },
+  {
+    "name_es": "Caldero Debacle",
+    "name_en": "Vessel of Ruin",
+    "generation": 9,
+    "effect_es": "Lowers Special Attack of all Pokémon except itself."
+  },
+  {
+    "name_es": "Espada Debacle",
+    "name_en": "Sword of Ruin",
+    "generation": 9,
+    "effect_es": "Lowers Defense of all Pokémon except itself."
+  },
+  {
+    "name_es": "Tablilla Debacle",
+    "name_en": "Tablets of Ruin",
+    "generation": 9,
+    "effect_es": "Lowers Attack of all Pokémon except itself."
+  },
+  {
+    "name_es": "Abalorio Debacle",
+    "name_en": "Beads of Ruin",
+    "generation": 9,
+    "effect_es": "Lowers Special Defense of all Pokémon except itself."
+  },
+  {
+    "name_es": "Latido Oricalco",
+    "name_en": "Orichalcum Pulse",
+    "generation": 9,
+    "effect_es": "Turns the sunlight harsh when entering battle, and boosts Attack while active."
+  },
+  {
+    "name_es": "Motor Hadrónico",
+    "name_en": "Hadron Engine",
+    "generation": 9,
+    "effect_es": "Creates an Electric Terrain when entering battle, and boosts Special Attack while active."
+  },
+  {
+    "name_es": "Oportunista",
+    "name_en": "Opportunist",
+    "generation": 9,
+    "effect_es": "Copies stat boosts by the opponent."
+  },
+  {
+    "name_es": "Rumia",
+    "name_en": "Cud Chew",
+    "generation": 9,
+    "effect_es": "Causes the Pokémon to reuse an already consumed Berry at the end of the next turn."
+  },
+  {
+    "name_es": "Cortante",
+    "name_en": "Sharpness",
+    "generation": 9,
+    "effect_es": "Powers up slicing moves."
+  },
+  {
+    "name_es": "General Supremo",
+    "name_en": "Supreme Overlord",
+    "generation": 9,
+    "effect_es": "Attack and Special Attack are boosted for each party Pokémon that has been defeated."
+  },
+  {
+    "name_es": "Unísono",
+    "name_en": "Costar",
+    "generation": 9,
+    "effect_es": "Copies ally's stat changes on entering battle."
+  },
+  {
+    "name_es": "Capa Tóxica",
+    "name_en": "Toxic Debris",
+    "generation": 9,
+    "effect_es": "Scatters poison spikes at the feet of the opposing team when the Pokémon takes damage from physical moves."
+  },
+  {
+    "name_es": "Cola Armadura",
+    "name_en": "Armor Tail",
+    "generation": 9,
+    "effect_es": "Prevents the opponent from using any moves that have priority, such as Quick Attack."
+  },
+  {
+    "name_es": "Geofagia",
+    "name_en": "Earth Eater",
+    "generation": 9,
+    "effect_es": "Restores HP when hit by a Ground-type move."
+  },
+  {
+    "name_es": "Poder Fúngico",
+    "name_en": "Mycelium Might",
+    "generation": 9,
+    "effect_es": "Status moves go last, but are not affected by the opponent's ability."
+  },
+  {
+    "name_es": "Ojo Mental",
+    "name_en": "Mind’s Eye",
+    "generation": 9,
+    "effect_es": "The Pokémon ignores changes to opponents' evasiveness, its accuracy can't be lowered, and it can hit Ghost types with Normal- and Fighting-type moves."
+  },
+  {
+    "name_es": "Néctar Dulce",
+    "name_en": "Supersweet Syrup",
+    "generation": 9,
+    "effect_es": "Once per battle, when a Pokémon with Supersweet Syrup enters the battle, it lowers the evasion stat of all adjacent opponents by one stage."
+  },
+  {
+    "name_es": "Hospitalidad",
+    "name_en": "Hospitality",
+    "generation": 9,
+    "effect_es": "When a Pokémon with Hospitality enters a battle, it restores HP for an ally by 25%."
+  },
+  {
+    "name_es": "Cadena Tóxica",
+    "name_en": "Toxic Chain",
+    "generation": 9,
+    "effect_es": "May cause bad poisoning when the Pokémon hits an opponent with a move."
+  },
+  {
+    "name_es": "Evocarrecuerdos",
+    "name_en": "Embody Aspect",
+    "generation": 9,
+    "effect_es": "Embody Aspect boosts a particular stat, depending on the form of a Terastallized Ogerpon"
+  },
+  {
+    "name_es": "Teracambio",
+    "name_en": "Tera Shift",
+    "generation": 9,
+    "effect_es": "When Terapagos enters the battle, it turns into its Terastal Form until the end of the battle."
+  },
+  {
+    "name_es": "Teracaparazón",
+    "name_en": "Tera Shell",
+    "generation": 9,
+    "effect_es": "All damage-dealing moves that hit the Pokémon when its HP is full will not be very effective."
+  },
+  {
+    "name_es": "Teraformación 0",
+    "name_en": "Teraform Zero",
+    "generation": 9,
+    "effect_es": "As soon as Terapagos assumes its Stellar Form, it will immediately neutralize weather and terrain effects."
+  },
+  {
+    "name_es": "Títere Tóxico",
+    "name_en": "Poison Puppeteer",
+    "generation": 9,
+    "effect_es": "Pokémon poisoned by Pecharunt's moves will also become confused."
+  },
+  {
+    "name_es": "Turbotaladro",
+    "name_en": "Piercing Drill",
+    "generation": 9,
+    "effect_es": "When the Pokémon uses contact moves, it can hit even targets that are protecting themselves."
+  },
+  {
+    "name_es": "Piel Dragontina",
+    "name_en": "Dragonize",
+    "generation": 9,
+    "effect_es": "The Pokémon's Normal-type moves become Dragon-type moves and their power is boosted by 20%."
+  },
+  {
+    "name_es": "Megasolar",
+    "name_en": "Mega Sol",
+    "generation": 9,
+    "effect_es": "The Pokémon can use its moves as if the weather were harsh sunlight."
+  },
+  {
+    "name_es": "Salpicante",
+    "name_en": "Spicy Spray",
+    "generation": 9,
+    "effect_es": "When the Pokémon takes damage from a move, it burns the attacker."
+  },
+  {
+    "name_es": "eelevate",
+    "name_en": "Eelevate",
+    "generation": 9,
+    "effect_es": "The Pokémon floats off the ground, making it immune to Ground-type moves, as well as the Spikes, Toxic Spikes, and Sticky Web statuses. When the Pokémon knocks out a target with an attack, its highest stat is boosted by 1 stage."
+  },
+  {
+    "name_es": "fire-mane",
+    "name_en": "Fire Mane",
+    "generation": 9,
+    "effect_es": "Boosts the power of the Pokémon's Fire-type moves by 50%."
+  }
 ]

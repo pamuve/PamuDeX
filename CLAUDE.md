@@ -30,6 +30,10 @@ cualquier versión reciente.
 cd backend && npm install && npm start
 cd backend && npm run seed          # recrear la DB desde backend/data/*.json
 
+# Regenerar el dataset desde PokeAPI (no se ejecuta en el arranque ni en el
+# build: los JSON van versionados para que la PWA siga siendo offline-first).
+cd backend && node tools/fetch-dataset.js
+
 # Frontend (puerto 5173, proxy de /api a localhost:4000)
 cd frontend && npm install && npm run dev
 ```

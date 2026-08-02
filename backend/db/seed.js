@@ -100,7 +100,14 @@ function seed() {
     INSERT INTO moves (name_es, name_en, type_id, category, power, accuracy, pp, priority, makes_contact, generation, effect_es)
     VALUES (@name_es, @name_en, @type, @category, @power, @accuracy, @pp, @priority, @makes_contact, @generation, @effect_es)
   `);
-  moves.forEach((m) => insertMove.run({ ...m, makes_contact: m.makes_contact ? 1 : 0 }));
+  // makes_contact admite null = desconocido (PokeAPI no expone ese dato), así
+  // que la ficha puede distinguir «no hace contacto» de «no lo sabemos».
+  moves.forEach((m) =>
+    insertMove.run({
+      ...m,
+      makes_contact: m.makes_contact === null || m.makes_contact === undefined ? null : m.makes_contact ? 1 : 0,
+    })
+  );
 
   console.log(`✔ Base de datos creada en ${DB_PATH}`);
   console.log(`  · ${types.length} tipos, ${pokemonList.length} Pokémon, ${moves.length} movimientos, ${abilityIdByName.size} habilidades`);

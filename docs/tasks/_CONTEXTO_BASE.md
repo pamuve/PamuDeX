@@ -17,6 +17,8 @@ PamuDeX: PWA autoalojada y **offline-first** para consultar tipos, Pokémon, mov
 ```
 backend/
   data/        types.json, type_chart.json, pokemon.json, moves.json, abilities.json
+               (18 tipos, 1025 Pokémon, 901 movimientos, 312 habilidades)
+  tools/       fetch-dataset.js  (regenera los JSON desde PokeAPI)
   db/          schema.sql, seed.js  (la DB se genera con `npm run seed`)
   lib/         effectiveness.js, overrides.js, typechart.js
   middleware/  sessionOverrides.js
@@ -104,6 +106,7 @@ Lo que no aparece conserva el valor global. Dos reglas que no son obvias:
 Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
 
 - Categoría de movimiento: **`fisico` | `especial` | `estado`** (en español, sin tilde). Nunca `physical/special/status`.
+- `makes_contact` es **`1` | `0` | `null`**. `null` significa *desconocido*, no *no*: PokeAPI no expone ese dato y solo 19 movimientos lo tienen puesto a mano. Al mostrarlo, `null` va como «—».
 - Multiplicadores de efectividad: `4, 2, 1, 0.5, 0.25, 0`, con claves `hiper_eficaz`, `super_eficaz`, `normal`, `poco_eficaz`, `muy_poco_eficaz`, `sin_efecto`.
 
 ## Estado actual
