@@ -69,7 +69,7 @@ Forma de `sessions.data_json`:
 ```json
 {
   "types":     { "fuego": { "name_es": "Llama", "color": "#FF5500" } },
-  "pokemon":   { "25": { "stats": { "spe": 120 }, "types": ["electrico", "hada"] } },
+  "pokemon":   { "7": { "stats": { "spe": 120 }, "types": ["electrico", "hada"] } },
   "moves":     { "6": { "power": 110 } },
   "abilities": { "3": { "effect_es": "..." } },
   "relations": { "fuego": { "agua": 2 } },
@@ -78,7 +78,10 @@ Forma de `sessions.data_json`:
 }
 ```
 
-Lo que no aparece conserva el valor global. **Un override tiene que guardarse con la misma forma que devuelve la API** (por ejemplo `abilities` como array de objetos), porque sustituye el campo entero.
+Lo que no aparece conserva el valor global. Dos reglas que no son obvias:
+
+- **La clave es el `id` interno de la entidad, no el nº de Pokédex.** En el ejemplo, `"7"` es el id de Pikachu; su `dex` es 25. `/api/pokemon/:id` acepta las dos cosas (el id manda), pero `data_json` se indexa siempre por `id`, que es lo que devuelven los listados y lo que escribe el editor. Los tipos son la excepción natural: su id ya es la cadena (`"fuego"`).
+- **Un override sustituye el campo entero**, así que tiene que guardarse con la misma forma que devuelve la API — por ejemplo `abilities` como array de objetos, no de cadenas.
 
 ## IDs de tipo (minúscula, sin tilde)
 
