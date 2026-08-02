@@ -10,6 +10,9 @@ backend/db/*.sqlite-journal
 # Vite PWA generado
 frontend/dev-dist/
 
+# Info incremental de tsc -b
+*.tsbuildinfo
+
 .DS_Store
 .env
 .env.*

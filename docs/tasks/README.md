@@ -17,8 +17,8 @@ Con esos dos archivos, la IA no necesita saber nada más del proyecto.
 | Fase | Tareas | Estado |
 |------|--------|--------|
 | 2 — Comparador de equipos | `fase2/` (5) | ✅ Implementada |
-| 3 — Sesiones + editor visual | `fase3/` (5) | 🔜 |
-| 4 — Import / export | `fase4/` (4) | 🔜 |
+| 3 — Sesiones + editor visual | `fase3/` (5) | ✅ Implementada |
+| 4 — Import / export | `fase4/` (4) | 🔜 **siguiente** |
 | 5 — Usuarios y perfiles | `fase5/` (4) | 🔜 |
 | 6 — Pokémon Champions | `fase6/` (3) | 🔜 |
 | 7 — Multi-generación | `fase7/` (3) | 🔜 |
@@ -27,6 +27,6 @@ Con esos dos archivos, la IA no necesita saber nada más del proyecto.
 
 Las tareas de una fase están ordenadas por dependencia: haz la `-01` antes que la `-02`. Entre fases distintas hay más libertad, salvo que la propia tarea diga de qué depende.
 
-Los archivos de `fase2/` se conservan aunque ya esté implementada: sirven de referencia del estilo y para rehacer alguna pieza si hiciera falta.
+Los archivos de `fase2/` y `fase3/` se conservan aunque ya estén implementadas: sirven de referencia del estilo y para rehacer alguna pieza si hiciera falta. En `docs/Fases/` está además el entregable original de cada fase, tal cual se recibió, para poder comparar contra el repo.
 
 Para crear tareas nuevas que no estén en el roadmap, usa `docs/AI_TASK_TEMPLATE.md`.

@@ -17,16 +17,14 @@ const sessionOverrides = require("./middleware/sessionOverrides");
 const sessionsRoutes = require("./routes/sessions");
 const chartRoutes = require("./routes/chart");
 
-app.use(express.json());               // si no lo tenías ya
+app.use(express.json());
 
-// IMPORTANTE: el middleware va ANTES de las rutas de datos.
+// IMPORTANTE: el middleware va ANTES de las rutas de datos. Intercepta res.json
+// y aplica los overrides de la sesión; sin ?session= en la query no hace nada.
 app.use("/api", sessionOverrides(db));
 
 app.use("/api/sessions", sessionsRoutes(db));
 app.use("/api/chart", chartRoutes(db));
-
-
-app.use(express.json());
 
 app.use("/api/types", require("./routes/types")(db));
 app.use("/api/pokemon", require("./routes/pokemon")(db));

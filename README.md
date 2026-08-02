@@ -38,31 +38,47 @@ pamudex/
 ├── backend/
 │   ├── data/              # JSON semilla: types, type_chart, pokemon, moves, abilities
 │   ├── db/
-│   │   ├── schema.sql     # esquema SQLite completo (núcleo + tablas Fase 2+)
+│   │   ├── schema.sql     # esquema SQLite completo (núcleo + tablas Fase 4+)
 │   │   └── seed.js        # recrea la DB desde los JSON de /data
 │   ├── lib/
-│   │   └── effectiveness.js   # motor de cálculo de tipos (x4/x2/x1/x0.5/x0.25/x0)
-│   ├── routes/             # types.js, pokemon.js, moves.js, abilities.js, search.js
+│   │   ├── effectiveness.js   # motor de cálculo de tipos (x4/x2/x1/x0.5/x0.25/x0)
+│   │   ├── overrides.js       # merge de los overrides de una sesión sobre el dato global
+│   │   └── typechart.js       # tabla de tipos 18x18 + overrides de relaciones
+│   ├── middleware/
+│   │   └── sessionOverrides.js  # aplica ?session=<id> interceptando res.json
+│   ├── routes/             # types, pokemon, moves, abilities, search, sessions, chart
+│   ├── tests/
+│   │   └── overrides.smoke.js   # prueba de humo sin servidor ni SQLite
 │   ├── server.js
 │   └── package.json
 ├── frontend/
 │   ├── public/icons/       # iconos PWA (192/512) — placeholder, sustituir por arte oficial
 │   ├── src/
-│   │   ├── components/     # TopBar, SearchBar, TypeBadge, EffectivenessPanel
-│   │   ├── pages/          # Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail
-│   │   ├── i18n/            # es.json, en.json, index.tsx (contexto)
-│   │   ├── lib/api.ts
+│   │   ├── components/     # TopBar, SearchBar, TypeBadge, EffectivenessPanel,
+│   │   │   │               # TeamSlotCard, RivalSlotCard, RecommendationCard,
+│   │   │   │               # CoverageMap, SessionRequired
+│   │   │   └── forms/      # PokemonForm, TypeForm, MoveForm, AbilityForm,
+│   │   │                   # RelationsMatrix, ThemeForm, EntityPicker, FormField
+│   │   ├── pages/          # Home, PokemonDetail, TypeDetail, MoveDetail,
+│   │   │                   # AbilityDetail, TeamBuilder, Sessions, Editor, EditorPokemon
+│   │   ├── hooks/          # useSessionOverride.ts
+│   │   ├── i18n/           # es.json, en.json, index.tsx (contexto)
+│   │   ├── lib/            # api, apiSession, session, theme, team, damage,
+│   │   │                   # recommendation, coverage
+│   │   ├── theme-vars.css  # variables CSS de la paleta (las pisa el tema de sesión)
 │   │   ├── types.ts
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   ├── vite.config.ts       # config PWA (manifest + service worker)
-│   ├── tailwind.config.js   # paleta OLED exacta del proyecto
+│   ├── tailwind.config.js   # paleta OLED enlazada a var(--color-*)
 │   └── package.json
 ├── docs/
 │   ├── ROADMAP.md           # todas las fases (2-9), divididas en tareas pequeñas
 │   ├── AI_TASK_TEMPLATE.md  # plantilla para crear nuevos encargos de IA autocontenidos
+│   ├── Fases/               # entregables originales de cada fase, tal cual se recibieron
 │   └── tasks/
-│       └── fase2/           # encargos ya redactados y listos para pegar en cualquier IA
+│       ├── _CONTEXTO_BASE.md   # se pega SIEMPRE antes del encargo de la tarea
+│       └── fase2/ … fase9/     # encargos redactados, listos para pegar en cualquier IA
 ├── Dockerfile
 ├── docker-compose.yml
 └── .gitignore
@@ -128,7 +144,13 @@ Este proyecto **NO** tiene afiliación, patrocinio ni está respaldado por Ninte
 
 ## ⚙️ Estado del proyecto
 
-> Estado actual: **Fase 1 completa y verificada** (núcleo de datos + consulta + PWA offline + Docker). Ver [`docs/ROADMAP.md`](docs/ROADMAP.md) para las fases siguientes.
+> Estado actual: **Fases 1, 2 y 3 completas y verificadas.**
+>
+> - **Fase 1** — núcleo de datos + consulta + PWA offline + Docker.
+> - **Fase 2** — comparador de equipos táctico en `/equipo` (motor de daño, «mejor respuesta», mapa de cobertura).
+> - **Fase 3** — sesiones de ROM Hack en `/sesiones` y editor visual en `/editor`, con overrides por sesión y tema propio.
+>
+> Siguiente: **Fase 4 — Importación / Exportación**. Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap
 
