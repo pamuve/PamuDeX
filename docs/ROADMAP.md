@@ -44,11 +44,11 @@ El editor escribe overrides en `sessions.data_json`; el middleware `backend/midd
 
 ---
 
-## 🔜 Fase 4 — Importación / Exportación
+## 🚧 Fase 4 — Importación / Exportación (en curso)
 
 | # | Tarea | Tamaño |
 |---|-------|--------|
-| 4.1 | Exportar sesión o dataset completo a JSON y CSV | Pequeña |
+| 4.1 | Exportar sesión o dataset completo a JSON y CSV | ✅ `backend/routes/export.js`, `pages/ImportExport.tsx` (`/datos`) |
 | 4.2 | Exportar a SQLite (descarga del `.sqlite` de una sesión) | Pequeña |
 | 4.3 | Importar JSON/CSV con validación de esquema y previsualización de cambios antes de aplicar | Media |
 | 4.4 | Importar SQLite externo y fusionarlo (o sustituir) una sesión | Media |

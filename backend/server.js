@@ -25,6 +25,7 @@ app.use("/api", sessionOverrides(db));
 
 app.use("/api/sessions", sessionsRoutes(db));
 app.use("/api/chart", chartRoutes(db));
+app.use("/api/export", require("./routes/export")(db));
 
 app.use("/api/types", require("./routes/types")(db));
 app.use("/api/pokemon", require("./routes/pokemon")(db));

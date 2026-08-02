@@ -186,5 +186,20 @@
   "theme.warning.nearBlack": "Casi negro: puede seguir notándose el efecto estela en pantallas OLED.",
   "theme.preview.title": "Previsualización",
   "theme.preview.body": "Así se verán los textos secundarios de la aplicación.",
-  "theme.preview.button": "Botón"
+  "theme.preview.button": "Botón",
+  "data.nav": "Datos",
+  "data.title": "Importar y exportar",
+  "data.subtitle": "Saca tus datos de PamuDeX en JSON o CSV, del dataset global o de una sesión concreta.",
+  "data.loading": "Cargando sesiones…",
+  "data.loadError": "No se han podido cargar las sesiones. Se puede exportar el dataset global igualmente.",
+  "data.sourceLabel": "Qué exportar",
+  "data.global": "Datos globales",
+  "data.globalHint": "La Pokédex original, sin las modificaciones de ninguna sesión.",
+  "data.sessionHint": "Los datos con los cambios de «{{name}}» ya aplicados.",
+  "data.jsonTitle": "JSON completo",
+  "data.jsonHint": "Un único archivo con tipos, tabla de tipos, Pokémon, movimientos y habilidades. Mismo formato que los archivos semilla: si lo dejas en backend/data/ y ejecutas la siembra, reproduce esta misma base de datos.",
+  "data.downloadJson": "Descargar JSON",
+  "data.csvTitle": "CSV por entidad",
+  "data.csvHint": "Un archivo por entidad, con cabecera y comillas donde hace falta. Se abren directamente en LibreOffice o Excel.",
+  "data.importSoon": "La importación de JSON, CSV y SQLite llega en las siguientes tareas de la Fase 4."
 }
