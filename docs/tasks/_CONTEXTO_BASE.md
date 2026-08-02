@@ -19,21 +19,22 @@ backend/
   data/        types.json, type_chart.json, pokemon.json, moves.json, abilities.json
                (18 tipos, 1025 Pokémon, 901 movimientos, 312 habilidades)
   tools/       fetch-dataset.js  (regenera los JSON desde PokeAPI)
-  db/          schema.sql, seed.js  (la DB se genera con `npm run seed`)
-  lib/         effectiveness.js, overrides.js, typechart.js
+  db/          schema.sql, seed.js, populate.js  (la DB se genera con `npm run seed`)
+  lib/         effectiveness.js, overrides.js, typechart.js,
+               dataset.js, importValidator.js
   middleware/  sessionOverrides.js
   routes/      types.js, pokemon.js, moves.js, abilities.js, search.js,
-               sessions.js, chart.js
+               sessions.js, chart.js, export.js, import.js
   tests/       overrides.smoke.js
   server.js
 frontend/src/
   components/  TopBar, SearchBar, TypeBadge, EffectivenessPanel,
                TeamSlotCard, RivalSlotCard, RecommendationCard, CoverageMap,
-               SessionRequired
+               SessionRequired, ImportPanel
   components/forms/  FormField, EntityPicker, PokemonForm, TypeForm, MoveForm,
                      AbilityForm, RelationsMatrix, ThemeForm
   pages/       Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail,
-               TeamBuilder, Sessions, Editor, EditorPokemon
+               TeamBuilder, Sessions, Editor, EditorPokemon, ImportExport
   hooks/       useSessionOverride.ts
   lib/         api.ts, apiSession.ts, session.ts, theme.ts,
                team.ts, damage.ts, recommendation.ts, coverage.ts
@@ -41,7 +42,7 @@ frontend/src/
   types.ts, App.tsx, main.tsx, index.css, theme-vars.css
 ```
 
-Rutas del frontend: `/`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`.
+Rutas del frontend: `/`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`.
 
 ## API REST existente (todas devuelven JSON plano, sin envoltorio)
 
@@ -85,6 +86,14 @@ Lo que no aparece conserva el valor global. Dos reglas que no son obvias:
 - **La clave es el `id` interno de la entidad, no el nº de Pokédex.** En el ejemplo, `"7"` es el id de Pikachu; su `dex` es 25. `/api/pokemon/:id` acepta las dos cosas (el id manda), pero `data_json` se indexa siempre por `id`, que es lo que devuelven los listados y lo que escribe el editor. Los tipos son la excepción natural: su id ya es la cadena (`"fuego"`).
 - **Un override sustituye el campo entero**, así que tiene que guardarse con la misma forma que devuelve la API — por ejemplo `abilities` como array de objetos, no de cadenas.
 
+### Exportación e importación (Fase 4)
+
+- `GET /api/export/json|csv|sqlite[?session=<id>]` — devuelven el **formato semilla** (`backend/data/*.json`), no el de la API.
+- `POST /api/import/preview` y `/apply` (JSON y CSV), `POST /api/import/sqlite/preview` y `/apply`. Parámetros en la query: `target=session|global`, `session=`, `mode=merge|replace`, `format=`, `entity=`. El cuerpo es el archivo **en crudo** (`express.raw`), sin multipart.
+- Flujo obligatorio: previsualizar → confirmar → aplicar. `apply` revalida desde cero; no hay estado guardado entre los dos pasos.
+- `lib/dataset.js` construye el dataset con los overrides ya resueltos, y lo comparten exportación e importación: por eso reimportar un export propio da «0 cambios».
+- **Los overrides parchean filas existentes, no crean nuevas.** Importar entidades nuevas dentro de una sesión no es posible: se informan y se omiten. Para darlas de alta hay que importar al dataset global.
+
 ## IDs de tipo (minúscula, sin tilde)
 
 `normal, fuego, agua, electrico, planta, hielo, lucha, veneno, tierra, volador, psiquico, bicho, roca, fantasma, dragon, siniestro, acero, hada`
@@ -114,7 +123,8 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
 - ✅ **Fase 1**: núcleo de tipos/Pokémon/movimientos/habilidades, buscador, PWA offline, Docker, i18n ES/EN.
 - ✅ **Fase 2**: comparador de equipos en `/equipo` (equipo propio y rival en `localStorage`, motor de daño, recomendación "mejor respuesta", mapa de cobertura).
 - ✅ **Fase 3**: sesiones de ROM Hack en `/sesiones` (CRUD en SQLite), overrides por sesión vía middleware, editor visual en `/editor` (Pokémon, tipos, movimientos, habilidades, matriz de relaciones) y tema de color por sesión.
-- 🔜 Fases 4-9: ver `docs/ROADMAP.md`.
+- ✅ **Fase 4**: exportación e importación en JSON, CSV y SQLite desde `/datos`, con previsualización antes de aplicar (`routes/export.js`, `routes/import.js`, `lib/importValidator.js`).
+- 🔜 Fases 5-9: ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 

@@ -31,8 +31,11 @@ module.exports = (db) => {
 
     const abilities = db
       .prepare(
+        // Orden estable: sin ORDER BY, las habilidades salían en un orden que
+        // depende de los ability_id y variaba entre bases.
         `SELECT a.name_es, a.name_en, a.effect_es, pa.is_hidden FROM pokemon_abilities pa
-         JOIN abilities a ON a.id = pa.ability_id WHERE pa.pokemon_id = ?`
+         JOIN abilities a ON a.id = pa.ability_id WHERE pa.pokemon_id = ?
+         ORDER BY pa.is_hidden, a.name_es`
       )
       .all(p.id);
 

@@ -1,5 +1,5 @@
 /**
- * PamuDeX — Tarea 4.1
+ * PamuDeX — Tareas 4.1 a 4.4
  * Página /datos: descarga del dataset en JSON y CSV, global o por sesión.
  *
  * Las descargas son enlaces `<a download>` directos a /api/export en vez de
@@ -7,7 +7,7 @@
  * nombre de archivo, y funciona igual en el móvil, donde crear un objectURL y
  * simular un clic es poco fiable.
  *
- * La importación llega en las tareas 4.3 y 4.4.
+ * La importación (4.3 y 4.4) vive en components/ImportPanel.tsx.
  */
 
 import { useEffect, useState } from "react";
@@ -16,6 +16,7 @@ import { sessionsApi, type Session } from "../lib/apiSession";
 import { useActiveSession } from "../lib/session";
 import { useI18n } from "../i18n";
 import { inputClass } from "../components/forms/FormField";
+import ImportPanel from "../components/ImportPanel";
 
 const ENTITIES = ["pokemon", "moves", "abilities", "types"] as const;
 type Entity = (typeof ENTITIES)[number];
@@ -156,7 +157,7 @@ export default function ImportExport() {
         </a>
       </section>
 
-      <p className="text-xs text-ink-soft">{t("data.importSoon")}</p>
+      <ImportPanel sessionId={selected} />
     </div>
   );
 }
