@@ -49,7 +49,7 @@ export type MoveSummary = {
 
 export type MoveDetail = MoveSummary & {
   priority: number;
-  makes_contact: number;
+  makes_contact: number | null;
   generation: number;
   effect_es: string;
   type_name_es: string;

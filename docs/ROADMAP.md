@@ -8,7 +8,9 @@ Cómo usar esto: abre una conversación nueva → pega el contenido íntegro del
 
 ## ✅ Fase 1 — Núcleo (completada)
 
-Tipos, Pokémon, movimientos, habilidades, buscador con autocompletado, PWA offline instalable, tema OLED, Docker de un solo contenedor, i18n ES/EN. Dataset semilla de 24 Pokémon / 19 movimientos / 42 habilidades, ampliable a mano editando `backend/data/*.json`.
+Tipos, Pokémon, movimientos, habilidades, buscador con autocompletado, PWA offline instalable, tema OLED, Docker de un solo contenedor, i18n ES/EN.
+
+Dataset completo: **18 tipos, 1025 Pokémon, 901 movimientos y 312 habilidades**, en `backend/data/*.json`. Se puede editar a mano o regenerar desde PokeAPI con `node backend/tools/fetch-dataset.js` (las entradas existentes se conservan; solo añade lo que falta). `makes_contact` queda a `null` en los movimientos importados porque PokeAPI no expone ese dato: la ficha muestra «—» en vez de inventar un Sí/No.
 
 ---
 

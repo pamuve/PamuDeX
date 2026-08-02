@@ -14,7 +14,12 @@ module.exports = (db) => {
   });
 
   router.get("/:id", (req, res) => {
-    const p = db.prepare("SELECT * FROM pokemon WHERE id = ? OR dex = ?").get(req.params.id, req.params.id);
+    // Se acepta tanto el id interno como el nº de Pokédex, pero el id manda:
+    // sin ORDER BY, `id = ? OR dex = ?` devuelve una fila arbitraria cuando cada
+    // condición casa con un Pokémon distinto (id 7 = Pikachu, dex 7 = Squirtle).
+    const p = db
+      .prepare("SELECT * FROM pokemon WHERE id = ? OR dex = ? ORDER BY (id = ?) DESC LIMIT 1")
+      .get(req.params.id, req.params.id, req.params.id);
     if (!p) return res.status(404).json({ error: "Pokémon no encontrado" });
 
     const types = db

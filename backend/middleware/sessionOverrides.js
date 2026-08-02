@@ -233,8 +233,14 @@ module.exports = (db) => {
       // Listados
       if (!id) return applyToList(body, overrides, entity);
 
-      // Detalle
-      const override = overrideFor(overrides, entity, id) || {};
+      // Detalle. La clave canónica del override es el id interno, pero la URL
+      // puede traer otra cosa (`/api/pokemon/:id` acepta también el nº de
+      // Pokédex), así que si por la URL no hay nada se reintenta con el id que
+      // viene en la propia respuesta.
+      const override =
+        overrideFor(overrides, entity, id) ||
+        (body.id !== undefined ? overrideFor(overrides, entity, body.id) : null) ||
+        {};
       let result = applyOverrides(body, override);
 
       if (entity === "pokemon") result = transformPokemon(body, result, override);

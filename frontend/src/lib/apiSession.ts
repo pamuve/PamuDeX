@@ -61,7 +61,7 @@ export interface MoveDetail {
   accuracy: number | null;
   pp: number | null;
   priority?: number;
-  makes_contact?: number | boolean;
+  makes_contact?: number | boolean | null;
   effect_es?: string;
   [key: string]: unknown;
 }

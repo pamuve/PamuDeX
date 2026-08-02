@@ -17,6 +17,8 @@ PamuDeX: PWA autoalojada y **offline-first** para consultar tipos, Pokémon, mov
 ```
 backend/
   data/        types.json, type_chart.json, pokemon.json, moves.json, abilities.json
+               (18 tipos, 1025 Pokémon, 901 movimientos, 312 habilidades)
+  tools/       fetch-dataset.js  (regenera los JSON desde PokeAPI)
   db/          schema.sql, seed.js  (la DB se genera con `npm run seed`)
   lib/         effectiveness.js, overrides.js, typechart.js
   middleware/  sessionOverrides.js
@@ -69,7 +71,7 @@ Forma de `sessions.data_json`:
 ```json
 {
   "types":     { "fuego": { "name_es": "Llama", "color": "#FF5500" } },
-  "pokemon":   { "25": { "stats": { "spe": 120 }, "types": ["electrico", "hada"] } },
+  "pokemon":   { "7": { "stats": { "spe": 120 }, "types": ["electrico", "hada"] } },
   "moves":     { "6": { "power": 110 } },
   "abilities": { "3": { "effect_es": "..." } },
   "relations": { "fuego": { "agua": 2 } },
@@ -78,7 +80,10 @@ Forma de `sessions.data_json`:
 }
 ```
 
-Lo que no aparece conserva el valor global. **Un override tiene que guardarse con la misma forma que devuelve la API** (por ejemplo `abilities` como array de objetos), porque sustituye el campo entero.
+Lo que no aparece conserva el valor global. Dos reglas que no son obvias:
+
+- **La clave es el `id` interno de la entidad, no el nº de Pokédex.** En el ejemplo, `"7"` es el id de Pikachu; su `dex` es 25. `/api/pokemon/:id` acepta las dos cosas (el id manda), pero `data_json` se indexa siempre por `id`, que es lo que devuelven los listados y lo que escribe el editor. Los tipos son la excepción natural: su id ya es la cadena (`"fuego"`).
+- **Un override sustituye el campo entero**, así que tiene que guardarse con la misma forma que devuelve la API — por ejemplo `abilities` como array de objetos, no de cadenas.
 
 ## IDs de tipo (minúscula, sin tilde)
 
@@ -101,6 +106,7 @@ Lo que no aparece conserva el valor global. **Un override tiene que guardarse co
 Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
 
 - Categoría de movimiento: **`fisico` | `especial` | `estado`** (en español, sin tilde). Nunca `physical/special/status`.
+- `makes_contact` es **`1` | `0` | `null`**. `null` significa *desconocido*, no *no*: PokeAPI no expone ese dato y solo 19 movimientos lo tienen puesto a mano. Al mostrarlo, `null` va como «—».
 - Multiplicadores de efectividad: `4, 2, 1, 0.5, 0.25, 0`, con claves `hiper_eficaz`, `super_eficaz`, `normal`, `poco_eficaz`, `muy_poco_eficaz`, `sin_efecto`.
 
 ## Estado actual

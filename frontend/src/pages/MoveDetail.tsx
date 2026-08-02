@@ -21,7 +21,10 @@ export function MoveDetail() {
     [t("move.accuracy"), move.accuracy ? `${move.accuracy}%` : "—"],
     [t("move.pp"), move.pp],
     [t("move.priority"), move.priority],
-    [t("move.contact"), move.makes_contact ? t("yes") : t("no")],
+    // null = desconocido (los movimientos importados de PokeAPI, que no expone
+    // este dato). Se muestra «—» igual que potencia y precisión sin valor, en
+    // vez de afirmar un «No» que no sabemos si es cierto.
+    [t("move.contact"), move.makes_contact === null ? "—" : move.makes_contact ? t("yes") : t("no")],
     [t("pokemon.generation"), move.generation],
   ];
 
