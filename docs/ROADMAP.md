@@ -49,7 +49,7 @@ El editor escribe overrides en `sessions.data_json`; el middleware `backend/midd
 | # | Tarea | Tamaño |
 |---|-------|--------|
 | 4.1 | Exportar sesión o dataset completo a JSON y CSV | ✅ `backend/routes/export.js`, `pages/ImportExport.tsx` (`/datos`) |
-| 4.2 | Exportar a SQLite (descarga del `.sqlite` de una sesión) | Pequeña |
+| 4.2 | Exportar a SQLite (descarga del `.sqlite` de una sesión) | ✅ `GET /api/export/sqlite`, `db/populate.js` |
 | 4.3 | Importar JSON/CSV con validación de esquema y previsualización de cambios antes de aplicar | Media |
 | 4.4 | Importar SQLite externo y fusionarlo (o sustituir) una sesión | Media |
 

@@ -201,5 +201,8 @@
   "data.downloadJson": "Download JSON",
   "data.csvTitle": "CSV per entity",
   "data.csvHint": "One file per entity, with a header row and quoting where needed. They open straight in LibreOffice or Excel.",
-  "data.importSoon": "Importing JSON, CSV and SQLite arrives in the next Phase 4 tasks."
+  "data.importSoon": "Importing JSON, CSV and SQLite arrives in the next Phase 4 tasks.",
+  "data.sqliteTitle": "SQLite database",
+  "data.sqliteHint": "A self-contained .sqlite file with the full schema and the data already resolved. If you export a session, its changes come applied in the rows themselves. Opens in any SQLite viewer.",
+  "data.downloadSqlite": "Download SQLite"
 }

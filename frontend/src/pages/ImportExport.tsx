@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Download, FileJson, Sheet, Loader2 } from "lucide-react";
+import { Download, FileJson, Sheet, Database, Loader2 } from "lucide-react";
 import { sessionsApi, type Session } from "../lib/apiSession";
 import { useActiveSession } from "../lib/session";
 import { useI18n } from "../i18n";
@@ -136,6 +136,24 @@ export default function ImportExport() {
             </a>
           ))}
         </div>
+      </section>
+
+      <section className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
+        <h2 className="flex items-center gap-2 font-display text-sm uppercase tracking-widest text-ink-soft">
+          <Database size={16} aria-hidden="true" />
+          {t("data.sqliteTitle")}
+        </h2>
+        <p className="mt-2 text-sm text-ink-soft">{t("data.sqliteHint")}</p>
+        <a
+          href={`/api/export/sqlite${query}`}
+          download
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-hover px-4 py-2
+                     text-sm font-medium text-ink transition hover:brightness-125
+                     focus:outline-none focus:ring-2 focus:ring-ink-soft/40"
+        >
+          <Download size={16} aria-hidden="true" />
+          {t("data.downloadSqlite")}
+        </a>
       </section>
 
       <p className="text-xs text-ink-soft">{t("data.importSoon")}</p>

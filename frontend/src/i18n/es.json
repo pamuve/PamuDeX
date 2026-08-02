@@ -201,5 +201,8 @@
   "data.downloadJson": "Descargar JSON",
   "data.csvTitle": "CSV por entidad",
   "data.csvHint": "Un archivo por entidad, con cabecera y comillas donde hace falta. Se abren directamente en LibreOffice o Excel.",
-  "data.importSoon": "La importación de JSON, CSV y SQLite llega en las siguientes tareas de la Fase 4."
+  "data.importSoon": "La importación de JSON, CSV y SQLite llega en las siguientes tareas de la Fase 4.",
+  "data.sqliteTitle": "Base de datos SQLite",
+  "data.sqliteHint": "Un archivo .sqlite autocontenido con el esquema completo y los datos ya resueltos. Si exportas una sesión, sus cambios vienen aplicados en las propias filas. Se abre con cualquier visor de SQLite.",
+  "data.downloadSqlite": "Descargar SQLite"
 }

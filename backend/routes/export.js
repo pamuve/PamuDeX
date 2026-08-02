@@ -18,7 +18,14 @@
  */
 
 const express = require("express");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const Database = require("better-sqlite3");
 const { applyOverrides, getSessionOverrides, overrideFor } = require("../lib/overrides");
+const { populate } = require("../db/populate");
+
+const SCHEMA_PATH = path.join(__dirname, "..", "db", "schema.sql");
 
 const ENTITIES = ["pokemon", "moves", "abilities", "types"];
 const STAT_KEYS = ["hp", "atk", "def", "spa", "spd", "spe"];
@@ -280,6 +287,105 @@ module.exports = (db) => {
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="${filename(ctx.name, entity, "csv")}"`);
     res.send(CSV[entity](build(db, ctx.overrides)));
+  });
+
+  // GET /api/export/sqlite[?session=<id>]
+  //
+  // Genera una base NUEVA con los overrides ya fusionados en las filas; nunca
+  // copia `pamudex.sqlite`, que contiene los datos globales y además las
+  // sesiones (que no tienen por qué viajar dentro de la exportación).
+  //
+  // El volcado usa el mismo `db/populate.js` que la siembra, así que el archivo
+  // descargado es idéntico a sembrar el JSON de /api/export/json.
+  router.get("/sqlite", (req, res) => {
+    const ctx = session(req);
+    if (!ctx) return res.status(404).json({ error: "sesion_no_encontrada" });
+
+    // Nombre único: varias descargas simultáneas no pueden pisarse.
+    const tmp = path.join(
+      os.tmpdir(),
+      `pamudex-export-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.sqlite`
+    );
+
+    let limpiado = false;
+    const limpiar = () => {
+      if (limpiado) return;
+      limpiado = true;
+      fs.rm(tmp, { force: true }, () => {});
+    };
+
+    let out;
+    try {
+      out = new Database(tmp);
+      out.exec(fs.readFileSync(SCHEMA_PATH, "utf-8"));
+      populate(out, {
+        types: buildTypes(db, ctx.overrides),
+        typeChart: buildTypeChart(db, ctx.overrides),
+        pokemon: buildPokemon(db, ctx.overrides),
+        moves: buildMoves(db, ctx.overrides),
+        abilities: buildAbilities(db, ctx.overrides),
+      });
+      out.close();
+    } catch (err) {
+      if (out) {
+        try {
+          out.close();
+        } catch {
+          /* ya cerrada */
+        }
+      }
+      limpiar();
+      return res.status(500).json({ error: "export_sqlite_fallido" });
+    }
+
+    // No se usa res.download: su callback depende de que el socket llegue a
+    // cerrarse, y con descargas abortadas eso puede no ocurrir a tiempo,
+    // dejando temporales sueltos.
+    //
+    // En su lugar se abre el descriptor y se DESVINCULA el archivo, los dos de
+    // forma síncrona. A partir de ese unlinkSync ya no existe ninguna entrada
+    // en el sistema de ficheros que pueda quedar huérfana —ni aunque el proceso
+    // muera a mitad—, mientras que el descriptor sigue siendo válido y el
+    // stream lee de él con normalidad. Es la garantía que pide el criterio de
+    // aceptación, y no depende de ningún manejador de eventos.
+    let fd;
+    let size;
+    try {
+      fd = fs.openSync(tmp, "r");
+      size = fs.fstatSync(fd).size;
+      fs.unlinkSync(tmp); // POSIX: el fd sobrevive al borrado
+      limpiado = true; // ya no hay nada que limpiar
+    } catch (err) {
+      if (fd !== undefined) {
+        try {
+          fs.closeSync(fd);
+        } catch {
+          /* ya cerrado */
+        }
+      }
+      limpiar();
+      return res.status(500).json({ error: "export_sqlite_fallido" });
+    }
+
+    const stream = fs.createReadStream(null, { fd, autoClose: true });
+
+    // Si el cliente corta, hay que destruir el stream a mano: sin esto el
+    // descriptor se queda vivo y, con suficientes descargas abortadas, el
+    // servidor deja de responder.
+    const cerrar = () => stream.destroy();
+    res.once("close", cerrar);
+    stream.once("error", () => {
+      if (!res.headersSent) res.status(500).json({ error: "export_sqlite_fallido" });
+      else res.destroy();
+    });
+
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Length", size);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${filename(ctx.name, "", "sqlite")}"`
+    );
+    stream.pipe(res);
   });
 
   return router;
