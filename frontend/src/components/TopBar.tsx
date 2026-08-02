@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 
 function ComingSoonMenu({ label, items }: { label: string; items: string[] }) {
@@ -79,6 +79,11 @@ export function TopBar() {
         <Link to="/editor" title={t("editor.nav")} aria-label={t("editor.nav")}
               className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
           <SlidersHorizontal size={20} aria-hidden="true" />
+        </Link>
+
+        <Link to="/datos" title={t("data.nav")} aria-label={t("data.nav")}
+              className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
+          <DatabaseBackup size={20} aria-hidden="true" />
         </Link>
 
         <Link

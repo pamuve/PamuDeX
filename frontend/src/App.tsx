@@ -9,6 +9,7 @@ import { TeamBuilder } from "./pages/TeamBuilder";
 import Sessions from "./pages/Sessions";
 import Editor from "./pages/Editor";
 import EditorPokemon from "./pages/EditorPokemon";
+import ImportExport from "./pages/ImportExport";
 import { useSessionTheme } from "./lib/theme";
 import { useActiveSession } from "./lib/session";
 
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/sesiones" element={<Sessions />} />
         <Route path="/editor" element={<Editor />} />
         <Route path="/editor/pokemon" element={<EditorPokemon />} />
+        <Route path="/datos" element={<ImportExport />} />
       </Routes>
     </div>
   );
