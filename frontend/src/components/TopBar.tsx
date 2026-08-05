@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 import { useActiveProfile, profileInitial } from "../lib/profile";
 
@@ -147,6 +147,11 @@ export function TopBar() {
             P
           </span>
           <span className="font-display font-bold tracking-tight text-lg text-ink">{t("app.name")}</span>
+        </Link>
+
+        <Link to="/favoritos" title={t("favorites.title")} aria-label={t("favorites.title")}
+              className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
+          <Star size={20} aria-hidden="true" />
         </Link>
 
         <Link to="/sesiones" title={t("sessions.nav")} aria-label={t("sessions.nav")}

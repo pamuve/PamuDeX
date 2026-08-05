@@ -285,5 +285,19 @@
   "pin.invalid": "El PIN tiene que ser de 4 dígitos.",
   "pin.tooMany": "Demasiados intentos fallidos.",
   "pin.lockedFor": "Espera {{s}} s antes de volver a intentarlo.",
-  "pin.error": "No se ha podido comprobar el PIN."
+  "pin.error": "No se ha podido comprobar el PIN.",
+
+  "favorites.title": "Favoritos",
+  "favorites.subtitle": "Lo que ha marcado {{name}}.",
+  "favorites.add": "Añadir a favoritos",
+  "favorites.remove": "Quitar de favoritos",
+  "favorites.pokemon": "Pokémon",
+  "favorites.moves": "Movimientos",
+  "favorites.abilities": "Habilidades",
+  "favorites.types": "Tipos",
+  "favorites.loading": "Cargando favoritos…",
+  "favorites.empty": "Todavía no has marcado nada.",
+  "favorites.emptyHint": "Pulsa la estrella en la ficha de un Pokémon, movimiento, habilidad o tipo para tenerlo a mano aquí.",
+  "favorites.needProfile": "Elige un perfil para ver sus favoritos.",
+  "favorites.toggleError": "No se ha podido guardar el favorito."
 }

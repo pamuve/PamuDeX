@@ -208,6 +208,46 @@ export const profilesApi = {
     ),
 };
 
+/**
+ * Favoritos por perfil (Tarea 5.3). Como los perfiles, van con `session: false`:
+ * un favorito no depende de la sesión de ROM Hack activa. El perfil viaja como
+ * `?profile=<id>`, igual que las sesiones usan `?session=`.
+ *
+ * La API devuelve REFERENCIAS, no nombres: los resuelve el frontend con los
+ * listados que ya tiene cacheados, y así los favoritos respetan los overrides
+ * de la sesión activa sin lógica adicional.
+ */
+export interface FavoriteItem {
+  id: number;
+  entity_type: string;
+  entity_ref: string;
+  created_at: string;
+}
+
+export const favoritesApi = {
+  list: (profileId: number) =>
+    request<{ profile_id: number; items: FavoriteItem[]; byType: Record<string, string[]> }>(
+      "GET",
+      `/favorites?profile=${profileId}`,
+      undefined,
+      false
+    ),
+  add: (profileId: number, entityType: string, entityRef: string | number) =>
+    request<{ ok: boolean; favorite: boolean; creado: boolean }>(
+      "POST",
+      `/favorites?profile=${profileId}`,
+      { entity_type: entityType, entity_ref: entityRef },
+      false
+    ),
+  remove: (profileId: number, entityType: string, entityRef: string | number) =>
+    request<{ ok: boolean; favorite: boolean; borrado: boolean }>(
+      "DELETE",
+      `/favorites?profile=${profileId}`,
+      { entity_type: entityType, entity_ref: entityRef },
+      false
+    ),
+};
+
 export const chartApi = {
   get: (session?: SessionParam) =>
     request<TypeChartResponse>("GET", "/chart", undefined, session),

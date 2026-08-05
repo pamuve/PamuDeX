@@ -22,12 +22,37 @@ function hasColumn(db, table, column) {
   return rows.some((row) => row.name === column);
 }
 
+/** ¿Existe esa tabla? */
+function hasTable(db, table) {
+  const row = db
+    .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`)
+    .get(table);
+  return Boolean(row);
+}
+
 const MIGRATIONS = [
   {
     // Tarea 5.2 — PIN opcional por perfil.
     name: "profiles.pin_hash",
     needed: (db) => !hasColumn(db, "profiles", "pin_hash"),
     run: (db) => db.exec(`ALTER TABLE profiles ADD COLUMN pin_hash TEXT`),
+  },
+  {
+    // Tarea 5.3 — favoritos por perfil. La tabla no existía en el esquema.
+    name: "tabla favorites",
+    needed: (db) => !hasTable(db, "favorites"),
+    run: (db) =>
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS favorites (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
+          entity_type TEXT NOT NULL,
+          entity_ref TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_unico
+          ON favorites (profile_id, entity_type, entity_ref);
+      `),
   },
 ];
 

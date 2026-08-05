@@ -72,6 +72,37 @@ La ruta del archivo SQLite sale de `db/paths.js` (`PAMUDEX_DB_DIR`): en local
 que el volumen no puede montarse ahí — Docker solo copia a un volumen vacío y el
 código quedaría congelado en la versión del primer despliegue.
 
+### Favoritos (Tarea 5.3)
+
+`GET/POST/DELETE /api/favorites?profile=<id>` sobre la tabla `favorites`
+(creada en `schema.sql` y en `db/migrate.js`), con índice **único** en
+`(profile_id, entity_type, entity_ref)`. `entity_type` ∈
+`pokemon | move | ability | type`; `entity_ref` es TEXT porque los tipos usan
+ids de texto y el resto enteros.
+
+POST y DELETE son **idempotentes** (`INSERT OR IGNORE` contra el índice único),
+así que el botón optimista no puede duplicar filas ni fallar por repetición.
+
+La API devuelve **referencias, no nombres**: los resuelve el frontend con los
+listados que ya tiene cacheados, y así los favoritos respetan los overrides de
+la sesión de ROM Hack activa sin lógica extra.
+
+El estado vive en `lib/favorites.ts` (caché de módulo + eventos de `window`,
+igual que `lib/session.ts`), no en un context.
+
+### El Service Worker NO puede cachear datos mutables como el dataset
+
+`vite.config.ts` tiene dos reglas de `runtimeCaching`, **y el orden importa**:
+
+- `/api/(favorites|profiles|sessions)` → **NetworkFirst**. Son datos que el
+  usuario modifica desde la app. Con StaleWhileRevalidate se veían con una
+  navegación de retraso (marcabas un favorito y no aparecía en `/favoritos`
+  hasta la siguiente carga).
+- El resto de `/api/` → StaleWhileRevalidate. El dataset solo cambia al
+  reconstruir la imagen, así que interesa responder al instante desde la caché.
+
+Si añades endpoints que el usuario pueda modificar, mételos en la primera regla.
+
 El perfil activo se guarda **entero** (no solo su id) en `localStorage` bajo
 `pamudex_active_profile`, porque la TopBar lo pinta en el primer render y la app
 es offline-first. Toda la app pasa por `lib/profile.ts` (`getActiveProfile()`,

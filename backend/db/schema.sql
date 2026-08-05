@@ -117,6 +117,21 @@ CREATE TABLE IF NOT EXISTS settings (
   PRIMARY KEY (profile_id, key)
 );
 
+-- Favoritos por perfil (Tarea 5.3).
+-- entity_ref es TEXT porque los ids no son homogéneos: los tipos usan cadenas
+-- ('fuego') y el resto enteros. El índice único es lo que hace que pulsar dos
+-- veces la estrella no pueda dejar filas duplicadas.
+CREATE TABLE IF NOT EXISTS favorites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
+  entity_type TEXT NOT NULL,     -- 'pokemon' | 'move' | 'ability' | 'type'
+  entity_ref TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_unico
+  ON favorites (profile_id, entity_type, entity_ref);
+
 CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE,

@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { TypeDetail as TypeDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
+import { FavoriteButton } from "../components/FavoriteButton";
 import { useI18n } from "../i18n";
 
 export function TypeDetail() {
@@ -22,8 +23,9 @@ export function TypeDetail() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex justify-center">
+      <div className="flex justify-center items-center gap-1">
         <TypeBadge type={type} size="lg" />
+        <FavoriteButton type="type" entityRef={type.id} />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-6">

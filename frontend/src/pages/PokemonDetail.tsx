@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { PokemonDetail as PokemonDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
+import { FavoriteButton } from "../components/FavoriteButton";
 import { useI18n } from "../i18n";
 
 const STAT_LABEL: Record<string, string> = { hp: "PS", atk: "Ataque", def: "Defensa", spa: "At. Esp.", spd: "Def. Esp.", spe: "Velocidad" };
@@ -34,7 +35,10 @@ export function PokemonDetail() {
         </div>
         <div className="flex-1 text-center sm:text-left space-y-2">
           <div className="text-ink-soft font-mono text-sm">#{String(poke.dex).padStart(3, "0")} · {t("pokemon.generation")} {poke.generation}</div>
-          <h1 className="font-display text-2xl font-bold text-ink">{poke.name_es}</h1>
+          <div className="flex items-center gap-1 justify-center sm:justify-start">
+            <h1 className="font-display text-2xl font-bold text-ink">{poke.name_es}</h1>
+            <FavoriteButton type="pokemon" entityRef={poke.id} />
+          </div>
           <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
             {poke.types.map((tp) => (
               <TypeBadge key={tp.id} type={tp} />

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { TopBar } from "./components/TopBar";
 import { Home } from "./pages/Home";
 import ProfileSelect from "./pages/ProfileSelect";
+import Favorites from "./pages/Favorites";
 import { useActiveProfile } from "./lib/profile";
 import { PokemonDetail } from "./pages/PokemonDetail";
 import { TypeDetail } from "./pages/TypeDetail";
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/tipo/:id" element={<TypeDetail />} />
         <Route path="/movimiento/:id" element={<MoveDetail />} />
         <Route path="/habilidad/:id" element={<AbilityDetail />} />
+        <Route path="/favoritos" element={<Favorites />} />
         <Route path="/equipo" element={<TeamBuilder />} />
         <Route path="/sesiones" element={<Sessions />} />
         <Route path="/editor" element={<Editor />} />

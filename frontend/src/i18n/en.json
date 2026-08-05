@@ -285,5 +285,19 @@
   "pin.invalid": "The PIN must be 4 digits.",
   "pin.tooMany": "Too many failed attempts.",
   "pin.lockedFor": "Wait {{s}} s before trying again.",
-  "pin.error": "Could not check the PIN."
+  "pin.error": "Could not check the PIN.",
+
+  "favorites.title": "Favourites",
+  "favorites.subtitle": "What {{name}} has starred.",
+  "favorites.add": "Add to favourites",
+  "favorites.remove": "Remove from favourites",
+  "favorites.pokemon": "Pokémon",
+  "favorites.moves": "Moves",
+  "favorites.abilities": "Abilities",
+  "favorites.types": "Types",
+  "favorites.loading": "Loading favourites…",
+  "favorites.empty": "You haven't starred anything yet.",
+  "favorites.emptyHint": "Tap the star on a Pokémon, move, ability or type to keep it handy here.",
+  "favorites.needProfile": "Choose a profile to see its favourites.",
+  "favorites.toggleError": "Could not save the favourite."
 }
