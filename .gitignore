@@ -3,6 +3,12 @@ dist/
 dist-ssr/
 *.local
 
+# El gestor de paquetes del proyecto es pnpm: los pnpm-lock.yaml SÍ se versionan.
+# Estos son de npm/yarn y no deben volver a aparecer.
+package-lock.json
+yarn.lock
+.pnpm-store/
+
 # Base de datos generada (se siembra automáticamente al arrancar)
 backend/db/*.sqlite
 backend/db/*.sqlite-journal

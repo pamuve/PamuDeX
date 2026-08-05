@@ -94,6 +94,11 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+-- El PIN de perfil vive AQUÍ, no en users.password_hash. Son dos cosas
+-- distintas: `users` es la credencial de cuenta (login real, si algún día se
+-- expone la app) y `pin_hash` es el bloqueo blando entre convivientes, como el
+-- PIN de perfil de Netflix. Reusar users.password_hash obligaría a inventar una
+-- fila de users falsa por perfil y rompería el 1:N cuenta -> perfiles.
 CREATE TABLE IF NOT EXISTS profiles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -101,7 +106,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar TEXT,
   color TEXT,
   language TEXT DEFAULT 'es',
-  theme TEXT DEFAULT 'oled'
+  theme TEXT DEFAULT 'oled',
+  pin_hash TEXT                 -- NULL = perfil sin PIN, entra de un toque
 );
 
 CREATE TABLE IF NOT EXISTS settings (

@@ -11,7 +11,7 @@ El objetivo es ofrecer una herramienta rápida, instalable y que funcione **100%
 *   🔍 **Buscador Inmediato:** Autocompletado rápido para Pokémon, Tipos, Movimientos y Habilidades.
 *   ⚔️ **Simulador Táctico:** Comparador avanzado de equipos que analiza la "Mejor Respuesta" basándose en coberturas, resistencias, inmunidades y movimientos esperados del rival.
 *   🛠️ **Sesiones Personalizadas (ROM Hacks):** Base de datos adaptable para crear entornos de juego donde puedes modificar tipos, estadísticas o habilidades a través de un editor visual.
-*   👥 **Sistema Multi-Perfil:** Soporte para múltiples usuarios locales con configuraciones, favoritos, historial y temas independientes.
+*   👥 **Sistema Multi-Perfil:** Soporte para múltiples usuarios locales con configuraciones, favoritos, historial y temas independientes, con PIN opcional por perfil (ver [Alcance de seguridad](#-alcance-de-seguridad)).
 *   🐳 **Autoalojable:** Despliegue en un solo contenedor Docker con persistencia de datos mediante volúmenes, compatible con Docker Compose.
 
 ## 🏗️ Arquitectura y Tecnologías
@@ -102,22 +102,45 @@ cd PamuDeX
 # 2. Levantar los contenedores
 docker-compose up -d
 ```
-*La aplicación estará disponible en `http://localhost:3000`.*
+*La aplicación estará disponible en `http://localhost:4000`.*
+
+Los datos persisten en el volumen `pamudex_db`, montado en **`/data`**. La base
+de datos se siembra sola en el primer arranque y las migraciones de esquema se
+aplican en cada arranque, así que actualizar la imagen no pierde nada.
+
+> **Si desplegaste PamuDeX antes de la Fase 5.2**, tu volumen estaba montado en
+> `/app/backend/db`, que además de la base de datos contenía el código del
+> esquema. Docker no refresca un volumen que ya tiene contenido, así que ese
+> código quedó congelado en la versión del primer despliegue y el contenedor
+> ya no arrancaría. Para mover tus datos al nuevo volumen:
+>
+> ```bash
+> docker-compose down
+> docker run --rm -v pamudex_pamudex_db:/viejo -v pamudex_datos:/nuevo alpine \
+>   cp /viejo/pamudex.sqlite /nuevo/pamudex.sqlite
+> ```
+>
+> Ajusta los nombres a los que devuelva `docker volume ls` y apunta el volumen
+> `pamudex_db` de `docker-compose.yml` al nuevo. Se conservan perfiles, sesiones
+> y personalizaciones.
 
 ### Desarrollo Local
 
 Si deseas modificar el código fuente:
 
-```bash
-# Frontend
-cd frontend
-npm install
-npm run dev
+> El gestor de paquetes del proyecto es **pnpm** (`npm install -g pnpm`, o
+> `corepack enable`). No uses `npm install`: el repo versiona `pnpm-lock.yaml`.
 
-# Backend
+```bash
+# Frontend (puerto 5173)
+cd frontend
+pnpm install
+pnpm run dev
+
+# Backend (puerto 4000)
 cd backend
-npm install
-npm run dev
+pnpm install
+pnpm start
 ```
 
 ## 🎨 Guía de Diseño (UI/UX)
@@ -142,15 +165,41 @@ PamuDeX es una aplicación creada por fans y con fines estrictamente educativos 
 © 1995–2026 Nintendo/Creatures Inc./GAME FREAK inc. Pokémon, los nombres de los personajes, sprites y recursos visuales son marcas registradas de Nintendo. 
 Este proyecto **NO** tiene afiliación, patrocinio ni está respaldado por Nintendo, Creatures Inc. o GAME FREAK. Todos los recursos visuales oficiales se utilizan bajo el principio de *Uso Justo (Fair Use)* y el proyecto no tiene fines comerciales.
 
+## 🔒 Alcance de seguridad
+
+El **PIN de perfil** es un bloqueo *entre convivientes*, al estilo del PIN de
+perfil de Netflix. **No es autenticación** y PamuDeX no está pensada para
+exponerse a internet.
+
+Qué hace y qué no:
+
+- El PIN **nunca se guarda ni viaja en claro**: se almacena como hash `scrypt`
+  con sal aleatoria por perfil (`profiles.pin_hash`), y el hash no sale nunca de
+  la API.
+- El servidor **limita los intentos** con pausa creciente a partir del quinto
+  fallo, que es la defensa real contra probar PINs a lo bruto.
+- Pero **son 4 dígitos: 10.000 combinaciones**. Quien tenga acceso al archivo
+  `pamudex.sqlite` puede agotarlas sin dificultad. El hash impide leer el PIN de
+  un vistazo abriendo la base de datos; no protege frente a un atacante decidido.
+- **No hay recuperación de PIN.** Si se olvida, la única salida es borrar el
+  perfil, y eso se lleva sus sesiones de ROM Hack por delante.
+
+Si algún día quieres exponer la app fuera de tu red, hace falta autenticación de
+verdad a nivel de cuenta (`users.password_hash`, hoy sin usar), HTTPS y sesiones
+con token. Nada de eso está implementado.
+
 ## ⚙️ Estado del proyecto
 
-> Estado actual: **Fases 1, 2 y 3 completas y verificadas.**
+> Estado actual: **Fases 1 a 4 completas y verificadas.**
 >
 > - **Fase 1** — núcleo de datos + consulta + PWA offline + Docker.
 > - **Fase 2** — comparador de equipos táctico en `/equipo` (motor de daño, «mejor respuesta», mapa de cobertura).
 > - **Fase 3** — sesiones de ROM Hack en `/sesiones` y editor visual en `/editor`, con overrides por sesión y tema propio.
+> - **Fase 4** — importación y exportación en JSON, CSV y SQLite desde `/datos`, con previsualización antes de aplicar.
 >
-> Siguiente: **Fase 4 — Importación / Exportación**. Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> En curso: **Fase 5 — Usuarios y perfiles**. Hechas la 5.1 (pantalla de
+> perfiles en `/perfiles`) y la 5.2 (PIN opcional por perfil).
+> Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap
 

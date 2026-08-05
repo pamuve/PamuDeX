@@ -1,0 +1,11 @@
+# Configuración de pnpm para el frontend.
+#
+# pnpm bloquea por defecto los scripts de instalación de las dependencias: es la
+# defensa contra un paquete que intente ejecutar código al instalarse. Aquí se
+# aprueban, una a una, las únicas que legítimamente los necesitan; cualquier otra
+# queda bloqueada aunque entre como dependencia transitiva.
+#
+# esbuild trae un binario nativo por plataforma y su script de instalación es el
+# que lo coloca en su sitio. Sin esta aprobación Vite no arranca ni compila.
+allowBuilds:
+  esbuild: true

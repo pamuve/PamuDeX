@@ -23,29 +23,50 @@ intenta compilar desde fuente y falla en macOS 13 por cabeceras C++20 ausentes
 (`fatal error: 'source_location' file not found`). El frontend sí funciona con
 cualquier versión reciente.
 
+## pnpm, nunca npm
+
+El gestor de paquetes es **pnpm** (fijado en `packageManager` de cada
+`package.json`). No ejecutes `npm install` ni `npx` en este repo: regeneran un
+`package-lock.json` que está en `.gitignore` y dejan el árbol de dependencias
+descuadrado respecto a `pnpm-lock.yaml`. El equivalente de `npx` es `pnpm exec`
+(o `pnpm dlx` para un paquete que no está instalado).
+
+`backend/` y `frontend/` son **dos proyectos pnpm independientes**, cada uno con
+su `pnpm-lock.yaml`. No es un workspace: el Dockerfile los instala en etapas
+separadas y unificarlos obligaría a rehacer el build.
+
+**pnpm bloquea los scripts de instalación por defecto.** Las excepciones se
+declaran en `pnpm-workspace.yaml` bajo `allowBuilds`, y hoy son exactamente dos:
+`better-sqlite3` (backend, binario nativo) y `esbuild` (frontend, binario por
+plataforma). Ese archivo hay que copiarlo al contenedor: sin él la instalación
+en Docker sale a medias sin fallar de forma visible. Si al añadir una
+dependencia aparece `ERR_PNPM_IGNORED_BUILDS`, decide caso por caso — no lo
+apruebes en automático, es la defensa contra un paquete que ejecute código al
+instalarse.
+
 ## Comandos
 
 ```bash
 # Backend (puerto 4000). La DB se siembra sola al arrancar si no existe.
-cd backend && npm install && npm start
-cd backend && npm run seed          # recrear la DB desde backend/data/*.json
+cd backend && pnpm install && pnpm start
+cd backend && pnpm run seed          # recrear la DB desde backend/data/*.json
 
 # Regenerar el dataset desde PokeAPI (no se ejecuta en el arranque ni en el
 # build: los JSON van versionados para que la PWA siga siendo offline-first).
 cd backend && node tools/fetch-dataset.js
 
 # Frontend (puerto 5173, proxy de /api a localhost:4000)
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm run dev
 ```
 
-`backend` no tiene script `dev` — es `npm start`.
+`backend` no tiene script `dev` — es `pnpm start`.
 
 ## Verificación antes de dar nada por cerrado
 
 Siempre, sin excepciones:
 
 ```bash
-cd frontend && npx tsc --noEmit && npm run build
+cd frontend && pnpm exec tsc --noEmit && pnpm run build
 cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js
 ```
 
@@ -77,6 +98,23 @@ frontend/src/
 
 - **Cada ruta del backend es un módulo que exporta `(db) => router`** y se monta en `server.js`.
 - **Componentes** reutilizables en `src/components/`; **páginas** con ruta propia en `src/pages/` + registrar la ruta en `src/App.tsx`.
+
+### El volumen de Docker va en `/data`, nunca en `backend/db/`
+
+`backend/db/` es **código** (`schema.sql`, `seed.js`, `populate.js`,
+`migrate.js`, `paths.js`). La base de datos vive donde diga `PAMUDEX_DB_DIR`:
+sin la variable, `backend/db/pamudex.sqlite` como siempre en local; en Docker,
+`/data`.
+
+Montar el volumen sobre `backend/db/` rompe las actualizaciones de forma
+silenciosa: Docker copia el contenido de la imagen a un volumen **solo si está
+vacío**, así que el volumen se queda con una copia congelada del código y a
+partir de ahí la imagen nueva ya no llega. Un archivo nuevo (como `migrate.js`)
+tumba el contenedor al arrancar. Estuvo así desde la Fase 1 y se corrigió en la 5.2.
+
+Las columnas nuevas se añaden en `db/migrate.js`, que corre en cada arranque y
+es **idempotente y solo aditivo**: `schema.sql` únicamente se ejecuta al sembrar
+desde cero, y un despliegue en marcha no puede perder sus sesiones.
 
 ### Sesiones y overrides (Fase 3) — leer antes de tocar datos
 
@@ -155,7 +193,7 @@ Al cerrar una fase, actualiza `docs/ROADMAP.md`, `docs/tasks/README.md`,
 Ese último es el que se pega en cada encargo futuro: si se queda obsoleto, la
 siguiente tarea parte de información falsa.
 
-Estado: Fases 1-3 completas. Siguiente: **Fase 4 — Importación / Exportación**.
+Estado: Fases 1-4 completas. Siguiente: **Fase 5 — Usuarios y perfiles**.
 
 ## Cómo trabaja el usuario
 

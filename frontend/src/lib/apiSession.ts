@@ -9,6 +9,7 @@
  */
 
 import { getActiveSessionId } from "./session";
+import type { Profile } from "./profile";
 
 /** false = forzar datos globales, ignorando la sesión activa. */
 export type SessionParam = number | null | false;
@@ -87,6 +88,24 @@ export function withSession(path: string, session?: SessionParam): string {
   return path + (path.includes("?") ? "&" : "?") + `session=${id}`;
 }
 
+/**
+ * Error de la API. `message` sigue siendo el código de error, como siempre, así
+ * que el código que ya existía no cambia. `payload` añade el cuerpo completo
+ * para los casos que necesitan más datos (por ejemplo `retry_after` cuando el
+ * límite de intentos del PIN bloquea).
+ */
+export class ApiError extends Error {
+  payload: Record<string, unknown>;
+  status: number;
+
+  constructor(code: string, status: number, payload: Record<string, unknown>) {
+    super(code);
+    this.name = "ApiError";
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -102,13 +121,14 @@ async function request<T>(
 
   if (!res.ok) {
     let code = `http_${res.status}`;
+    let payload: Record<string, unknown> = {};
     try {
-      const payload = await res.json();
+      payload = await res.json();
       if (payload && payload.error) code = String(payload.error);
     } catch {
       /* sin cuerpo JSON */
     }
-    throw new Error(code);
+    throw new ApiError(code, res.status, payload);
   }
   return (await res.json()) as T;
 }
@@ -130,6 +150,62 @@ export const sessionsApi = {
     request<Session>("POST", `/sessions/${id}/duplicate`, undefined, false),
   remove: (id: number) =>
     request<{ ok: boolean; id: number }>("DELETE", `/sessions/${id}`, undefined, false),
+};
+
+/**
+ * Perfiles (Fase 5). Van con `session: false` a propósito: un perfil no
+ * depende de la sesión de ROM Hack activa. Añadir `?session=` generaría una URL
+ * distinta por sesión, que el Service Worker cachearía por separado sin ninguna
+ * ganancia. El middleware `sessionOverrides` tampoco toca `/profiles` — su
+ * regex solo cubre types/pokemon/moves/abilities y /search.
+ */
+export const profilesApi = {
+  list: () => request<Profile[]>("GET", "/profiles", undefined, false),
+  get: (id: number) => request<Profile>("GET", `/profiles/${id}`, undefined, false),
+  palette: () =>
+    request<{ palette: string[]; suggested: string }>(
+      "GET",
+      "/profiles/palette",
+      undefined,
+      false
+    ),
+  create: (data: { name: string; avatar?: string | null; color?: string }) =>
+    request<Profile>("POST", "/profiles", data, false),
+  update: (
+    id: number,
+    patch: { name?: string; avatar?: string | null; color?: string; language?: string; theme?: string }
+  ) => request<Profile>("PUT", `/profiles/${id}`, patch, false),
+  remove: (id: number) =>
+    request<{ ok: boolean; id: number; sessions_borradas: number }>(
+      "DELETE",
+      `/profiles/${id}`,
+      undefined,
+      false
+    ),
+
+  /* --- PIN de perfil (Tarea 5.2) --------------------------------------- */
+
+  /** Comprueba el PIN para entrar. Lanza "pin_incorrecto" o "demasiados_intentos". */
+  verifyPin: (id: number, pin: string) =>
+    request<{ ok: boolean; profile: Profile }>("POST", `/profiles/${id}/verify`, { pin }, false),
+
+  /** Establece o cambia el PIN. `current` es obligatorio si ya había uno. */
+  setPin: (id: number, pin: string, current?: string) =>
+    request<{ ok: boolean; profile: Profile }>(
+      "POST",
+      `/profiles/${id}/password`,
+      current === undefined ? { pin } : { pin, current },
+      false
+    ),
+
+  /** Quita el PIN. Exige conocer el actual. */
+  removePin: (id: number, current: string) =>
+    request<{ ok: boolean; profile: Profile }>(
+      "DELETE",
+      `/profiles/${id}/password`,
+      { current },
+      false
+    ),
 };
 
 export const chartApi = {

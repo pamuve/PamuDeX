@@ -7,7 +7,14 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - pamudex_db:/app/backend/db
+      # El volumen va en /data, que contiene SOLO la base de datos.
+      #
+      # No lo cambies a /app/backend/db: ahí vive el código (schema.sql, seed.js,
+      # populate.js, migrate.js). Docker únicamente copia el contenido de la
+      # imagen a un volumen VACÍO, así que el volumen acabaría con una copia
+      # congelada de ese código y las actualizaciones de la imagen no llegarían
+      # jamás — un archivo nuevo tumbaría el contenedor al arrancar.
+      - pamudex_db:/data
 
 volumes:
   pamudex_db:

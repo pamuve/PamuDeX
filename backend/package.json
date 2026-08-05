@@ -4,6 +4,10 @@
   "private": true,
   "description": "API REST de PamuDeX (tipos, Pokémon, movimientos, habilidades)",
   "main": "server.js",
+  "packageManager": "pnpm@11.5.0",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node server.js",
     "seed": "node db/seed.js"

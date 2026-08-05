@@ -3,6 +3,7 @@
 // se encarga de que estas respuestas queden disponibles sin conexión tras la primera sincronización.
 
 import { getActiveSessionId } from "./session";
+import { profilesApi } from "./apiSession";
 
 /**
  * Añade `?session=<id>` cuando hay una sesión activa (Fase 3).
@@ -45,4 +46,12 @@ export const api = {
     detail: (id: string | number) => get<import("../types").AbilityDetail>(`/abilities/${id}`),
   },
   search: (q: string) => get<import("../types").SearchResults>(`/search?q=${encodeURIComponent(q)}`),
+
+  /**
+   * Perfiles (Fase 5). La implementación vive en `apiSession.ts`, que es donde
+   * está el helper capaz de hacer POST/PUT/DELETE; el `get()` de este archivo
+   * solo sabe hacer GET y además añade `?session=`, que aquí no queremos.
+   * Se expone desde `api` para que las páginas tengan un único punto de entrada.
+   */
+  profiles: profilesApi,
 };
