@@ -197,8 +197,9 @@ con token. Nada de eso está implementado.
 > - **Fase 3** — sesiones de ROM Hack en `/sesiones` y editor visual en `/editor`, con overrides por sesión y tema propio.
 > - **Fase 4** — importación y exportación en JSON, CSV y SQLite desde `/datos`, con previsualización antes de aplicar.
 >
-> En curso: **Fase 5 — Usuarios y perfiles**. Hechas la 5.1 (pantalla de
-> perfiles en `/perfiles`) y la 5.2 (PIN opcional por perfil).
+> En curso: **Fase 5 — Usuarios y perfiles**. Hechas la 5.1 (pantalla de perfiles
+> en `/perfiles`), la 5.2 (PIN opcional por perfil) y la 5.3 (favoritos por
+> perfil en `/favoritos`). Siguiente: 5.4, historial y ajustes por perfil.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

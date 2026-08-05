@@ -83,16 +83,19 @@ comprobar tú.
 ```
 backend/
   data/        JSON semilla — la fuente de verdad del dataset
-  db/          schema.sql, seed.js
-  lib/         effectiveness.js, overrides.js, typechart.js
+  db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
+  lib/         effectiveness.js, overrides.js, typechart.js, dataset.js,
+               importValidator.js, pin.js, pinThrottle.js
   middleware/  sessionOverrides.js
-  routes/      types, pokemon, moves, abilities, search, sessions, chart
+  routes/      types, pokemon, moves, abilities, search, sessions, chart,
+               export, import, profiles, favorites
   tests/       overrides.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
   pages/       una por ruta, registrada en App.tsx
   hooks/       useSessionOverride.ts
-  lib/         api, apiSession, session, theme, team, damage, recommendation, coverage
+  lib/         api, apiSession, session, profile, favorites, theme, team,
+               damage, recommendation, coverage
   i18n/        es.json, en.json, index.tsx
 ```
 
@@ -193,7 +196,10 @@ Al cerrar una fase, actualiza `docs/ROADMAP.md`, `docs/tasks/README.md`,
 Ese último es el que se pega en cada encargo futuro: si se queda obsoleto, la
 siguiente tarea parte de información falsa.
 
-Estado: Fases 1-4 completas. Siguiente: **Fase 5 — Usuarios y perfiles**.
+Estado: Fases 1-4 completas. **Fase 5 en curso**: 5.1 (pantalla de perfiles),
+5.2 (PIN por perfil) y 5.3 (favoritos) hechas. Siguiente: **5.4 — historial y
+ajustes por perfil**; antes de empezarla, lee las tres decisiones pendientes al
+final de `docs/tasks/_CONTEXTO_BASE.md`.
 
 ## Cómo trabaja el usuario
 

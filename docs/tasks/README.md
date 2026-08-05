@@ -19,7 +19,7 @@ Con esos dos archivos, la IA no necesita saber nada más del proyecto.
 | 2 — Comparador de equipos | `fase2/` (5) | ✅ Implementada |
 | 3 — Sesiones + editor visual | `fase3/` (5) | ✅ Implementada |
 | 4 — Import / export | `fase4/` (4) | ✅ Implementada |
-| 5 — Usuarios y perfiles | `fase5/` (4) | 🔜 **siguiente** |
+| 5 — Usuarios y perfiles | `fase5/` (4) | 🔄 **en curso** — 5.1, 5.2 y 5.3 hechas; toca la **5.4** |
 | 6 — Pokémon Champions | `fase6/` (3) | 🔜 |
 | 7 — Multi-generación | `fase7/` (3) | 🔜 |
 | 8 — Accesibilidad y rendimiento | `fase8/` (4) | 🔜 |

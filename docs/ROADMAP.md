@@ -55,14 +55,20 @@ El editor escribe overrides en `sessions.data_json`; el middleware `backend/midd
 
 ---
 
-## 🔜 Fase 5 — Usuarios y perfiles (estilo Netflix)
+## 🔄 Fase 5 — Usuarios y perfiles (estilo Netflix) — en curso
 
-| # | Tarea | Tamaño |
-|---|-------|--------|
-| 5.1 | Pantalla de selección de perfiles (avatar, nombre, color) + creación/edición | Media |
-| 5.2 | Contraseña opcional por perfil (hash, verificación) | Pequeña |
-| 5.3 | Favoritos por perfil (marcar Pokémon/movimientos/habilidades) | Pequeña |
-| 5.4 | Historial de consultas por perfil + ajustes (idioma/tema) persistentes por perfil | Pequeña |
+| # | Tarea | Tamaño | Estado |
+|---|-------|--------|--------|
+| 5.1 | Pantalla de selección de perfiles (avatar, nombre, color) + creación/edición | Media | ✅ |
+| 5.2 | Contraseña opcional por perfil (hash, verificación) | Pequeña | ✅ |
+| 5.3 | Favoritos por perfil (marcar Pokémon/movimientos/habilidades) | Pequeña | ✅ |
+| 5.4 | Historial de consultas por perfil + ajustes (idioma/tema) persistentes por perfil | Pequeña | 🔜 **siguiente** |
+
+Pantalla de perfiles en `/perfiles`, PIN de 4 dígitos por perfil (`profiles.pin_hash`,
+scrypt) y favoritos en `/favoritos`. Antes de empezar la 5.4, lee las **tres
+decisiones pendientes** al final de `docs/tasks/_CONTEXTO_BASE.md`: idioma en
+`profiles.language` o en `settings`, precedencia del tema perfil/sesión, y
+deduplicación del historial.
 
 ---
 

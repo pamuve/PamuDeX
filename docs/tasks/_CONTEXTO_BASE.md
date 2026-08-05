@@ -19,31 +19,34 @@ backend/
   data/        types.json, type_chart.json, pokemon.json, moves.json, abilities.json
                (18 tipos, 1025 Pokémon, 901 movimientos, 312 habilidades)
   tools/       fetch-dataset.js  (regenera los JSON desde PokeAPI)
-  db/          schema.sql, seed.js, populate.js  (la DB se genera con `pnpm run seed`)
+  db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
+               (la DB se genera con `pnpm run seed`)
   lib/         effectiveness.js, overrides.js, typechart.js,
-               dataset.js, importValidator.js
+               dataset.js, importValidator.js, pin.js, pinThrottle.js
   middleware/  sessionOverrides.js
   routes/      types.js, pokemon.js, moves.js, abilities.js, search.js,
-               sessions.js, chart.js, export.js, import.js, profiles.js
+               sessions.js, chart.js, export.js, import.js,
+               profiles.js, favorites.js
   tests/       overrides.smoke.js
   server.js
 frontend/src/
   components/  TopBar, SearchBar, TypeBadge, EffectivenessPanel,
                TeamSlotCard, RivalSlotCard, RecommendationCard, CoverageMap,
-               SessionRequired, ImportPanel
+               SessionRequired, ImportPanel,
+               PinPad, PinDialog, FavoriteButton
   components/forms/  FormField, EntityPicker, PokemonForm, TypeForm, MoveForm,
                      AbilityForm, RelationsMatrix, ThemeForm
   pages/       Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail,
                TeamBuilder, Sessions, Editor, EditorPokemon, ImportExport,
-               ProfileSelect
+               ProfileSelect, Favorites
   hooks/       useSessionOverride.ts
-  lib/         api.ts, apiSession.ts, session.ts, profile.ts, theme.ts,
-               team.ts, damage.ts, recommendation.ts, coverage.ts
+  lib/         api.ts, apiSession.ts, session.ts, profile.ts, favorites.ts,
+               theme.ts, team.ts, damage.ts, recommendation.ts, coverage.ts
   i18n/        es.json, en.json, index.tsx
   types.ts, App.tsx, main.tsx, index.css, theme-vars.css
 ```
 
-Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`.
+Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/favoritos`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`.
 
 ### Perfiles y PIN (Tareas 5.1 y 5.2) — leer antes de tocar perfiles
 
@@ -128,6 +131,13 @@ así que se aplica en caliente. El DELETE devuelve `sessions_borradas`.
 
 En `/api/pokemon/:id`, `abilities` es un **array de objetos** `{ name_es, name_en, effect_es, is_hidden }` y `hidden_ability` es **ese mismo objeto o `null`** (no cadenas sueltas).
 
+### Perfiles y favoritos (Fase 5)
+
+- `GET|POST /api/profiles`, `GET|PUT|DELETE /api/profiles/:id`, `GET /api/profiles/palette`
+  → `{ id, user_id, name, avatar, color, language, theme, has_pin }` (**nunca `pin_hash`**)
+- `POST /api/profiles/:id/verify`, `POST /api/profiles/:id/password`, `DELETE /api/profiles/:id/password`
+- `GET|POST|DELETE /api/favorites?profile=<id>` → `{ profile_id, items[], byType }`
+
 ### Sesiones y overrides (Fase 3)
 
 - `GET|POST /api/sessions`, `GET|PUT|DELETE /api/sessions/:id`, `POST /api/sessions/:id/duplicate`
@@ -196,8 +206,50 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
 - ✅ **Fase 2**: comparador de equipos en `/equipo` (equipo propio y rival en `localStorage`, motor de daño, recomendación "mejor respuesta", mapa de cobertura).
 - ✅ **Fase 3**: sesiones de ROM Hack en `/sesiones` (CRUD en SQLite), overrides por sesión vía middleware, editor visual en `/editor` (Pokémon, tipos, movimientos, habilidades, matriz de relaciones) y tema de color por sesión.
 - ✅ **Fase 4**: exportación e importación en JSON, CSV y SQLite desde `/datos`, con previsualización antes de aplicar (`routes/export.js`, `routes/import.js`, `lib/importValidator.js`).
-- 🔜 Fases 5-9: ver `docs/ROADMAP.md`.
+- 🔄 **Fase 5, en curso**:
+  - ✅ **5.1** pantalla de perfiles en `/perfiles` + perfil activo en `localStorage`.
+  - ✅ **5.2** PIN opcional de 4 dígitos por perfil (`profiles.pin_hash`, scrypt).
+  - ✅ **5.3** favoritos por perfil en `/favoritos` (tabla `favorites`).
+  - 🔜 **5.4** historial y ajustes por perfil. **Es la siguiente.**
+- 🔜 Fases 6-9: ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 
-`items`, `users`, `profiles`, `settings`, `history`, `champions_rules`. Están en `backend/db/schema.sql` — reutilízalas antes de inventar tablas nuevas. (`sessions` ya está en uso desde la Fase 3.)
+`items` y `champions_rules`. Están en `backend/db/schema.sql` — reutilízalas antes
+de inventar tablas nuevas.
+
+Ya en uso: `sessions` (Fase 3), `profiles` (5.1 y 5.2), `favorites` (5.3).
+`users` existe pero **sigue vacía a propósito**: se reserva para un login real.
+`settings` e `history` son las que toca activar en la 5.4.
+
+## Antes de empezar la 5.4: tres decisiones que hay que tomar
+
+La tarea 5.4 se topa con solapamientos que el encargo original no previó. **No
+las resuelvas por inercia, decídelas y avisa antes de aplicarlas.**
+
+**1. ¿El idioma va en `profiles.language` o en `settings`?**
+Las dos existen. `profiles.language` se creó en la 5.1 y la API de perfiles ya
+lo acepta en POST y PUT, pero **nadie lo lee todavía**: el idioma real vive en
+`localStorage` bajo `pamudex_lang` (`i18n/index.tsx`). El encargo de la 5.4 pide
+migrarlo a `settings`. Duplicarlo en los dos sitios acabaría en incoherencias.
+Lo razonable es elegir uno: `profiles.language` ya está y evita una tabla de
+por medio; `settings` es más flexible para preferencias futuras. Elige y deja el
+otro explícitamente sin usar, documentándolo.
+
+**2. ¿El tema es del perfil o de la sesión?**
+`profiles.theme` existe desde la 5.1 (sin usar), pero `lib/theme.ts` de la Fase
+3 aplica el tema de la **sesión de ROM Hack activa** mediante variables CSS. Si
+la 5.4 añade tema por perfil, los dos compiten por las mismas `--color-*`. Hay
+que definir la precedencia (lo natural: la sesión pisa al perfil mientras esté
+activa) y dejarlo escrito.
+
+**3. La deduplicación del historial no la da la base de datos.**
+`history` **no tiene índice único** (a diferencia de `favorites`), y no debe
+tenerlo: el historial es una bitácora, la misma ficha puede aparecer muchas
+veces en momentos distintos. La regla de «no registrar dos veces la misma
+entidad en menos de 5 minutos» hay que implementarla en la ruta, comprobando el
+`viewed_at` de la última visita de esa entidad para ese perfil.
+
+Recordatorio que aplica a las tres: si añades endpoints que el usuario pueda
+modificar (`/api/history`, `/api/settings`), **mételos en la regla NetworkFirst
+de `vite.config.ts`** o se verán con una navegación de retraso.
