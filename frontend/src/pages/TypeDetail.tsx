@@ -5,6 +5,7 @@ import { TypeDetail as TypeDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
 export function TypeDetail() {
@@ -18,6 +19,8 @@ export function TypeDetail() {
     api.types.detail(id).then(setType);
     api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((t) => [t.id, t]))));
   }, [id]);
+
+  useRecordVisit("type", type ? type.id : undefined);
 
   if (!type) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 

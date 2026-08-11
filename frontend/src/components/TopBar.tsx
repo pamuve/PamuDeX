@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 import { useActiveProfile, profileInitial } from "../lib/profile";
 
@@ -81,6 +81,28 @@ function ProfileMenu() {
           <p className="px-3 py-1.5 text-[11px] text-ink-soft/70 border-b border-hover mb-1">
             {t("profiles.activeProfile", { name: profile.name })}
           </p>
+          {/* Historial y ajustes viven aquí y no en la barra: son del perfil,
+              y la barra ya va justa de sitio en móvil. */}
+          <button
+            onClick={() => {
+              setOpen(false);
+              navigate("/historial");
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
+          >
+            <History size={16} aria-hidden="true" />
+            {t("history.title")}
+          </button>
+          <button
+            onClick={() => {
+              setOpen(false);
+              navigate("/ajustes");
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
+          >
+            <Settings size={16} aria-hidden="true" />
+            {t("nav.settings")}
+          </button>
           <button
             onClick={() => {
               setOpen(false);
@@ -180,13 +202,14 @@ export function TopBar() {
 
         <ComingSoonMenu label={t("nav.mode")} items={["Modo estándar", "Pokémon Champions", "Sesión ROM Hack"]} />
 
-        <button
+        <Link
+          to="/ajustes"
           className="p-2 rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
           aria-label={t("nav.settings")}
           title={t("nav.settings")}
         >
-          <Settings size={20} />
-        </button>
+          <Settings size={20} aria-hidden="true" />
+        </Link>
 
         <ProfileMenu />
       </div>

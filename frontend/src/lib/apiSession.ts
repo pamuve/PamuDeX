@@ -248,6 +248,79 @@ export const favoritesApi = {
     ),
 };
 
+/**
+ * Historial de consultas por perfil (Tarea 5.4). Mismo criterio que favoritos:
+ * `session: false` y el perfil en `?profile=<id>`. Devuelve REFERENCIAS, no
+ * nombres — los resuelve la página con los listados ya cacheados, así que el
+ * historial también respeta los overrides de la sesión activa.
+ */
+export interface HistoryItem {
+  id: number;
+  entity_type: string;
+  /** Cadena siempre: los tipos usan ids de texto ('fuego') y el resto enteros. */
+  entity_ref: string;
+  /** UTC en formato 'YYYY-MM-DD HH:MM:SS' (lo que guarda SQLite). */
+  viewed_at: string;
+}
+
+export const historyApi = {
+  list: (profileId: number, limit?: number) =>
+    request<{ profile_id: number; limit: number; items: HistoryItem[] }>(
+      "GET",
+      `/history?profile=${profileId}${limit ? `&limit=${limit}` : ""}`,
+      undefined,
+      false
+    ),
+  /** `registrado: false` = la ruta lo descartó por duplicado reciente. */
+  add: (profileId: number, entityType: string, entityRef: string | number) =>
+    request<{ ok: boolean; registrado: boolean }>(
+      "POST",
+      `/history?profile=${profileId}`,
+      { entity_type: entityType, entity_ref: entityRef },
+      false
+    ),
+  clear: (profileId: number) =>
+    request<{ ok: boolean; borradas: number }>(
+      "DELETE",
+      `/history?profile=${profileId}`,
+      undefined,
+      false
+    ),
+};
+
+/**
+ * Ajustes por perfil (Tarea 5.4). Aquí NO están el idioma ni el tema: viven en
+ * `profiles.language` y `profiles.theme`, que viajan dentro del perfil cacheado
+ * y por tanto están disponibles en el primer render y sin conexión.
+ *
+ * El perfil va en la URL y no en la query porque esto es un único documento que
+ * pertenece al perfil, no una colección filtrada por él.
+ */
+export interface ProfileSettings {
+  /** Id de la sesión de ROM Hack de este perfil. "" = ninguna. */
+  active_session: string;
+  /** "1" | "0" — permite desactivar el registro de visitas. */
+  history_enabled: string;
+}
+
+export const settingsApi = {
+  get: (profileId: number) =>
+    request<{ profile_id: number; settings: ProfileSettings }>(
+      "GET",
+      `/settings/${profileId}`,
+      undefined,
+      false
+    ),
+  /** Fusiona: lo que no se envía conserva su valor. `null` borra la clave. */
+  update: (profileId: number, patch: Partial<Record<keyof ProfileSettings, string | number | boolean | null>>) =>
+    request<{ profile_id: number; settings: ProfileSettings }>(
+      "PUT",
+      `/settings/${profileId}`,
+      patch,
+      false
+    ),
+};
+
 export const chartApi = {
   get: (session?: SessionParam) =>
     request<TypeChartResponse>("GET", "/chart", undefined, session),

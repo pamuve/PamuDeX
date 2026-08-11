@@ -67,13 +67,15 @@ Siempre, sin excepciones:
 
 ```bash
 cd frontend && pnpm exec tsc --noEmit && pnpm run build
-cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js
+cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js && node tests/history.smoke.js
 ```
 
 Y comprobar la **paridad exacta de claves entre `es.json` y `en.json`**.
 
-`tests/overrides.smoke.js` no necesita servidor ni SQLite: simula `db`, `req` y
-`res`. Ejecútalo siempre que toques overrides, el middleware o la tabla de tipos.
+Ninguna de las dos pruebas necesita servidor ni SQLite: simulan `db`, `req` y
+`res`. `overrides.smoke.js` cubre overrides, middleware y tabla de tipos;
+`history.smoke.js` cubre el historial (la ventana de deduplicación de 5 minutos
+y la poda) y los ajustes por perfil. Ejecuta la que corresponda a lo que toques.
 
 Verificación interna, no le pidas al usuario que pruebe por ti lo que puedes
 comprobar tú.
@@ -88,14 +90,14 @@ backend/
                importValidator.js, pin.js, pinThrottle.js
   middleware/  sessionOverrides.js
   routes/      types, pokemon, moves, abilities, search, sessions, chart,
-               export, import, profiles, favorites
-  tests/       overrides.smoke.js
+               export, import, profiles, favorites, history, settings
+  tests/       overrides.smoke.js, history.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
   pages/       una por ruta, registrada en App.tsx
   hooks/       useSessionOverride.ts
-  lib/         api, apiSession, session, profile, favorites, theme, team,
-               damage, recommendation, coverage
+  lib/         api, apiSession, session, profile, favorites, history, settings,
+               theme, team, damage, recommendation, coverage
   i18n/        es.json, en.json, index.tsx
 ```
 
@@ -139,6 +141,24 @@ forma que devuelve la API.** Es el error que ya se cometió una vez: los
 formularios guardaban `abilities` como array de cadenas cuando
 `/api/pokemon/:id` las devuelve como array de objetos.
 
+### Perfiles: dónde va cada preferencia (Fase 5)
+
+- **Idioma y tema son columnas de `profiles`** (`language`, `theme`), no filas de
+  `settings`. El perfil activo se cachea entero en `localStorage`, así que
+  ambos se aplican en el primer render y sin conexión. No los dupliques.
+- **El tema de la sesión de ROM Hack pisa al del perfil** mientras esa sesión
+  esté activa; si la sesión no define tema, se cae al del perfil. Lo resuelve
+  `useAppTheme()` en `App.tsx`.
+- **`settings` es para lo que no merece columna**, con lista blanca de claves en
+  `routes/settings.js` (`active_session`, `history_enabled`). Añadir una
+  preferencia es añadirla ahí y en `ProfileSettings` de `apiSession.ts`.
+- **`history` no lleva índice único** (a diferencia de `favorites`): es una
+  bitácora. La regla de «no dos veces en 5 minutos» la aplica la ruta, y el
+  historial se poda a las 300 visitas más recientes por perfil.
+- La sesión de ROM Hack activa **se recuerda por perfil**
+  (`settings.active_session`); `localStorage` sigue siendo la fuente de verdad
+  inmediata porque `lib/api.ts` la lee de forma síncrona en cada petición.
+
 ## Convenciones obligatorias
 
 ### Paleta OLED, nunca negro puro
@@ -181,8 +201,10 @@ De 4" a escritorio, incluidas Steam Deck, ROG Ally y AYN Thor.
 
 ### Antes de inventar tablas
 
-`items`, `users`, `profiles`, `settings`, `history`, `champions_rules` ya existen
-en `backend/db/schema.sql` sin lógica todavía. Reutilízalas.
+`items` y `champions_rules` ya existen en `backend/db/schema.sql` sin lógica
+todavía. Reutilízalas. `users` existe y sigue vacía a propósito: se reserva para
+un login real, y el PIN de perfil no va ahí. **`items` está vacía de datos**: no
+hay `data/items.json` y `tools/fetch-dataset.js` no descarga objetos.
 
 ## Cómo se organiza el trabajo
 
@@ -196,10 +218,12 @@ Al cerrar una fase, actualiza `docs/ROADMAP.md`, `docs/tasks/README.md`,
 Ese último es el que se pega en cada encargo futuro: si se queda obsoleto, la
 siguiente tarea parte de información falsa.
 
-Estado: Fases 1-4 completas. **Fase 5 en curso**: 5.1 (pantalla de perfiles),
-5.2 (PIN por perfil) y 5.3 (favoritos) hechas. Siguiente: **5.4 — historial y
-ajustes por perfil**; antes de empezarla, lee las tres decisiones pendientes al
-final de `docs/tasks/_CONTEXTO_BASE.md`.
+Estado: **Fases 1-5 completas.** La 5 cerró con perfiles (`/perfiles`), PIN,
+favoritos (`/favoritos`), historial (`/historial`) y ajustes (`/ajustes`).
+
+Siguiente: **Fase 6 — Pokémon Champions**. Antes de encargar la 6.1, lee
+`docs/tasks/fase6/00-preparacion.md`: los tres encargos se redactaron antes de
+las fases 3-5 y hay cinco puntos que decidir primero.
 
 ## Cómo trabaja el usuario
 

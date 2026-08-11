@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { MoveDetail as MoveDetailT } from "../types";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
 export function MoveDetail() {
@@ -13,6 +14,8 @@ export function MoveDetail() {
   useEffect(() => {
     if (id) api.moves.detail(id).then(setMove);
   }, [id]);
+
+  useRecordVisit("move", move ? move.id : undefined);
 
   if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 

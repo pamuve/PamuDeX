@@ -30,6 +30,14 @@ function hasTable(db, table) {
   return Boolean(row);
 }
 
+/** ¿Existe ese índice? */
+function hasIndex(db, index) {
+  const row = db
+    .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?`)
+    .get(index);
+  return Boolean(row);
+}
+
 const MIGRATIONS = [
   {
     // Tarea 5.2 — PIN opcional por perfil.
@@ -52,6 +60,22 @@ const MIGRATIONS = [
         );
         CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_unico
           ON favorites (profile_id, entity_type, entity_ref);
+      `),
+  },
+  {
+    // Tarea 5.4 — historial por perfil. La tabla ya venía en schema.sql desde la
+    // Fase 1, pero sin usar y sin índice. Las dos consultas de routes/history.js
+    // filtran por perfil y ordenan por fecha.
+    //
+    // NO es un índice único a propósito: el historial es una bitácora, la misma
+    // ficha puede aparecer muchas veces. La deduplicación de 5 minutos la hace
+    // la ruta.
+    name: "índice de history",
+    needed: (db) => hasTable(db, "history") && !hasIndex(db, "idx_history_perfil"),
+    run: (db) =>
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_history_perfil
+          ON history (profile_id, viewed_at);
       `),
   },
 ];

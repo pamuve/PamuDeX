@@ -26,8 +26,8 @@ backend/
   middleware/  sessionOverrides.js
   routes/      types.js, pokemon.js, moves.js, abilities.js, search.js,
                sessions.js, chart.js, export.js, import.js,
-               profiles.js, favorites.js
-  tests/       overrides.smoke.js
+               profiles.js, favorites.js, history.js, settings.js
+  tests/       overrides.smoke.js, history.smoke.js
   server.js
 frontend/src/
   components/  TopBar, SearchBar, TypeBadge, EffectivenessPanel,
@@ -38,15 +38,16 @@ frontend/src/
                      AbilityForm, RelationsMatrix, ThemeForm
   pages/       Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail,
                TeamBuilder, Sessions, Editor, EditorPokemon, ImportExport,
-               ProfileSelect, Favorites
+               ProfileSelect, Favorites, History, Settings
   hooks/       useSessionOverride.ts
   lib/         api.ts, apiSession.ts, session.ts, profile.ts, favorites.ts,
-               theme.ts, team.ts, damage.ts, recommendation.ts, coverage.ts
+               history.ts, settings.ts, theme.ts, team.ts, damage.ts,
+               recommendation.ts, coverage.ts
   i18n/        es.json, en.json, index.tsx
   types.ts, App.tsx, main.tsx, index.css, theme-vars.css
 ```
 
-Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/favoritos`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`.
+Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/favoritos`, `/historial`, `/ajustes`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`.
 
 ### Perfiles y PIN (Tareas 5.1 y 5.2) — leer antes de tocar perfiles
 
@@ -93,12 +94,55 @@ la sesión de ROM Hack activa sin lógica extra.
 El estado vive en `lib/favorites.ts` (caché de módulo + eventos de `window`,
 igual que `lib/session.ts`), no en un context.
 
+### Historial y ajustes (Tarea 5.4) — dónde va cada preferencia
+
+Las tres decisiones que quedaban abiertas antes de la 5.4 están **tomadas**:
+
+**1. El idioma va en `profiles.language`, NO en `settings`.** El perfil activo se
+cachea entero en `localStorage`, así que su idioma está disponible en el primer
+render y sin conexión; con `settings` haría falta una petición antes de saber en
+qué idioma pintar. `localStorage.pamudex_lang` se conserva como respaldo (antes
+de elegir perfil). Lo aplica `i18n/index.tsx`, que además reacciona al cambio de
+perfil. **No dupliques el idioma en `settings`.**
+
+**2. El tema: la sesión pisa al perfil.** `profiles.theme` es el nombre de una
+paleta del catálogo cerrado `PROFILE_THEMES` de `lib/theme.ts` (`oled`, `abismo`,
+`bosque`, `brasa`, `ciruela`; ninguna con negro puro). El tema libre por sesión
+de la Fase 3.5 manda mientras esa sesión esté activa, porque un ROM Hack tiene
+identidad visual propia; si la sesión no define tema, se cae al del perfil.
+`useAppTheme()` (antes `useSessionTheme()`) resuelve la precedencia y se llama
+una sola vez, en `App.tsx`.
+
+**3. La deduplicación del historial la hace la ruta.** `history` no tiene índice
+único, y no debe tenerlo: es una bitácora, la misma ficha aparece muchas veces.
+`routes/history.js` descarta la visita si esa entidad ya se registró para ese
+perfil hace menos de **5 minutos**, mirando el `viewed_at` de la última. El
+frontend repite la ventana en memoria solo para no mandar peticiones inútiles.
+El historial además tiene techo: se conservan las **300** visitas más recientes
+por perfil (lo escribe la app sola, sin poda crecería sin fin).
+
+`settings` queda para lo que no merece columna, con **lista blanca** de claves en
+`backend/routes/settings.js` (hoy `active_session` e `history_enabled`). Añadir
+una preferencia = añadirla a `ALLOWED_KEYS` y a `ProfileSettings`.
+
+**La sesión de ROM Hack pasó a ser de cada perfil.** `localStorage` sigue siendo
+la fuente de verdad inmediata (`lib/api.ts` la lee de forma síncrona en cada
+petición) y `settings.active_session` es la copia que se restaura al cambiar de
+perfil. Lo gestiona `lib/settings.ts` colgándose del evento de cambio de sesión,
+así que funciona desde cualquier sitio que la cambie. Un perfil sin preferencia
+guardada **adopta** la sesión que hubiera al arrancar la app (para no perder el
+ROM Hack abierto al actualizar) pero la **limpia** al entrar desde otro perfil.
+
+Las fichas registran su visita con una línea: `useRecordVisit(tipo, id)` de
+`lib/history.ts`, con el **id interno**, nunca el `:id` de la URL (que en Pokémon
+puede ser el nº de Pokédex).
+
 ### El Service Worker NO puede cachear datos mutables como el dataset
 
 `vite.config.ts` tiene dos reglas de `runtimeCaching`, **y el orden importa**:
 
-- `/api/(favorites|profiles|sessions)` → **NetworkFirst**. Son datos que el
-  usuario modifica desde la app. Con StaleWhileRevalidate se veían con una
+- `/api/(favorites|profiles|sessions|history|settings)` → **NetworkFirst**. Son
+  datos que el usuario modifica desde la app. Con StaleWhileRevalidate se veían con una
   navegación de retraso (marcabas un favorito y no aparecía en `/favoritos`
   hasta la siguiente carga).
 - El resto de `/api/` → StaleWhileRevalidate. El dataset solo cambia al
@@ -137,6 +181,15 @@ En `/api/pokemon/:id`, `abilities` es un **array de objetos** `{ name_es, name_e
   → `{ id, user_id, name, avatar, color, language, theme, has_pin }` (**nunca `pin_hash`**)
 - `POST /api/profiles/:id/verify`, `POST /api/profiles/:id/password`, `DELETE /api/profiles/:id/password`
 - `GET|POST|DELETE /api/favorites?profile=<id>` → `{ profile_id, items[], byType }`
+- `GET|POST|DELETE /api/history?profile=<id>[&limit=50]` → `{ profile_id, limit, items[] }`
+  · POST responde `registrado: false` si lo descartó por duplicado reciente
+- `GET|PUT /api/settings/:profileId` → `{ profile_id, settings }`. PUT **fusiona**
+  (lo que no se envía conserva su valor) y `null` borra una clave
+
+`/history` y `/favorites` devuelven **referencias, no nombres**; los resuelve el
+frontend con los listados cacheados y así respetan los overrides de la sesión.
+El perfil viaja en la query (`?profile=`) en las colecciones y en la URL en
+`/settings/:profileId`, que es un documento único del perfil.
 
 ### Sesiones y overrides (Fase 3)
 
@@ -206,50 +259,42 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
 - ✅ **Fase 2**: comparador de equipos en `/equipo` (equipo propio y rival en `localStorage`, motor de daño, recomendación "mejor respuesta", mapa de cobertura).
 - ✅ **Fase 3**: sesiones de ROM Hack en `/sesiones` (CRUD en SQLite), overrides por sesión vía middleware, editor visual en `/editor` (Pokémon, tipos, movimientos, habilidades, matriz de relaciones) y tema de color por sesión.
 - ✅ **Fase 4**: exportación e importación en JSON, CSV y SQLite desde `/datos`, con previsualización antes de aplicar (`routes/export.js`, `routes/import.js`, `lib/importValidator.js`).
-- 🔄 **Fase 5, en curso**:
+- ✅ **Fase 5**: usuarios y perfiles.
   - ✅ **5.1** pantalla de perfiles en `/perfiles` + perfil activo en `localStorage`.
   - ✅ **5.2** PIN opcional de 4 dígitos por perfil (`profiles.pin_hash`, scrypt).
   - ✅ **5.3** favoritos por perfil en `/favoritos` (tabla `favorites`).
-  - 🔜 **5.4** historial y ajustes por perfil. **Es la siguiente.**
-- 🔜 Fases 6-9: ver `docs/ROADMAP.md`.
+  - ✅ **5.4** historial en `/historial` y ajustes en `/ajustes` (tablas `history`
+    y `settings`), idioma y tema por perfil, sesión de ROM Hack por perfil.
+- 🔜 **Fase 6, la siguiente**: Pokémon Champions. **Lee antes
+  `docs/tasks/fase6/00-preparacion.md`**: los encargos `06-0*` se escribieron
+  antes de las fases 3-5 y hay cinco cosas que decidir primero (entre ellas, que
+  la tabla `items` está vacía y la 6.1 no puede filtrar objetos).
+- 🔜 Fases 7-9: ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 
 `items` y `champions_rules`. Están en `backend/db/schema.sql` — reutilízalas antes
-de inventar tablas nuevas.
+de inventar tablas nuevas. **`items` está vacía**: no hay `data/items.json` y
+`tools/fetch-dataset.js` no descarga objetos de PokeAPI. Tenlo en cuenta antes
+de prometer nada que dependa de ellos (ver `docs/tasks/fase6/00-preparacion.md`).
 
-Ya en uso: `sessions` (Fase 3), `profiles` (5.1 y 5.2), `favorites` (5.3).
-`users` existe pero **sigue vacía a propósito**: se reserva para un login real.
-`settings` e `history` son las que toca activar en la 5.4.
+Ya en uso: `sessions` (Fase 3), `profiles` (5.1 y 5.2), `favorites` (5.3),
+`history` y `settings` (5.4). `users` existe pero **sigue vacía a propósito**: se
+reserva para un login real.
 
-## Antes de empezar la 5.4: tres decisiones que hay que tomar
+## Antes de empezar la Fase 6
 
-La tarea 5.4 se topa con solapamientos que el encargo original no previó. **No
-las resuelvas por inercia, decídelas y avisa antes de aplicarlas.**
+Las tres decisiones que había abiertas para la 5.4 (idioma, tema e historial)
+están **tomadas y documentadas** más arriba, en «Historial y ajustes (Tarea
+5.4)». No las reabras sin motivo.
 
-**1. ¿El idioma va en `profiles.language` o en `settings`?**
-Las dos existen. `profiles.language` se creó en la 5.1 y la API de perfiles ya
-lo acepta en POST y PUT, pero **nadie lo lee todavía**: el idioma real vive en
-`localStorage` bajo `pamudex_lang` (`i18n/index.tsx`). El encargo de la 5.4 pide
-migrarlo a `settings`. Duplicarlo en los dos sitios acabaría en incoherencias.
-Lo razonable es elegir uno: `profiles.language` ya está y evita una tabla de
-por medio; `settings` es más flexible para preferencias futuras. Elige y deja el
-otro explícitamente sin usar, documentándolo.
+La Fase 6 tiene su propia nota previa: **`docs/tasks/fase6/00-preparacion.md`**.
+Los encargos `06-01`, `06-02` y `06-03` se escribieron antes de que existieran
+las fases 3, 4 y 5, y hay cinco puntos que decidir antes de escribir código
+(cómo llega el filtro a la API, si Champions convive con las sesiones, qué puede
+y qué no puede redefinir `custom_multipliers_json`, dónde se guarda el conjunto
+de reglas activo, y que no existen datos de objetos).
 
-**2. ¿El tema es del perfil o de la sesión?**
-`profiles.theme` existe desde la 5.1 (sin usar), pero `lib/theme.ts` de la Fase
-3 aplica el tema de la **sesión de ROM Hack activa** mediante variables CSS. Si
-la 5.4 añade tema por perfil, los dos compiten por las mismas `--color-*`. Hay
-que definir la precedencia (lo natural: la sesión pisa al perfil mientras esté
-activa) y dejarlo escrito.
-
-**3. La deduplicación del historial no la da la base de datos.**
-`history` **no tiene índice único** (a diferencia de `favorites`), y no debe
-tenerlo: el historial es una bitácora, la misma ficha puede aparecer muchas
-veces en momentos distintos. La regla de «no registrar dos veces la misma
-entidad en menos de 5 minutos» hay que implementarla en la ruta, comprobando el
-`viewed_at` de la última visita de esa entidad para ese perfil.
-
-Recordatorio que aplica a las tres: si añades endpoints que el usuario pueda
-modificar (`/api/history`, `/api/settings`), **mételos en la regla NetworkFirst
-de `vite.config.ts`** o se verán con una navegación de retraso.
+Recordatorio permanente: si añades endpoints que el usuario pueda modificar,
+**mételos en la regla NetworkFirst de `vite.config.ts`** o se verán con una
+navegación de retraso.

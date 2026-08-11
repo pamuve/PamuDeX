@@ -38,6 +38,8 @@ app.use("/api", sessionOverrides(db));
 
 app.use("/api/profiles", require("./routes/profiles")(db));
 app.use("/api/favorites", require("./routes/favorites")(db));
+app.use("/api/history", require("./routes/history")(db));
+app.use("/api/settings", require("./routes/settings")(db));
 app.use("/api/sessions", sessionsRoutes(db));
 app.use("/api/chart", chartRoutes(db));
 app.use("/api/export", require("./routes/export")(db));

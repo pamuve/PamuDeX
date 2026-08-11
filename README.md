@@ -39,16 +39,24 @@ pamudex/
 │   ├── data/              # JSON semilla: types, type_chart, pokemon, moves, abilities
 │   ├── db/
 │   │   ├── schema.sql     # esquema SQLite completo (núcleo + tablas Fase 4+)
-│   │   └── seed.js        # recrea la DB desde los JSON de /data
+│   │   ├── seed.js        # recrea la DB desde los JSON de /data
+│   │   ├── migrate.js     # migraciones en caliente, idempotentes y solo aditivas
+│   │   └── paths.js       # dónde vive el .sqlite (PAMUDEX_DB_DIR; /data en Docker)
 │   ├── lib/
 │   │   ├── effectiveness.js   # motor de cálculo de tipos (x4/x2/x1/x0.5/x0.25/x0)
 │   │   ├── overrides.js       # merge de los overrides de una sesión sobre el dato global
-│   │   └── typechart.js       # tabla de tipos 18x18 + overrides de relaciones
+│   │   ├── typechart.js       # tabla de tipos 18x18 + overrides de relaciones
+│   │   ├── dataset.js         # dataset con overrides resueltos (export e import)
+│   │   ├── importValidator.js # validación de JSON/CSV antes de aplicar
+│   │   └── pin.js, pinThrottle.js  # PIN de perfil (scrypt) y límite de intentos
 │   ├── middleware/
 │   │   └── sessionOverrides.js  # aplica ?session=<id> interceptando res.json
-│   ├── routes/             # types, pokemon, moves, abilities, search, sessions, chart
-│   ├── tests/
-│   │   └── overrides.smoke.js   # prueba de humo sin servidor ni SQLite
+│   ├── routes/             # types, pokemon, moves, abilities, search, sessions,
+│   │                       # chart, export, import, profiles, favorites,
+│   │                       # history, settings
+│   ├── tests/              # pruebas de humo sin servidor ni SQLite
+│   │   ├── overrides.smoke.js
+│   │   └── history.smoke.js     # historial (ventana de 5 min) y ajustes
 │   ├── server.js
 │   └── package.json
 ├── frontend/
@@ -56,16 +64,21 @@ pamudex/
 │   ├── src/
 │   │   ├── components/     # TopBar, SearchBar, TypeBadge, EffectivenessPanel,
 │   │   │   │               # TeamSlotCard, RivalSlotCard, RecommendationCard,
-│   │   │   │               # CoverageMap, SessionRequired
+│   │   │   │               # CoverageMap, SessionRequired, ImportPanel,
+│   │   │   │               # PinPad, PinDialog, FavoriteButton
 │   │   │   └── forms/      # PokemonForm, TypeForm, MoveForm, AbilityForm,
 │   │   │                   # RelationsMatrix, ThemeForm, EntityPicker, FormField
 │   │   ├── pages/          # Home, PokemonDetail, TypeDetail, MoveDetail,
-│   │   │                   # AbilityDetail, TeamBuilder, Sessions, Editor, EditorPokemon
+│   │   │                   # AbilityDetail, TeamBuilder, Sessions, Editor,
+│   │   │                   # EditorPokemon, ImportExport, ProfileSelect,
+│   │   │                   # Favorites, History, Settings
 │   │   ├── hooks/          # useSessionOverride.ts
 │   │   ├── i18n/           # es.json, en.json, index.tsx (contexto)
-│   │   ├── lib/            # api, apiSession, session, theme, team, damage,
+│   │   ├── lib/            # api, apiSession, session, profile, favorites,
+│   │   │                   # history, settings, theme, team, damage,
 │   │   │                   # recommendation, coverage
-│   │   ├── theme-vars.css  # variables CSS de la paleta (las pisa el tema de sesión)
+│   │   ├── theme-vars.css  # variables CSS de la paleta (las pisan el tema de
+│   │   │                   # sesión y, por debajo, el del perfil)
 │   │   ├── types.ts
 │   │   ├── App.tsx
 │   │   └── main.tsx
@@ -190,16 +203,18 @@ con token. Nada de eso está implementado.
 
 ## ⚙️ Estado del proyecto
 
-> Estado actual: **Fases 1 a 4 completas y verificadas.**
+> Estado actual: **Fases 1 a 5 completas y verificadas.**
 >
 > - **Fase 1** — núcleo de datos + consulta + PWA offline + Docker.
 > - **Fase 2** — comparador de equipos táctico en `/equipo` (motor de daño, «mejor respuesta», mapa de cobertura).
 > - **Fase 3** — sesiones de ROM Hack en `/sesiones` y editor visual en `/editor`, con overrides por sesión y tema propio.
 > - **Fase 4** — importación y exportación en JSON, CSV y SQLite desde `/datos`, con previsualización antes de aplicar.
+> - **Fase 5** — perfiles en `/perfiles` con PIN opcional, favoritos en `/favoritos`,
+>   historial en `/historial` y ajustes en `/ajustes`. Cada perfil tiene su
+>   idioma, su tema, su historial y su sesión de ROM Hack.
 >
-> En curso: **Fase 5 — Usuarios y perfiles**. Hechas la 5.1 (pantalla de perfiles
-> en `/perfiles`), la 5.2 (PIN opcional por perfil) y la 5.3 (favoritos por
-> perfil en `/favoritos`). Siguiente: 5.4, historial y ajustes por perfil.
+> Siguiente: **Fase 6 — Pokémon Champions**, con nota previa en
+> [`docs/tasks/fase6/00-preparacion.md`](docs/tasks/fase6/00-preparacion.md).
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

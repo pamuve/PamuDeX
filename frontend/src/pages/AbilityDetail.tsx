@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { AbilityDetail as AbilityDetailT } from "../types";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
 export function AbilityDetail() {
@@ -13,6 +14,8 @@ export function AbilityDetail() {
   useEffect(() => {
     if (id) api.abilities.detail(id).then(setAbility);
   }, [id]);
+
+  useRecordVisit("ability", ability ? ability.id : undefined);
 
   if (!ability) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 

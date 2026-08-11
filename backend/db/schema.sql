@@ -132,6 +132,12 @@ CREATE TABLE IF NOT EXISTS favorites (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_unico
   ON favorites (profile_id, entity_type, entity_ref);
 
+-- Historial de consultas por perfil (Tarea 5.4).
+-- OJO: aquí NO hay índice único, al revés que en `favorites`, y es a propósito:
+-- el historial es una bitácora y la misma ficha debe poder aparecer varias
+-- veces en momentos distintos. Evitar las ráfagas de duplicados (recargar,
+-- volver atrás) es cosa de `routes/history.js`, que descarta la visita si esa
+-- misma entidad ya se registró hace menos de 5 minutos.
 CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
@@ -139,6 +145,11 @@ CREATE TABLE IF NOT EXISTS history (
   entity_ref TEXT NOT NULL,
   viewed_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Las dos consultas del historial (últimas N y "¿la vi hace poco?") filtran por
+-- perfil y ordenan por fecha.
+CREATE INDEX IF NOT EXISTS idx_history_perfil
+  ON history (profile_id, viewed_at);
 
 -- Sesiones personalizadas (Radical Red, Elite Redux, ROM Hacks propios...)
 CREATE TABLE IF NOT EXISTS sessions (
