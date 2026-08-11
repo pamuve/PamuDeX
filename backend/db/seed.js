@@ -6,8 +6,8 @@ const fs = require("fs");
 const Database = require("better-sqlite3");
 const { populate } = require("./populate");
 
-const DB_PATH = path.join(__dirname, "pamudex.sqlite");
-const SCHEMA_PATH = path.join(__dirname, "schema.sql");
+// Ruta compartida con server.js: en Docker la lleva a /data (ver db/paths.js).
+const { DB_PATH, SCHEMA_PATH, ensureDbDir } = require("./paths");
 const DATA_DIR = path.join(__dirname, "..", "data");
 
 function readJSON(file) {
@@ -15,6 +15,7 @@ function readJSON(file) {
 }
 
 function seed() {
+  ensureDbDir();
   if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH);
   const db = new Database(DB_PATH);
   db.exec(fs.readFileSync(SCHEMA_PATH, "utf-8"));

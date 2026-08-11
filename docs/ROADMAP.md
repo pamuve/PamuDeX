@@ -55,18 +55,40 @@ El editor escribe overrides en `sessions.data_json`; el middleware `backend/midd
 
 ---
 
-## 🔜 Fase 5 — Usuarios y perfiles (estilo Netflix)
+## ✅ Fase 5 — Usuarios y perfiles (estilo Netflix) — completada
 
-| # | Tarea | Tamaño |
-|---|-------|--------|
-| 5.1 | Pantalla de selección de perfiles (avatar, nombre, color) + creación/edición | Media |
-| 5.2 | Contraseña opcional por perfil (hash, verificación) | Pequeña |
-| 5.3 | Favoritos por perfil (marcar Pokémon/movimientos/habilidades) | Pequeña |
-| 5.4 | Historial de consultas por perfil + ajustes (idioma/tema) persistentes por perfil | Pequeña |
+| # | Tarea | Tamaño | Estado |
+|---|-------|--------|--------|
+| 5.1 | Pantalla de selección de perfiles (avatar, nombre, color) + creación/edición | Media | ✅ `routes/profiles.js`, `pages/ProfileSelect.tsx` |
+| 5.2 | Contraseña opcional por perfil (hash, verificación) | Pequeña | ✅ `lib/pin.js`, `lib/pinThrottle.js`, `components/PinDialog.tsx` |
+| 5.3 | Favoritos por perfil (marcar Pokémon/movimientos/habilidades) | Pequeña | ✅ `routes/favorites.js`, `pages/Favorites.tsx` |
+| 5.4 | Historial de consultas por perfil + ajustes (idioma/tema) persistentes por perfil | Pequeña | ✅ `routes/history.js`, `routes/settings.js`, `pages/History.tsx`, `pages/Settings.tsx` |
+
+Perfiles en `/perfiles`, PIN de 4 dígitos (`profiles.pin_hash`, scrypt),
+favoritos en `/favoritos`, historial en `/historial` y ajustes en `/ajustes`.
+
+Las tres decisiones que quedaban abiertas antes de la 5.4 se resolvieron así, y
+están explicadas en `docs/tasks/_CONTEXTO_BASE.md`:
+
+- **Idioma en `profiles.language`**, no en `settings`: viaja con el perfil ya
+  cacheado, así que se aplica en el primer render y sin conexión.
+- **Tema: la sesión pisa al perfil.** El perfil elige una paleta del catálogo
+  cerrado de `lib/theme.ts`; el tema libre de un ROM Hack manda mientras esa
+  sesión esté activa.
+- **Deduplicación del historial en la ruta** (5 minutos por entidad y perfil),
+  porque `history` es una bitácora y no puede llevar índice único.
+
+De propina, la sesión de ROM Hack activa dejó de ser global y pasó a recordarse
+por perfil (`settings.active_session`).
 
 ---
 
 ## 🔜 Fase 6 — Pokémon Champions
+
+> **Antes de encargar la 6.1, lee `docs/tasks/fase6/00-preparacion.md`.** Los
+> tres encargos se escribieron antes de las fases 3, 4 y 5, y hay cinco puntos
+> que decidir primero — incluido que la tabla `items` está vacía, así que la 6.1
+> no puede filtrar objetos sin una tarea previa de dataset.
 
 | # | Tarea | Tamaño |
 |---|-------|--------|

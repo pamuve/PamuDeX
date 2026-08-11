@@ -94,6 +94,11 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+-- El PIN de perfil vive AQUÍ, no en users.password_hash. Son dos cosas
+-- distintas: `users` es la credencial de cuenta (login real, si algún día se
+-- expone la app) y `pin_hash` es el bloqueo blando entre convivientes, como el
+-- PIN de perfil de Netflix. Reusar users.password_hash obligaría a inventar una
+-- fila de users falsa por perfil y rompería el 1:N cuenta -> perfiles.
 CREATE TABLE IF NOT EXISTS profiles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -101,7 +106,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar TEXT,
   color TEXT,
   language TEXT DEFAULT 'es',
-  theme TEXT DEFAULT 'oled'
+  theme TEXT DEFAULT 'oled',
+  pin_hash TEXT                 -- NULL = perfil sin PIN, entra de un toque
 );
 
 CREATE TABLE IF NOT EXISTS settings (
@@ -111,6 +117,27 @@ CREATE TABLE IF NOT EXISTS settings (
   PRIMARY KEY (profile_id, key)
 );
 
+-- Favoritos por perfil (Tarea 5.3).
+-- entity_ref es TEXT porque los ids no son homogéneos: los tipos usan cadenas
+-- ('fuego') y el resto enteros. El índice único es lo que hace que pulsar dos
+-- veces la estrella no pueda dejar filas duplicadas.
+CREATE TABLE IF NOT EXISTS favorites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
+  entity_type TEXT NOT NULL,     -- 'pokemon' | 'move' | 'ability' | 'type'
+  entity_ref TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_favorites_unico
+  ON favorites (profile_id, entity_type, entity_ref);
+
+-- Historial de consultas por perfil (Tarea 5.4).
+-- OJO: aquí NO hay índice único, al revés que en `favorites`, y es a propósito:
+-- el historial es una bitácora y la misma ficha debe poder aparecer varias
+-- veces en momentos distintos. Evitar las ráfagas de duplicados (recargar,
+-- volver atrás) es cosa de `routes/history.js`, que descarta la visita si esa
+-- misma entidad ya se registró hace menos de 5 minutos.
 CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
@@ -118,6 +145,11 @@ CREATE TABLE IF NOT EXISTS history (
   entity_ref TEXT NOT NULL,
   viewed_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Las dos consultas del historial (últimas N y "¿la vi hace poco?") filtran por
+-- perfil y ordenan por fecha.
+CREATE INDEX IF NOT EXISTS idx_history_perfil
+  ON history (profile_id, viewed_at);
 
 -- Sesiones personalizadas (Radical Red, Elite Redux, ROM Hacks propios...)
 CREATE TABLE IF NOT EXISTS sessions (

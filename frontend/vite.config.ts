@@ -26,8 +26,30 @@ export default defineConfig({
       workbox: {
         // Cachea el shell de la app; los datos de la API se cachean aparte (ver src/lib/api.ts)
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        // El orden importa: gana la primera regla que encaje.
         runtimeCaching: [
           {
+            // Datos que el usuario MODIFICA desde la propia app: perfiles,
+            // favoritos, sesiones, historial y ajustes. Con StaleWhileRevalidate
+            // se veían con un navegación de retraso (marcabas un favorito y no
+            // salía en /favoritos hasta la siguiente carga), porque el SW
+            // respondía con la copia anterior mientras revalidaba por detrás.
+            //
+            // NetworkFirst da el dato fresco cuando hay red y cae en la caché
+            // cuando no la hay, así que no se pierde el modo offline.
+            //
+            // Si añades un endpoint que el usuario pueda modificar, va AQUÍ.
+            urlPattern: /\/api\/(favorites|profiles|sessions|history|settings)\b/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "pamudex-user-cache",
+              networkTimeoutSeconds: 3,
+            },
+          },
+          {
+            // El dataset (tipos, Pokémon, movimientos, habilidades, búsqueda)
+            // solo cambia al reconstruir la imagen, así que aquí sí interesa
+            // responder al instante desde la caché.
             urlPattern: /\/api\//,
             handler: "StaleWhileRevalidate",
             options: { cacheName: "pamudex-api-cache" },

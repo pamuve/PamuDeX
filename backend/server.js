@@ -3,13 +3,26 @@ const path = require("path");
 const fs = require("fs");
 const Database = require("better-sqlite3");
 
-const DB_PATH = path.join(__dirname, "db", "pamudex.sqlite");
+// La ruta sale de db/paths.js: en local es backend/db/pamudex.sqlite, y en
+// Docker la variable PAMUDEX_DB_DIR la lleva a /data, un directorio de datos
+// puros. El volumen NO puede montarse sobre backend/db/, que es código.
+const { DB_PATH, ensureDbDir } = require("./db/paths");
+ensureDbDir();
+
 if (!fs.existsSync(DB_PATH)) {
   console.log("No existe la base de datos, ejecutando siembra inicial...");
   require("./db/seed.js");
 }
 
 const db = new Database(DB_PATH);
+
+// Columnas añadidas después de que existiera la base de datos. Es idempotente:
+// en una instalación al día no hace nada. Evita tener que resembrar (y perder
+// sesiones y perfiles) al actualizar el código.
+const { migrate } = require("./db/migrate");
+const applied = migrate(db);
+if (applied.length) console.log(`Esquema actualizado: ${applied.join(", ")}`);
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -23,6 +36,10 @@ app.use(express.json());
 // y aplica los overrides de la sesión; sin ?session= en la query no hace nada.
 app.use("/api", sessionOverrides(db));
 
+app.use("/api/profiles", require("./routes/profiles")(db));
+app.use("/api/favorites", require("./routes/favorites")(db));
+app.use("/api/history", require("./routes/history")(db));
+app.use("/api/settings", require("./routes/settings")(db));
 app.use("/api/sessions", sessionsRoutes(db));
 app.use("/api/chart", chartRoutes(db));
 app.use("/api/export", require("./routes/export")(db));

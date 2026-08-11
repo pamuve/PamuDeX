@@ -1,0 +1,24 @@
+# Nunca copiar dependencias ni artefactos del host a la imagen: se instalan
+# dentro del contenedor con `pnpm install --frozen-lockfile`. Copiar el
+# node_modules local metería binarios nativos compilados para la arquitectura
+# del host (better-sqlite3) y el árbol de enlaces de pnpm.
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+frontend/dev-dist/
+
+# Base de datos generada: el contenedor la siembra en el primer arranque
+backend/db/*.sqlite
+backend/db/*.sqlite-journal
+
+# No aportan nada al build
+.git/
+.gitignore
+docs/
+*.md
+!README.md
+.env
+.env.*
+*.log
+*.tsbuildinfo

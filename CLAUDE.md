@@ -23,36 +23,59 @@ intenta compilar desde fuente y falla en macOS 13 por cabeceras C++20 ausentes
 (`fatal error: 'source_location' file not found`). El frontend sí funciona con
 cualquier versión reciente.
 
+## pnpm, nunca npm
+
+El gestor de paquetes es **pnpm** (fijado en `packageManager` de cada
+`package.json`). No ejecutes `npm install` ni `npx` en este repo: regeneran un
+`package-lock.json` que está en `.gitignore` y dejan el árbol de dependencias
+descuadrado respecto a `pnpm-lock.yaml`. El equivalente de `npx` es `pnpm exec`
+(o `pnpm dlx` para un paquete que no está instalado).
+
+`backend/` y `frontend/` son **dos proyectos pnpm independientes**, cada uno con
+su `pnpm-lock.yaml`. No es un workspace: el Dockerfile los instala en etapas
+separadas y unificarlos obligaría a rehacer el build.
+
+**pnpm bloquea los scripts de instalación por defecto.** Las excepciones se
+declaran en `pnpm-workspace.yaml` bajo `allowBuilds`, y hoy son exactamente dos:
+`better-sqlite3` (backend, binario nativo) y `esbuild` (frontend, binario por
+plataforma). Ese archivo hay que copiarlo al contenedor: sin él la instalación
+en Docker sale a medias sin fallar de forma visible. Si al añadir una
+dependencia aparece `ERR_PNPM_IGNORED_BUILDS`, decide caso por caso — no lo
+apruebes en automático, es la defensa contra un paquete que ejecute código al
+instalarse.
+
 ## Comandos
 
 ```bash
 # Backend (puerto 4000). La DB se siembra sola al arrancar si no existe.
-cd backend && npm install && npm start
-cd backend && npm run seed          # recrear la DB desde backend/data/*.json
+cd backend && pnpm install && pnpm start
+cd backend && pnpm run seed          # recrear la DB desde backend/data/*.json
 
 # Regenerar el dataset desde PokeAPI (no se ejecuta en el arranque ni en el
 # build: los JSON van versionados para que la PWA siga siendo offline-first).
 cd backend && node tools/fetch-dataset.js
 
 # Frontend (puerto 5173, proxy de /api a localhost:4000)
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm run dev
 ```
 
-`backend` no tiene script `dev` — es `npm start`.
+`backend` no tiene script `dev` — es `pnpm start`.
 
 ## Verificación antes de dar nada por cerrado
 
 Siempre, sin excepciones:
 
 ```bash
-cd frontend && npx tsc --noEmit && npm run build
-cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js
+cd frontend && pnpm exec tsc --noEmit && pnpm run build
+cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js && node tests/history.smoke.js
 ```
 
 Y comprobar la **paridad exacta de claves entre `es.json` y `en.json`**.
 
-`tests/overrides.smoke.js` no necesita servidor ni SQLite: simula `db`, `req` y
-`res`. Ejecútalo siempre que toques overrides, el middleware o la tabla de tipos.
+Ninguna de las dos pruebas necesita servidor ni SQLite: simulan `db`, `req` y
+`res`. `overrides.smoke.js` cubre overrides, middleware y tabla de tipos;
+`history.smoke.js` cubre el historial (la ventana de deduplicación de 5 minutos
+y la poda) y los ajustes por perfil. Ejecuta la que corresponda a lo que toques.
 
 Verificación interna, no le pidas al usuario que pruebe por ti lo que puedes
 comprobar tú.
@@ -62,21 +85,41 @@ comprobar tú.
 ```
 backend/
   data/        JSON semilla — la fuente de verdad del dataset
-  db/          schema.sql, seed.js
-  lib/         effectiveness.js, overrides.js, typechart.js
+  db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
+  lib/         effectiveness.js, overrides.js, typechart.js, dataset.js,
+               importValidator.js, pin.js, pinThrottle.js
   middleware/  sessionOverrides.js
-  routes/      types, pokemon, moves, abilities, search, sessions, chart
-  tests/       overrides.smoke.js
+  routes/      types, pokemon, moves, abilities, search, sessions, chart,
+               export, import, profiles, favorites, history, settings
+  tests/       overrides.smoke.js, history.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
   pages/       una por ruta, registrada en App.tsx
   hooks/       useSessionOverride.ts
-  lib/         api, apiSession, session, theme, team, damage, recommendation, coverage
+  lib/         api, apiSession, session, profile, favorites, history, settings,
+               theme, team, damage, recommendation, coverage
   i18n/        es.json, en.json, index.tsx
 ```
 
 - **Cada ruta del backend es un módulo que exporta `(db) => router`** y se monta en `server.js`.
 - **Componentes** reutilizables en `src/components/`; **páginas** con ruta propia en `src/pages/` + registrar la ruta en `src/App.tsx`.
+
+### El volumen de Docker va en `/data`, nunca en `backend/db/`
+
+`backend/db/` es **código** (`schema.sql`, `seed.js`, `populate.js`,
+`migrate.js`, `paths.js`). La base de datos vive donde diga `PAMUDEX_DB_DIR`:
+sin la variable, `backend/db/pamudex.sqlite` como siempre en local; en Docker,
+`/data`.
+
+Montar el volumen sobre `backend/db/` rompe las actualizaciones de forma
+silenciosa: Docker copia el contenido de la imagen a un volumen **solo si está
+vacío**, así que el volumen se queda con una copia congelada del código y a
+partir de ahí la imagen nueva ya no llega. Un archivo nuevo (como `migrate.js`)
+tumba el contenedor al arrancar. Estuvo así desde la Fase 1 y se corrigió en la 5.2.
+
+Las columnas nuevas se añaden en `db/migrate.js`, que corre en cada arranque y
+es **idempotente y solo aditivo**: `schema.sql` únicamente se ejecuta al sembrar
+desde cero, y un despliegue en marcha no puede perder sus sesiones.
 
 ### Sesiones y overrides (Fase 3) — leer antes de tocar datos
 
@@ -97,6 +140,24 @@ que cualquier página que use `api.*` respeta la sesión sin hacer nada.
 forma que devuelve la API.** Es el error que ya se cometió una vez: los
 formularios guardaban `abilities` como array de cadenas cuando
 `/api/pokemon/:id` las devuelve como array de objetos.
+
+### Perfiles: dónde va cada preferencia (Fase 5)
+
+- **Idioma y tema son columnas de `profiles`** (`language`, `theme`), no filas de
+  `settings`. El perfil activo se cachea entero en `localStorage`, así que
+  ambos se aplican en el primer render y sin conexión. No los dupliques.
+- **El tema de la sesión de ROM Hack pisa al del perfil** mientras esa sesión
+  esté activa; si la sesión no define tema, se cae al del perfil. Lo resuelve
+  `useAppTheme()` en `App.tsx`.
+- **`settings` es para lo que no merece columna**, con lista blanca de claves en
+  `routes/settings.js` (`active_session`, `history_enabled`). Añadir una
+  preferencia es añadirla ahí y en `ProfileSettings` de `apiSession.ts`.
+- **`history` no lleva índice único** (a diferencia de `favorites`): es una
+  bitácora. La regla de «no dos veces en 5 minutos» la aplica la ruta, y el
+  historial se poda a las 300 visitas más recientes por perfil.
+- La sesión de ROM Hack activa **se recuerda por perfil**
+  (`settings.active_session`); `localStorage` sigue siendo la fuente de verdad
+  inmediata porque `lib/api.ts` la lee de forma síncrona en cada petición.
 
 ## Convenciones obligatorias
 
@@ -140,8 +201,10 @@ De 4" a escritorio, incluidas Steam Deck, ROG Ally y AYN Thor.
 
 ### Antes de inventar tablas
 
-`items`, `users`, `profiles`, `settings`, `history`, `champions_rules` ya existen
-en `backend/db/schema.sql` sin lógica todavía. Reutilízalas.
+`items` y `champions_rules` ya existen en `backend/db/schema.sql` sin lógica
+todavía. Reutilízalas. `users` existe y sigue vacía a propósito: se reserva para
+un login real, y el PIN de perfil no va ahí. **`items` está vacía de datos**: no
+hay `data/items.json` y `tools/fetch-dataset.js` no descarga objetos.
 
 ## Cómo se organiza el trabajo
 
@@ -155,7 +218,12 @@ Al cerrar una fase, actualiza `docs/ROADMAP.md`, `docs/tasks/README.md`,
 Ese último es el que se pega en cada encargo futuro: si se queda obsoleto, la
 siguiente tarea parte de información falsa.
 
-Estado: Fases 1-3 completas. Siguiente: **Fase 4 — Importación / Exportación**.
+Estado: **Fases 1-5 completas.** La 5 cerró con perfiles (`/perfiles`), PIN,
+favoritos (`/favoritos`), historial (`/historial`) y ajustes (`/ajustes`).
+
+Siguiente: **Fase 6 — Pokémon Champions**. Antes de encargar la 6.1, lee
+`docs/tasks/fase6/00-preparacion.md`: los tres encargos se redactaron antes de
+las fases 3-5 y hay cinco puntos que decidir primero.
 
 ## Cómo trabaja el usuario
 

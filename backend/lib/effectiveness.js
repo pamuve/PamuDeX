@@ -1,7 +1,8 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 
-const db = new Database(path.join(__dirname, "..", "db", "pamudex.sqlite"), { readonly: true, fileMustExist: true });
+const { DB_PATH } = require("../db/paths");
+const db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
 
 const ALL_TYPES = db.prepare("SELECT id FROM types").all().map((r) => r.id);
 

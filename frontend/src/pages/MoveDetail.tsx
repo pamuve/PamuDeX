@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { MoveDetail as MoveDetailT } from "../types";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
 export function MoveDetail() {
@@ -12,6 +14,8 @@ export function MoveDetail() {
   useEffect(() => {
     if (id) api.moves.detail(id).then(setMove);
   }, [id]);
+
+  useRecordVisit("move", move ? move.id : undefined);
 
   if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 
@@ -34,6 +38,7 @@ export function MoveDetail() {
         <div className="flex items-center gap-2 mb-4">
           <span className="w-3 h-3 rounded-full" style={{ backgroundColor: move.color }} />
           <h1 className="font-display text-2xl font-bold text-ink">{move.name_es}</h1>
+          <span className="ml-auto"><FavoriteButton type="move" entityRef={move.id} /></span>
         </div>
         <div className="grid grid-cols-2 gap-y-3 gap-x-6">
           {rows.map(([label, val]) => (

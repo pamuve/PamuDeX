@@ -4,6 +4,8 @@ import { api } from "../lib/api";
 import { TypeDetail as TypeDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
+import { FavoriteButton } from "../components/FavoriteButton";
+import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
 export function TypeDetail() {
@@ -18,12 +20,15 @@ export function TypeDetail() {
     api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((t) => [t.id, t]))));
   }, [id]);
 
+  useRecordVisit("type", type ? type.id : undefined);
+
   if (!type) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex justify-center">
+      <div className="flex justify-center items-center gap-1">
         <TypeBadge type={type} size="lg" />
+        <FavoriteButton type="type" entityRef={type.id} />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-6">

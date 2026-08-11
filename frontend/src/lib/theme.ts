@@ -10,6 +10,7 @@
 import { useEffect } from "react";
 import { sessionsApi } from "./apiSession";
 import { useActiveSession } from "./session";
+import { useActiveProfile } from "./profile";
 
 export interface ThemeColors {
   base: string;
@@ -110,18 +111,86 @@ export function readTheme(data: unknown): ThemeColors | null {
   return { ...DEFAULT_THEME, ...(theme as Partial<ThemeColors>) };
 }
 
+/* ------------------------------------------------------------------ */
+/* Temas de perfil (Tarea 5.4)                                        */
+/* ------------------------------------------------------------------ */
+
 /**
- * Aplica automáticamente el tema de la sesión activa.
- * Se llama una sola vez, en App.tsx.
+ * Paletas con nombre que puede elegir un perfil (`profiles.theme`, columna que
+ * existe desde la 5.1 y que hasta ahora nadie leía).
+ *
+ * Son paletas CERRADAS, no colores libres: el editor de colores libre es del
+ * tema de sesión (Fase 3.5), que sirve para que un ROM Hack tenga su identidad.
+ * Lo del perfil es una preferencia personal, y con un catálogo revisado se
+ * garantiza que ninguna combinación deja texto ilegible ni cae en negro puro.
  */
-export function useSessionTheme(): void {
+export const PROFILE_THEMES: Record<string, ThemeColors> = {
+  oled: DEFAULT_THEME,
+  abismo: {
+    base: "#071A1C",
+    panel: "#0F2A2D",
+    hover: "#17393E",
+    ink: "#F2F8F8",
+    inkSoft: "#9FC2C4",
+    accent: "#57C7C7",
+  },
+  bosque: {
+    base: "#0A1A12",
+    panel: "#12291D",
+    hover: "#1B3B2A",
+    ink: "#F3F9F4",
+    inkSoft: "#A5C6B0",
+    accent: "#78C850",
+  },
+  brasa: {
+    base: "#1A0E0A",
+    panel: "#2B1811",
+    hover: "#3D231A",
+    ink: "#FBF4F0",
+    inkSoft: "#D2B0A0",
+    accent: "#F08030",
+  },
+  ciruela: {
+    base: "#150A1E",
+    panel: "#24122F",
+    hover: "#331B42",
+    ink: "#F8F3FB",
+    inkSoft: "#C0A9D2",
+    accent: "#A040A0",
+  },
+};
+
+/** Ids del catálogo, en el orden en que los pinta la pantalla de ajustes. */
+export const PROFILE_THEME_IDS = Object.keys(PROFILE_THEMES);
+
+/** Paleta de un perfil. Un nombre desconocido cae en la de siempre. */
+export function profileTheme(name: string | null | undefined): ThemeColors {
+  if (name && PROFILE_THEMES[name]) return PROFILE_THEMES[name];
+  return DEFAULT_THEME;
+}
+
+/**
+ * Aplica el tema efectivo. Se llama una sola vez, en App.tsx.
+ *
+ * PRECEDENCIA: LA SESIÓN PISA AL PERFIL
+ * -------------------------------------
+ * Decisión de la 5.4, porque los dos escriben en las mismas variables
+ * `--color-*`. Una sesión es un ROM Hack concreto y su identidad visual manda
+ * mientras esté abierta; el tema del perfil es la preferencia de fondo, la que
+ * se ve en el modo estándar. Si la sesión activa no define tema propio, se cae
+ * al del perfil en vez de a la paleta por defecto.
+ */
+export function useAppTheme(): void {
   const [sessionId] = useActiveSession();
+  const [profile] = useActiveProfile();
+  const nombreTemaPerfil = profile ? profile.theme : null;
 
   useEffect(() => {
     let cancelled = false;
+    const delPerfil = profileTheme(nombreTemaPerfil);
 
     if (sessionId === null) {
-      applyTheme(null);
+      applyTheme(delPerfil);
       return;
     }
 
@@ -129,14 +198,16 @@ export function useSessionTheme(): void {
       .get(sessionId)
       .then((session) => {
         if (cancelled) return;
-        applyTheme(readTheme(session.data));
+        applyTheme(readTheme(session.data) || delPerfil);
       })
       .catch(() => {
-        if (!cancelled) applyTheme(null);
+        // Sin conexión no se sabe si la sesión tenía tema: se usa el del perfil,
+        // que siempre está disponible.
+        if (!cancelled) applyTheme(delPerfil);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, nombreTemaPerfil]);
 }
