@@ -89,8 +89,8 @@ backend/
   lib/         effectiveness.js, overrides.js, typechart.js, dataset.js,
                importValidator.js, pin.js, pinThrottle.js
   middleware/  sessionOverrides.js
-  routes/      types, pokemon, moves, abilities, search, sessions, chart,
-               export, import, profiles, favorites, history, settings
+  routes/      types, pokemon, moves, abilities, items, search, sessions,
+               chart, export, import, profiles, favorites, history, settings
   tests/       overrides.smoke.js, history.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
@@ -201,10 +201,16 @@ De 4" a escritorio, incluidas Steam Deck, ROG Ally y AYN Thor.
 
 ### Antes de inventar tablas
 
-`items` y `champions_rules` ya existen en `backend/db/schema.sql` sin lógica
-todavía. Reutilízalas. `users` existe y sigue vacía a propósito: se reserva para
-un login real, y el PIN de perfil no va ahí. **`items` está vacía de datos**: no
-hay `data/items.json` y `tools/fetch-dataset.js` no descarga objetos.
+`champions_rules` ya existe en `backend/db/schema.sql` sin lógica todavía.
+Reutilízala. `users` existe y sigue vacía a propósito: se reserva para un login
+real, y el PIN de perfil no va ahí.
+
+### Una entidad nueva del dataset no se incorpora resembrando
+
+`pnpm run seed` **borra la base entera**: perfiles, sesiones, favoritos,
+historial y ajustes. Los datos nuevos entran por `db/migrate.js`, condicionados a
+que la tabla esté vacía. Así se sembraron los objetos en la 6.0, y así hay que
+hacerlo con lo que venga.
 
 ## Cómo se organiza el trabajo
 
@@ -221,9 +227,12 @@ siguiente tarea parte de información falsa.
 Estado: **Fases 1-5 completas.** La 5 cerró con perfiles (`/perfiles`), PIN,
 favoritos (`/favoritos`), historial (`/historial`) y ajustes (`/ajustes`).
 
-Siguiente: **Fase 6 — Pokémon Champions**. Antes de encargar la 6.1, lee
-`docs/tasks/fase6/00-preparacion.md`: los tres encargos se redactaron antes de
-las fases 3-5 y hay cinco puntos que decidir primero.
+**Fase 6 en curso** (Pokémon Champions): hecha la **6.0**, que añadió los objetos
+al dataset (2151 en `/api/items`) porque la 6.1 no tenía objetos que filtrar.
+Siguiente: **6.1, base de reglas**. Las decisiones de la fase están tomadas en
+`docs/tasks/fase6/00-preparacion.md` — la principal, que el filtro de Champions
+llega por **middleware con `?champions=<id>`**, igual que los overrides de sesión,
+para no duplicar rutas ni páginas.
 
 ## Cómo trabaja el usuario
 

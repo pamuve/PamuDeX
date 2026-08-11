@@ -36,7 +36,8 @@ El objetivo es ofrecer una herramienta rápida, instalable y que funcione **100%
 ```
 pamudex/
 ├── backend/
-│   ├── data/              # JSON semilla: types, type_chart, pokemon, moves, abilities
+│   ├── data/              # JSON semilla: types, type_chart, pokemon, moves,
+│   │                      # abilities, items
 │   ├── db/
 │   │   ├── schema.sql     # esquema SQLite completo (núcleo + tablas Fase 4+)
 │   │   ├── seed.js        # recrea la DB desde los JSON de /data
@@ -51,9 +52,9 @@ pamudex/
 │   │   └── pin.js, pinThrottle.js  # PIN de perfil (scrypt) y límite de intentos
 │   ├── middleware/
 │   │   └── sessionOverrides.js  # aplica ?session=<id> interceptando res.json
-│   ├── routes/             # types, pokemon, moves, abilities, search, sessions,
-│   │                       # chart, export, import, profiles, favorites,
-│   │                       # history, settings
+│   ├── routes/             # types, pokemon, moves, abilities, items, search,
+│   │                       # sessions, chart, export, import, profiles,
+│   │                       # favorites, history, settings
 │   ├── tests/              # pruebas de humo sin servidor ni SQLite
 │   │   ├── overrides.smoke.js
 │   │   └── history.smoke.js     # historial (ventana de 5 min) y ajustes

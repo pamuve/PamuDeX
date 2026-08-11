@@ -16,16 +16,20 @@ PamuDeX: PWA autoalojada y **offline-first** para consultar tipos, Pokémon, mov
 
 ```
 backend/
-  data/        types.json, type_chart.json, pokemon.json, moves.json, abilities.json
-               (18 tipos, 1025 Pokémon, 901 movimientos, 312 habilidades)
+  data/        types.json, type_chart.json, pokemon.json, moves.json,
+               abilities.json, items.json
+               (18 tipos, 1025 Pokémon, 901 movimientos, 312 habilidades,
+                2151 objetos)
   tools/       fetch-dataset.js  (regenera los JSON desde PokeAPI)
   db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
-               (la DB se genera con `pnpm run seed`)
+               (`pnpm run seed` BORRA la base y la recrea: se lleva perfiles,
+                sesiones, favoritos, historial y ajustes. Los datos nuevos
+                entran por migrate.js)
   lib/         effectiveness.js, overrides.js, typechart.js,
                dataset.js, importValidator.js, pin.js, pinThrottle.js
   middleware/  sessionOverrides.js
-  routes/      types.js, pokemon.js, moves.js, abilities.js, search.js,
-               sessions.js, chart.js, export.js, import.js,
+  routes/      types.js, pokemon.js, moves.js, abilities.js, items.js,
+               search.js, sessions.js, chart.js, export.js, import.js,
                profiles.js, favorites.js, history.js, settings.js
   tests/       overrides.smoke.js, history.smoke.js
   server.js
@@ -191,6 +195,32 @@ frontend con los listados cacheados y así respetan los overrides de la sesión.
 El perfil viaja en la query (`?profile=`) en las colecciones y en la URL en
 `/settings/:profileId`, que es un documento único del perfil.
 
+### Objetos (Tarea 6.0)
+
+- `GET /api/items[?category=&q=]` → `{ id, name_es, name_en, category }[]`
+- `GET /api/items/categories` → `{ category, total }[]` · `GET /api/items/:id` (+ `effect_es`)
+
+**2151 objetos en 54 categorías** (`backend/data/items.json`). Tres cosas que no
+son obvias:
+
+- **No hay campo «equipable».** PokeAPI no lo sabe: el Chaleco Asalto y el Casco
+  Dentado llegan sin `attributes` y en cambio la Poción trae `holdable`.
+  Inventarlo se equivocaría en las dos direcciones, así que para acotar los
+  objetos de combate se usa `category`.
+- **El listado admite filtros**, al revés que `/pokemon`, `/moves` y
+  `/abilities`, que devuelven todo. Son 394 KB: filtrar en SQLite sale más
+  barato que mandarlo entero para descartarlo en el cliente. El listado no
+  incluye `effect_es`; la descripción llega con la ficha.
+- **Los objetos no pasan por el middleware de overrides ni por la exportación e
+  importación de la Fase 4.** Un ROM Hack todavía no puede reescribirlos y un
+  `.sqlite` exportado no los lleva. Pendiente, no olvido.
+
+**Una entidad nueva del dataset NO se incorpora resembrando.** `pnpm run seed`
+borra la base entera y con ella perfiles, sesiones, favoritos, historial y
+ajustes. Los objetos entran por `db/migrate.js`, que los siembra desde
+`data/items.json` **solo si la tabla está vacía**: idempotente, aditivo, y
+respeta a quien los haya editado.
+
 ### Sesiones y overrides (Fase 3)
 
 - `GET|POST /api/sessions`, `GET|PUT|DELETE /api/sessions/:id`, `POST /api/sessions/:id/duplicate`
@@ -265,22 +295,27 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
   - ✅ **5.3** favoritos por perfil en `/favoritos` (tabla `favorites`).
   - ✅ **5.4** historial en `/historial` y ajustes en `/ajustes` (tablas `history`
     y `settings`), idioma y tema por perfil, sesión de ROM Hack por perfil.
-- 🔜 **Fase 6, la siguiente**: Pokémon Champions. **Lee antes
-  `docs/tasks/fase6/00-preparacion.md`**: los encargos `06-0*` se escribieron
-  antes de las fases 3-5 y hay cinco cosas que decidir primero (entre ellas, que
-  la tabla `items` está vacía y la 6.1 no puede filtrar objetos).
+- 🔄 **Fase 6, en curso**: Pokémon Champions.
+  - ✅ **6.0** objetos en el dataset (`/api/items`), tarea añadida al preparar la
+    fase porque la 6.1 no tenía objetos que filtrar.
+  - 🔜 **6.1** base de reglas de Champions. **Es la siguiente.**
+
+  Las decisiones de la fase están tomadas en
+  `docs/tasks/fase6/00-preparacion.md`: el filtro llega por **middleware con
+  `?champions=<id>`** (como los overrides de la Fase 3, para no duplicar rutas ni
+  páginas), el modo es **excluyente con las sesiones de ROM Hack**, y
+  `custom_multipliers_json` puede cambiar los **valores** de las claves de
+  efectividad pero nunca las claves.
 - 🔜 Fases 7-9: ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 
-`items` y `champions_rules`. Están en `backend/db/schema.sql` — reutilízalas antes
-de inventar tablas nuevas. **`items` está vacía**: no hay `data/items.json` y
-`tools/fetch-dataset.js` no descarga objetos de PokeAPI. Tenlo en cuenta antes
-de prometer nada que dependa de ellos (ver `docs/tasks/fase6/00-preparacion.md`).
+`champions_rules`. Está en `backend/db/schema.sql` — reutilízala antes de
+inventar tablas nuevas.
 
 Ya en uso: `sessions` (Fase 3), `profiles` (5.1 y 5.2), `favorites` (5.3),
-`history` y `settings` (5.4). `users` existe pero **sigue vacía a propósito**: se
-reserva para un login real.
+`history` y `settings` (5.4), `items` (6.0). `users` existe pero **sigue vacía a
+propósito**: se reserva para un login real.
 
 ## Antes de empezar la Fase 6
 
@@ -290,10 +325,19 @@ están **tomadas y documentadas** más arriba, en «Historial y ajustes (Tarea
 
 La Fase 6 tiene su propia nota previa: **`docs/tasks/fase6/00-preparacion.md`**.
 Los encargos `06-01`, `06-02` y `06-03` se escribieron antes de que existieran
-las fases 3, 4 y 5, y hay cinco puntos que decidir antes de escribir código
-(cómo llega el filtro a la API, si Champions convive con las sesiones, qué puede
-y qué no puede redefinir `custom_multipliers_json`, dónde se guarda el conjunto
-de reglas activo, y que no existen datos de objetos).
+las fases 3, 4 y 5, así que sus cinco puntos ya están **decididos** allí:
+
+1. El filtro llega por **middleware con `?champions=<id>`**, como los overrides
+   de la Fase 3. Las rutas `/api/champions/:id/pokemon` quedan para el editor de
+   reglas, no para la consulta.
+2. Champions y las sesiones de ROM Hack son **excluyentes**: entrar en el modo
+   pausa la sesión, que se restaura al salir desde `settings.active_session`.
+3. `custom_multipliers_json` cambia los **valores** de `hiper_eficaz`,
+   `super_eficaz`… pero **nunca las claves**, que son valores canónicos contra
+   los que comparan `lib/damage.ts` y `EffectivenessPanel.tsx`.
+4. El conjunto de reglas activo es **de cada perfil**, en `settings` (los
+   conjuntos en sí son del hogar: `champions_rules` no tiene `profile_id`).
+5. Los objetos ya existen: se hizo la **tarea 6.0** antes que la 6.1.
 
 Recordatorio permanente: si añades endpoints que el usuario pueda modificar,
 **mételos en la regla NetworkFirst de `vite.config.ts`** o se verán con una

@@ -10,7 +10,7 @@ Cómo usar esto: abre una conversación nueva → pega el contenido íntegro del
 
 Tipos, Pokémon, movimientos, habilidades, buscador con autocompletado, PWA offline instalable, tema OLED, Docker de un solo contenedor, i18n ES/EN.
 
-Dataset completo: **18 tipos, 1025 Pokémon, 901 movimientos y 312 habilidades**, en `backend/data/*.json`. Se puede editar a mano o regenerar desde PokeAPI con `node backend/tools/fetch-dataset.js` (las entradas existentes se conservan; solo añade lo que falta). `makes_contact` queda a `null` en los movimientos importados porque PokeAPI no expone ese dato: la ficha muestra «—» en vez de inventar un Sí/No.
+Dataset completo: **18 tipos, 1025 Pokémon, 901 movimientos y 312 habilidades**, en `backend/data/*.json` (más **2151 objetos** añadidos en la tarea 6.0). Se puede editar a mano o regenerar desde PokeAPI con `node backend/tools/fetch-dataset.js` (las entradas existentes se conservan; solo añade lo que falta). `makes_contact` queda a `null` en los movimientos importados porque PokeAPI no expone ese dato: la ficha muestra «—» en vez de inventar un Sí/No.
 
 ---
 
@@ -86,15 +86,18 @@ por perfil (`settings.active_session`).
 ## 🔜 Fase 6 — Pokémon Champions
 
 > **Antes de encargar la 6.1, lee `docs/tasks/fase6/00-preparacion.md`.** Los
-> tres encargos se escribieron antes de las fases 3, 4 y 5, y hay cinco puntos
-> que decidir primero — incluido que la tabla `items` está vacía, así que la 6.1
-> no puede filtrar objetos sin una tarea previa de dataset.
+> tres encargos se escribieron antes de las fases 3, 4 y 5. Las decisiones ya
+> están tomadas y anotadas allí: el filtro de Champions llega por **middleware
+> con `?champions=<id>`** (como los overrides de la Fase 3, para no duplicar
+> rutas ni páginas), el modo es **excluyente con las sesiones de ROM Hack**, y
+> los objetos ya existen gracias a la 6.0.
 
-| # | Tarea | Tamaño |
-|---|-------|--------|
-| 6.1 | Base de reglas independiente (`champions_rules`, ya en el esquema): Pokémon/objetos/movimientos/habilidades permitidos | Media |
-| 6.2 | Multiplicador propio del modo ("Hiper eficaz" x4) integrado en `EffectivenessPanel` | Pequeña |
-| 6.3 | Vista Champions separada de la Pokédex general (misma UI, dataset filtrado) | Media |
+| # | Tarea | Tamaño | Estado |
+|---|-------|--------|--------|
+| 6.0 | Objetos en el dataset (`items.json`, siembra por migración, `/api/items`) — añadida al preparar la fase | Pequeña | ✅ 2151 objetos en 54 categorías |
+| 6.1 | Base de reglas independiente (`champions_rules`, ya en el esquema): Pokémon/objetos/movimientos/habilidades permitidos | Media | 🔜 **siguiente** |
+| 6.2 | Multiplicador propio del modo ("Hiper eficaz" x4) integrado en `EffectivenessPanel` | Pequeña | 🔜 |
+| 6.3 | Vista Champions separada de la Pokédex general (misma UI, dataset filtrado) | Media | 🔜 |
 
 ---
 

@@ -85,9 +85,21 @@ Al añadir la clave hay que declararla en `ALLOWED_KEYS` de
 `ProfileSettings` de `frontend/src/lib/apiSession.ts`. Sugerencia de nombre:
 `champions_rules`.
 
-## 5. No hay datos de objetos. La 6.1 no puede filtrarlos
+## 5. No había datos de objetos ✅ RESUELTO en la tarea 6.0
 
-Esto no es una decisión, es un hecho que hay que ver antes de empezar:
+> **Decidido:** se hizo la tarea **6.0** (`06-00-dataset-objetos.md`) antes de la
+> 6.1. Hoy hay **2151 objetos en 54 categorías** en `backend/data/items.json`,
+> sembrados y servidos en `GET /api/items`. Lo que sigue queda como registro de
+> por qué hizo falta.
+>
+> Dos cosas que la 6.1 debe dar por sabidas:
+> - **No existe un campo «equipable»**, porque PokeAPI no lo sabe (el Chaleco
+>   Asalto llega sin atributos y la Poción sí trae `holdable`). Para acotar los
+>   objetos de combate hay que usar `category`.
+> - Los objetos **no pasan por el middleware de overrides** ni por la
+>   exportación e importación de la Fase 4. Sigue pendiente.
+
+El punto original, tal como estaba:
 
 | tabla | filas |
 |-------|-------|
@@ -109,8 +121,11 @@ Opciones, por orden de coste:
    `data/items.json`, sembrarlos en `db/seed.js` y exponer `/api/items`). Es una
    tarea entera por sí misma: sería una **6.0**, antes de la 6.1.
 
-Recomendación: la 1, y crear la 6.0 solo si de verdad hacen falta objetos.
-Nada del resto de la app los usa todavía.
+**Se eligió la 2.** Una trampa que apareció al hacerla y que conviene recordar
+para cualquier entidad nueva del dataset: **`pnpm run seed` borra la base
+entera**, así que una instalación en marcha no puede incorporar datos nuevos
+resembrando (perdería perfiles, sesiones, favoritos, historial y ajustes). Los
+objetos entran por `db/migrate.js`, que los siembra solo si la tabla está vacía.
 
 ## 6. Recordatorios que ya son convención
 

@@ -48,6 +48,27 @@ export const api = {
   search: (q: string) => get<import("../types").SearchResults>(`/search?q=${encodeURIComponent(q)}`),
 
   /**
+   * Objetos (Tarea 6.0). A diferencia del resto de listados, este admite
+   * filtros: son 2151 entradas y el editor de reglas de Champions (6.1) los
+   * necesita por categoría para que marcarlos sea manejable.
+   *
+   * Pasan por `get()` como todo lo demás, así que llevan `?session=` cuando hay
+   * sesión activa. Hoy da igual —el middleware de overrides no toca los
+   * objetos—, pero mantiene la URL coherente para cuando lo haga.
+   */
+  items: {
+    list: (opts?: { category?: string; q?: string }) => {
+      const params = new URLSearchParams();
+      if (opts?.category) params.set("category", opts.category);
+      if (opts?.q) params.set("q", opts.q);
+      const query = params.toString();
+      return get<import("../types").ItemSummary[]>(`/items${query ? `?${query}` : ""}`);
+    },
+    detail: (id: string | number) => get<import("../types").ItemDetail>(`/items/${id}`),
+    categories: () => get<import("../types").ItemCategory[]>("/items/categories"),
+  },
+
+  /**
    * Perfiles (Fase 5). La implementación vive en `apiSession.ts`, que es donde
    * está el helper capaz de hacer POST/PUT/DELETE; el `get()` de este archivo
    * solo sabe hacer GET y además añade `?session=`, que aquí no queremos.

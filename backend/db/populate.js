@@ -19,6 +19,12 @@
  *   moves      [{ name_es, name_en, type, category, power, accuracy, pp,
  *                 priority, makes_contact, generation, effect_es }]
  *   abilities  [{ name_es, name_en, generation, effect_es }]
+ *   items      [{ name_es, name_en, category, effect_es }]   (opcional)
+ *
+ * `items` es OPCIONAL a propósito (Tarea 6.0): `lib/dataset.js`, que es quien
+ * construye el dataset para exportar, todavía no los conoce. Si se exigiera,
+ * `/api/export/sqlite` reventaría. Un dataset sin objetos produce una base sin
+ * objetos, y ya está.
  */
 
 const GENERATIONS = 9;
@@ -35,7 +41,7 @@ function populate(db, dataset) {
   return db.transaction(() => volcar(db, dataset))();
 }
 
-function volcar(db, { types, typeChart, pokemon, moves, abilities }) {
+function volcar(db, { types, typeChart, pokemon, moves, abilities, items = [] }) {
   const insertGen = db.prepare("INSERT INTO generations (id, name_es, name_en) VALUES (?, ?, ?)");
   for (let n = 1; n <= GENERATIONS; n++) {
     insertGen.run(n, `Generación ${n}`, `Generation ${n}`);
@@ -120,12 +126,34 @@ function volcar(db, { types, typeChart, pokemon, moves, abilities }) {
     })
   );
 
+  // Objetos (Tarea 6.0). El volcado vive aquí y no en seed.js para que lo
+  // comparta la exportación a SQLite el día que `lib/dataset.js` los incluya.
+  insertItems(db, items);
+
   return {
     types: types.length,
     pokemon: pokemon.length,
     moves: moves.length,
     abilities: abilityIdByName.size,
+    items: items.length,
   };
 }
 
-module.exports = { populate };
+/**
+ * Inserta los objetos. Se expone aparte porque `db/migrate.js` la reutiliza:
+ * una instalación que ya existe no puede resembrar (perdería perfiles,
+ * sesiones, favoritos, historial y ajustes), así que los objetos entran por
+ * migración cuando la tabla está vacía.
+ */
+function insertItems(db, items) {
+  if (!items || !items.length) return 0;
+  const insert = db.prepare(
+    "INSERT INTO items (name_es, name_en, category, effect_es) VALUES (?, ?, ?, ?)"
+  );
+  for (const it of items) {
+    insert.run(it.name_es, it.name_en ?? null, it.category ?? null, it.effect_es ?? null);
+  }
+  return items.length;
+}
+
+module.exports = { populate, insertItems };

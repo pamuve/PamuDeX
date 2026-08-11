@@ -71,6 +71,26 @@ export type SearchResults = {
   abilities: AbilitySummary[];
 };
 
+/**
+ * Objetos (Tarea 6.0). El listado NO trae `effect_es`: son 2151 entradas y el
+ * texto es casi todo el peso; la descripción llega con la ficha.
+ *
+ * `category` es la de PokeAPI en inglés (`held-items`, `mega-stones`, `berries`…),
+ * 54 en total. No hay campo «equipable»: PokeAPI no lo sabe (el Chaleco Asalto
+ * llega sin atributos y la Poción sí trae `holdable`), así que separar objetos
+ * de combate del resto se hace por categoría.
+ */
+export type ItemSummary = {
+  id: number;
+  name_es: string;
+  name_en: string;
+  category: string | null;
+};
+
+export type ItemDetail = ItemSummary & { effect_es: string | null };
+
+export type ItemCategory = { category: string; total: number };
+
 // ===================== Fase 2: comparador de equipos =====================
 
 export type StatKey = "hp" | "atk" | "def" | "spa" | "spd" | "spe";
