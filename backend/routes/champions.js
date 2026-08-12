@@ -36,10 +36,12 @@ const {
   COLUMN,
   parseAllowed,
   serializeAllowed,
+  allows,
   filterList,
   readRules,
-  catalog,
 } = require("../lib/championsFilter");
+const { createCatalog } = require("../lib/catalog");
+const { createEffectiveness, normalizeMultipliers } = require("../lib/effectiveness");
 
 const MAX_NAME = 60;
 
@@ -57,7 +59,27 @@ function parseId(raw) {
 
 module.exports = (db) => {
   const router = express.Router();
-  const cat = catalog(db);
+  const cat = createCatalog(db);
+
+  /**
+   * Motor de efectividad por conjunto de reglas (Tarea 6.2).
+   *
+   * Se cachea por id: construirlo lee los 18 tipos y prepara una consulta, y
+   * una ficha de Champions lo usaría en cada petición. La caché se invalida al
+   * guardar el conjunto, que es el único momento en que sus multiplicadores
+   * pueden cambiar.
+   */
+  const motores = new Map();
+
+  function effectivenessFor(row) {
+    const cacheada = motores.get(row.id);
+    if (cacheada) return cacheada;
+    const motor = createEffectiveness(db, readRules(row).multipliers);
+    motores.set(row.id, motor);
+    return motor;
+  }
+
+  const olvidarMotor = (id) => motores.delete(id);
 
   const q = {
     list: db.prepare(`SELECT * FROM champions_rules ORDER BY name COLLATE NOCASE ASC`),
@@ -76,6 +98,10 @@ module.exports = (db) => {
       `UPDATE champions_rules SET ${COLUMN[entity]} = ? WHERE id = ?`
     );
   }
+
+  const setMultipliers = db.prepare(
+    `UPDATE champions_rules SET custom_multipliers_json = ? WHERE id = ?`
+  );
 
   /** Busca el conjunto de reglas del :id, o responde ya con el error. */
   function rulesFrom(req, res) {
@@ -119,13 +145,13 @@ module.exports = (db) => {
     res.status(201).json(readRules(q.byId.get(info.lastInsertRowid)));
   });
 
-  // PUT /api/champions/:id  { name?, allowed: { pokemon: [1,2] | null, ... } }
+  // PUT /api/champions/:id
+  //   { name?, allowed?: { pokemon: [1,2] | null, ... },
+  //     multipliers?: { hiper_eficaz: 3, ... } | null }
   //
   // Solo se toca lo que venga en el cuerpo. Mandar `null` en una entidad le
-  // quita la restricción; mandar `[]` la deja sin nada permitido.
-  //
-  // `custom_multipliers_json` NO se toca aquí: es de la tarea 6.2. Se conserva
-  // tal cual esté en la base.
+  // quita la restricción; mandar `[]` la deja sin nada permitido. En
+  // `multipliers`, `null` restablece los valores de siempre.
   router.put("/:id", (req, res) => {
     const row = rulesFrom(req, res);
     if (!row) return;
@@ -158,11 +184,27 @@ module.exports = (db) => {
       }
     }
 
+    // Multiplicadores propios del modo (6.2). Se validan igual: antes de tocar
+    // la base. Las CLAVES son canónicas y no se pueden inventar; lo que cambia
+    // es el número que se enseña para cada categoría.
+    let multiplicadores; // undefined = no viene en el cuerpo, no tocar
+    if (body.multipliers !== undefined) {
+      const resultado = normalizeMultipliers(body.multipliers);
+      if (!resultado.ok) {
+        return res.status(400).json({ error: resultado.error, key: resultado.key });
+      }
+      multiplicadores = resultado.multipliers === null ? null : JSON.stringify(resultado.multipliers);
+    }
+
     const guardar = db.transaction(() => {
       if (name !== row.name) q.rename.run(name, row.id);
       for (const [entity, json] of pendientes) setAllowed[entity].run(json, row.id);
+      if (multiplicadores !== undefined) setMultipliers.run(multiplicadores, row.id);
     });
     guardar();
+
+    // El motor cacheado se queda con los multiplicadores viejos.
+    if (multiplicadores !== undefined) olvidarMotor(row.id);
 
     res.json(readRules(q.byId.get(row.id)));
   });
@@ -175,6 +217,7 @@ module.exports = (db) => {
     const info = q.remove.run(id);
     if (info.changes === 0) return res.status(404).json({ error: "reglas_no_encontradas" });
 
+    olvidarMotor(id);
     res.json({ ok: true, id });
   });
 
@@ -199,6 +242,63 @@ module.exports = (db) => {
       res.json(filterList(cat[entity](), parseAllowed(row[COLUMN[entity]])));
     });
   }
+
+  /* ------------------------------------------------------------------ */
+  /* Fichas con la efectividad del modo (Tarea 6.2)                      */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * GET /api/champions/:id/pokemon/:pokeId
+   *
+   * La misma ficha que `/api/pokemon/:id`, pero con la `efectividad` calculada
+   * con los multiplicadores del conjunto de reglas. Las CLAVES de los grupos
+   * (`hiper_eficaz`…) no cambian nunca —el frontend compara contra ellas—, solo
+   * el número que acompaña a cada una.
+   *
+   * Un Pokémon que el conjunto no permite responde 404: en este modo, para
+   * efectos prácticos, no existe.
+   */
+  router.get("/:id/pokemon/:pokeId", (req, res) => {
+    const row = rulesFrom(req, res);
+    if (!row) return;
+
+    const pokemon = cat.pokemonDetail(req.params.pokeId);
+    if (!pokemon) return res.status(404).json({ error: "Pokémon no encontrado" });
+
+    // Se comprueba contra el id interno, no contra el :pokeId de la URL, que
+    // puede ser el nº de Pokédex.
+    if (!allows(parseAllowed(row[COLUMN.pokemon]), pokemon.id)) {
+      return res.status(404).json({ error: "pokemon_no_permitido" });
+    }
+
+    const { defensiveProfile } = effectivenessFor(row);
+    res.json({
+      ...pokemon,
+      efectividad: defensiveProfile(pokemon.types.map((t) => t.id)),
+    });
+  });
+
+  /**
+   * GET /api/champions/:id/types/:typeId
+   *
+   * Los tipos NO se filtran: un conjunto de reglas limita el contenido
+   * (Pokémon, movimientos, habilidades, objetos), no la tabla de tipos, que es
+   * la física del juego. Lo que cambia aquí son los multiplicadores.
+   */
+  router.get("/:id/types/:typeId", (req, res) => {
+    const row = rulesFrom(req, res);
+    if (!row) return;
+
+    const type = cat.typeDetail(req.params.typeId);
+    if (!type) return res.status(404).json({ error: "Tipo no encontrado" });
+
+    const { offensiveProfile, defensiveProfileForSingleType } = effectivenessFor(row);
+    res.json({
+      ...type,
+      ofensivo: offensiveProfile(type.id),
+      defensivo: defensiveProfileForSingleType(type.id),
+    });
+  });
 
   return router;
 };

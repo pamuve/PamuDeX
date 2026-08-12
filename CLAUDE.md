@@ -87,8 +87,9 @@ comprobar tú.
 backend/
   data/        JSON semilla — la fuente de verdad del dataset
   db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
-  lib/         effectiveness.js, overrides.js, typechart.js, dataset.js,
-               importValidator.js, pin.js, pinThrottle.js, championsFilter.js
+  lib/         effectiveness.js, catalog.js, overrides.js, typechart.js,
+               dataset.js, importValidator.js, pin.js, pinThrottle.js,
+               championsFilter.js
   middleware/  sessionOverrides.js
   routes/      types, pokemon, moves, abilities, items, search, sessions,
                chart, export, import, profiles, favorites, history, settings,
@@ -230,12 +231,27 @@ Estado: **Fases 1-5 completas.** La 5 cerró con perfiles (`/perfiles`), PIN,
 favoritos (`/favoritos`), historial (`/historial`) y ajustes (`/ajustes`).
 
 **Fase 6 en curso** (Pokémon Champions): hechas la **6.0** (2151 objetos en
-`/api/items`) y la **6.1** (base de reglas en `/champions/reglas`).
-Siguiente: **6.2, multiplicadores propios del modo**.
+`/api/items`), la **6.1** (base de reglas en `/champions/reglas`) y la **6.2**
+(multiplicadores propios del modo). Siguiente: **6.3, la vista del modo**.
 
 En las reglas de Champions, **`null` no es `[]`**: columna a NULL es «sin
 restricción» y `[]` es «nada permitido». Un conjunto nuevo permite todo el
-catálogo, si no habría que marcar 1025 casillas antes de que sirviera de algo. Las decisiones de la fase están tomadas en
+catálogo, si no habría que marcar 1025 casillas antes de que sirviera de algo.
+
+### Efectividad: las claves son canónicas, los valores no
+
+`lib/effectiveness.js` es una factoría `createEffectiveness(db, multipliers)`.
+El producto de la tabla de tipos decide la **categoría** (`hiper_eficaz`,
+`super_eficaz`, `normal`, `poco_eficaz`, `muy_poco_eficaz`, `sin_efecto`) y el
+conjunto de reglas de Champions decide **qué número se enseña** en ella. No lo
+inviertas: agrupar por número —como se hacía antes de la 6.2— hace que poner
+«hiper eficaz» a x3 caiga en el cubo de x2.
+
+`EffectivenessPanel.tsx` indexa etiqueta y color **por `key`**, nunca por el
+multiplicador, y filtra el grupo neutro por `key !== "normal"`.
+
+Las lecturas del catálogo (listados y fichas) están en `lib/catalog.js`, no
+dentro de cada ruta: las comparten el modo estándar y Champions. Las decisiones de la fase están tomadas en
 `docs/tasks/fase6/00-preparacion.md` — la principal, que el filtro de Champions
 llega por **middleware con `?champions=<id>`**, igual que los overrides de sesión,
 para no duplicar rutas ni páginas.

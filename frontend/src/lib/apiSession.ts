@@ -355,19 +355,60 @@ export interface ChampionsRulesSummary {
   counts: ChampionsCounts;
 }
 
+/**
+ * Multiplicadores propios del modo (Tarea 6.2).
+ *
+ * Las **claves son canónicas** y no cambian nunca: son las que compara
+ * `lib/damage.ts` y con las que `EffectivenessPanel` elige etiqueta y color. Un
+ * conjunto de reglas solo redefine el NÚMERO de cada categoría.
+ */
+export type MultiplierKey =
+  | "hiper_eficaz"
+  | "super_eficaz"
+  | "normal"
+  | "poco_eficaz"
+  | "muy_poco_eficaz"
+  | "sin_efecto";
+
+export type ChampionsMultipliers = Record<MultiplierKey, number>;
+
+/** Orden en que se pintan, de más a menos eficaz. Lo mismo que en el backend. */
+export const MULTIPLIER_KEYS: MultiplierKey[] = [
+  "hiper_eficaz",
+  "super_eficaz",
+  "normal",
+  "poco_eficaz",
+  "muy_poco_eficaz",
+  "sin_efecto",
+];
+
 export interface ChampionsRules extends ChampionsRulesSummary {
   allowed: ChampionsAllowed;
-  /** Multiplicadores propios del modo. Los edita la 6.2; aquí solo se leen. */
-  multipliers: Record<string, number> | null;
+  /**
+   * Tabla COMPLETA: el backend rellena con los valores de siempre lo que el
+   * conjunto no personalice, así que el frontend nunca necesita conocerlos.
+   */
+  multipliers: ChampionsMultipliers;
+  /** `true` si el conjunto se aparta de los valores por defecto. */
+  multipliers_custom: boolean;
 }
 
 export const championsApi = {
   list: () => request<ChampionsRulesSummary[]>("GET", "/champions", undefined, false),
   get: (id: number) => request<ChampionsRules>("GET", `/champions/${id}`, undefined, false),
   create: (name: string) => request<ChampionsRules>("POST", "/champions", { name }, false),
-  /** Parcial: lo que no se envía conserva su valor. */
-  update: (id: number, patch: { name?: string; allowed?: Partial<ChampionsAllowed> }) =>
-    request<ChampionsRules>("PUT", `/champions/${id}`, patch, false),
+  /**
+   * Parcial: lo que no se envía conserva su valor.
+   * En `multipliers`, `null` restablece los valores de siempre.
+   */
+  update: (
+    id: number,
+    patch: {
+      name?: string;
+      allowed?: Partial<ChampionsAllowed>;
+      multipliers?: Partial<ChampionsMultipliers> | null;
+    }
+  ) => request<ChampionsRules>("PUT", `/champions/${id}`, patch, false),
   remove: (id: number) =>
     request<{ ok: boolean; id: number }>("DELETE", `/champions/${id}`, undefined, false),
 
@@ -376,6 +417,15 @@ export const championsApi = {
    * normales, para que la 6.3 pueda reutilizar componentes sin adaptarlos.
    */
   pokemon: (id: number) => apiGet<PokemonListItem[]>(`/champions/${id}/pokemon`, { session: false }),
+  /**
+   * Fichas del modo: la misma forma que `/api/pokemon/:id` y `/api/types/:id`,
+   * pero con la efectividad calculada con los multiplicadores del conjunto.
+   * Un Pokémon no permitido responde 404: en este modo no existe.
+   */
+  pokemonDetail: (id: number, pokeId: string | number) =>
+    apiGet<PokemonDetail>(`/champions/${id}/pokemon/${pokeId}`, { session: false }),
+  typeDetail: (id: number, typeId: string) =>
+    apiGet<import("../types").TypeDetail>(`/champions/${id}/types/${typeId}`, { session: false }),
   moves: (id: number) => apiGet<MoveDetail[]>(`/champions/${id}/moves`, { session: false }),
   abilities: (id: number) =>
     apiGet<AbilityDetail[]>(`/champions/${id}/abilities`, { session: false }),

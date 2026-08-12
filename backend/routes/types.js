@@ -1,15 +1,21 @@
 const express = require("express");
 const router = express.Router();
-const { offensiveProfile, defensiveProfileForSingleType } = require("../lib/effectiveness");
+const { createCatalog } = require("../lib/catalog");
+const { createEffectiveness } = require("../lib/effectiveness");
 
 module.exports = (db) => {
+  const catalog = createCatalog(db);
+  // Modo estándar: multiplicadores de siempre (ver routes/pokemon.js).
+  const { offensiveProfile, defensiveProfileForSingleType } = createEffectiveness(db, null);
+
   router.get("/", (req, res) => {
-    res.json(db.prepare("SELECT id, name_es, name_en, color FROM types").all());
+    res.json(catalog.types());
   });
 
   router.get("/:id", (req, res) => {
-    const type = db.prepare("SELECT id, name_es, name_en, color FROM types WHERE id = ?").get(req.params.id);
+    const type = catalog.typeDetail(req.params.id);
     if (!type) return res.status(404).json({ error: "Tipo no encontrado" });
+
     res.json({
       ...type,
       ofensivo: offensiveProfile(type.id),

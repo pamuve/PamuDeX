@@ -25,8 +25,9 @@ backend/
                (`pnpm run seed` BORRA la base y la recrea: se lleva perfiles,
                 sesiones, favoritos, historial y ajustes. Los datos nuevos
                 entran por migrate.js)
-  lib/         effectiveness.js, overrides.js, typechart.js, dataset.js,
-               importValidator.js, pin.js, pinThrottle.js, championsFilter.js
+  lib/         effectiveness.js, catalog.js, overrides.js, typechart.js,
+               dataset.js, importValidator.js, pin.js, pinThrottle.js,
+               championsFilter.js
   middleware/  sessionOverrides.js
   routes/      types.js, pokemon.js, moves.js, abilities.js, items.js,
                search.js, sessions.js, chart.js, export.js, import.js,
@@ -240,8 +241,31 @@ hogar. Lo que será de cada perfil es cuál tiene puesto, y eso va en `settings`
 (lo montará la 6.3).
 
 El PUT es **parcial** y valida todo antes de escribir nada, así que un cuerpo
-inválido no deja el conjunto a medias. `custom_multipliers_json` se conserva
-pero no se edita: es de la 6.2.
+inválido no deja el conjunto a medias.
+
+### Multiplicadores propios del modo (Tarea 6.2)
+
+- `PUT /api/champions/:id` acepta `multipliers` (`null` restablece los de siempre)
+- `GET /api/champions/:id/pokemon/:pokeId` y `/types/:typeId` → la misma ficha
+  que `/api/pokemon/:id` y `/api/types/:id`, con la **efectividad recalculada**
+
+**Las CLAVES son canónicas, los VALORES no.** `hiper_eficaz`, `super_eficaz`,
+`normal`, `poco_eficaz`, `muy_poco_eficaz` y `sin_efecto` no se pueden renombrar
+ni ampliar: son lo que comparan `lib/damage.ts` y `EffectivenessPanel.tsx`. Un
+conjunto de reglas solo cambia el número que se enseña en cada categoría.
+
+`lib/effectiveness.js` es una **factoría**, `createEffectiveness(db, multipliers)`.
+Su recorrido va **clave → valor**: el producto de la tabla de tipos decide la
+categoría (eso sale del cruce de tipos y no lo cambia nadie) y el conjunto de
+reglas decide el número. Al revés —agrupar por número, como hacía antes— poner
+«hiper eficaz» a x3 metía esos tipos en el cubo de x2.
+
+La API devuelve la tabla **completa** más `multipliers_custom`, para que el
+frontend no tenga que conocer los valores por defecto del proyecto.
+`EffectivenessPanel` indexa etiqueta y color **por `key`**, nunca por el número.
+
+Una ficha que el conjunto no permite responde **404**: en ese modo no existe.
+Los **tipos no se filtran**, son la física del juego y no contenido.
 
 Champions **no toca el modo estándar ni las sesiones**: no reescribe datos, solo
 dice qué contenido es legal. Por eso lee el catálogo global, sin overrides.
@@ -325,7 +349,9 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     fase porque la 6.1 no tenía objetos que filtrar.
   - ✅ **6.1** base de reglas en `/champions/reglas` (`champions_rules`,
     `lib/championsFilter.js`, `routes/champions.js`).
-  - 🔜 **6.2** multiplicadores propios del modo. **Es la siguiente.**
+  - ✅ **6.2** multiplicadores propios del modo (`custom_multipliers_json`),
+    con `lib/effectiveness.js` convertido en factoría.
+  - 🔜 **6.3** vista Champions con el middleware `?champions=`. **Es la siguiente.**
 
   Las decisiones de la fase están tomadas en
   `docs/tasks/fase6/00-preparacion.md`: el filtro llega por **middleware con

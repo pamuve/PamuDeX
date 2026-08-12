@@ -34,6 +34,7 @@ import {
   Check,
   Loader2,
   Plus,
+  RotateCcw,
   Save,
   Search,
   Shield,
@@ -43,10 +44,13 @@ import {
 import {
   championsApi,
   catalogApi,
+  MULTIPLIER_KEYS,
   type ChampionsAllowed,
   type ChampionsEntity,
+  type ChampionsMultipliers,
   type ChampionsRules,
   type ChampionsRulesSummary,
+  type MultiplierKey,
 } from "../lib/apiSession";
 import { useI18n } from "../i18n";
 
@@ -73,6 +77,7 @@ export default function ChampionsRules() {
   // Borrador local: lo que se está editando y todavía no se ha guardado.
   const [draft, setDraft] = useState<ChampionsAllowed | null>(null);
   const [draftName, setDraftName] = useState("");
+  const [draftMultipliers, setDraftMultipliers] = useState<ChampionsMultipliers | null>(null);
 
   const [catalogs, setCatalogs] = useState<Partial<Record<ChampionsEntity, Fila[]>>>({});
   const [query, setQuery] = useState("");
@@ -116,6 +121,7 @@ export default function ChampionsRules() {
       setSelected(reglas);
       setDraft(reglas.allowed);
       setDraftName(reglas.name);
+      setDraftMultipliers(reglas.multipliers);
       setQuery("");
       setConfirmDelete(false);
     } catch {
@@ -201,7 +207,17 @@ export default function ChampionsRules() {
     selected !== null &&
     draft !== null &&
     (draftName !== selected.name ||
-      ENTITIES.some((e) => JSON.stringify(draft[e]) !== JSON.stringify(selected.allowed[e])));
+      ENTITIES.some((e) => JSON.stringify(draft[e]) !== JSON.stringify(selected.allowed[e])) ||
+      MULTIPLIER_KEYS.some(
+        (k) => (draftMultipliers ? draftMultipliers[k] : null) !== selected.multipliers[k]
+      ));
+
+  /** Cambia un multiplicador del borrador. Vacío o no numérico se ignora. */
+  function setMultiplicador(key: MultiplierKey, valor: string) {
+    const numero = Number(valor);
+    if (valor.trim() === "" || !Number.isFinite(numero) || numero < 0) return;
+    setDraftMultipliers((prev) => (prev ? { ...prev, [key]: numero } : prev));
+  }
 
   function setEntidad(valor: number[] | null) {
     setDraft((prev) => (prev ? { ...prev, [entity]: valor } : prev));
@@ -236,10 +252,12 @@ export default function ChampionsRules() {
       const actualizado = await championsApi.update(selected.id, {
         name: draftName.trim() || selected.name,
         allowed: draft,
+        multipliers: draftMultipliers,
       });
       setSelected(actualizado);
       setDraft(actualizado.allowed);
       setDraftName(actualizado.name);
+      setDraftMultipliers(actualizado.multipliers);
       setList((prev) =>
         prev.map((r) =>
           r.id === actualizado.id
@@ -258,6 +276,31 @@ export default function ChampionsRules() {
     if (!selected) return;
     setDraft(selected.allowed);
     setDraftName(selected.name);
+    setDraftMultipliers(selected.multipliers);
+  }
+
+  /**
+   * Restablece los multiplicadores a los valores de siempre.
+   *
+   * Es una acción propia con su petición, no un cambio del borrador: el
+   * frontend no conoce los valores por defecto del proyecto a propósito (los
+   * rellena el backend), así que la única forma de volver a ellos es pedirlo
+   * con `multipliers: null`. Los cambios pendientes de nombre o de contenido
+   * siguen en el borrador — el PUT es parcial y no los toca.
+   */
+  async function restablecerMultiplicadores() {
+    if (!selected) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const actualizado = await championsApi.update(selected.id, { multipliers: null });
+      setSelected(actualizado);
+      setDraftMultipliers(actualizado.multipliers);
+    } catch {
+      setError(t("champions.saveError"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function crear() {
@@ -275,6 +318,7 @@ export default function ChampionsRules() {
       setSelected(creado);
       setDraft(creado.allowed);
       setDraftName(creado.name);
+      setDraftMultipliers(creado.multipliers);
       setCreating(false);
       setNewName("");
     } catch {
@@ -293,6 +337,7 @@ export default function ChampionsRules() {
       setList((prev) => prev.filter((r) => r.id !== selected.id));
       setSelected(null);
       setDraft(null);
+      setDraftMultipliers(null);
       setConfirmDelete(false);
     } catch {
       setError(t("champions.deleteError"));
@@ -622,6 +667,60 @@ export default function ChampionsRules() {
                     )}
                   </>
                 )}
+              </div>
+
+              {/* Multiplicadores del modo (Tarea 6.2) --------------------- */}
+              <div className="bg-panel rounded-xl2 shadow-card p-4">
+                <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1">
+                  {t("champions.multipliers")}
+                </h2>
+                <p className="text-ink-soft text-xs mb-3">{t("champions.multipliersHint")}</p>
+
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {MULTIPLIER_KEYS.map((key) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-3 bg-base rounded-lg px-3 py-2"
+                      htmlFor={`mult-${key}`}
+                    >
+                      <span className="text-ink text-sm flex-1 truncate">
+                        {t(`effectiveness.${key}`)}
+                      </span>
+                      <span className="text-ink-soft font-mono text-sm" aria-hidden="true">
+                        x
+                      </span>
+                      <input
+                        id={`mult-${key}`}
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        max={99}
+                        step={0.25}
+                        value={draftMultipliers ? draftMultipliers[key] : ""}
+                        onChange={(e) => setMultiplicador(key, e.target.value)}
+                        className="w-20 bg-panel border border-hover rounded-lg px-2 py-1.5 text-ink text-sm font-mono text-right focus:outline-none focus:border-ink-soft"
+                      />
+                    </label>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {selected.multipliers_custom && (
+                    <button
+                      onClick={restablecerMultiplicadores}
+                      disabled={busy}
+                      className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50"
+                    >
+                      <RotateCcw size={14} aria-hidden="true" />
+                      {t("champions.multipliersReset")}
+                    </button>
+                  )}
+                  <p className="text-ink-soft text-xs flex-1 min-w-[12rem]">
+                    {selected.multipliers_custom
+                      ? t("champions.multipliersCustom")
+                      : t("champions.multipliersDefault")}
+                  </p>
+                </div>
               </div>
             </section>
           )}

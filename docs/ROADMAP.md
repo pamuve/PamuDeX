@@ -101,8 +101,8 @@ por perfil (`settings.active_session`).
 |---|-------|--------|--------|
 | 6.0 | Objetos en el dataset (`items.json`, siembra por migración, `/api/items`) — añadida al preparar la fase | Pequeña | ✅ 2151 objetos en 54 categorías |
 | 6.1 | Base de reglas independiente (`champions_rules`, ya en el esquema): Pokémon/objetos/movimientos/habilidades permitidos | Media | ✅ `/champions/reglas` |
-| 6.2 | Multiplicador propio del modo ("Hiper eficaz" x4) integrado en `EffectivenessPanel` | Pequeña | 🔜 **siguiente** |
-| 6.3 | Vista Champions separada de la Pokédex general (misma UI, dataset filtrado) | Media | 🔜 |
+| 6.2 | Multiplicador propio del modo ("Hiper eficaz" x4) integrado en `EffectivenessPanel` | Pequeña | ✅ `custom_multipliers_json` editable |
+| 6.3 | Vista Champions separada de la Pokédex general (misma UI, dataset filtrado) | Media | 🔜 **siguiente** |
 
 ---
 

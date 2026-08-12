@@ -36,6 +36,12 @@
  * de Champions no significaría nada.
  */
 
+const {
+  DEFAULT_MULTIPLIERS,
+  normalizeMultipliers,
+  isCustomized,
+} = require("./effectiveness");
+
 /** Entidades que un conjunto de reglas puede limitar. */
 const ENTITIES = ["pokemon", "moves", "abilities", "items"];
 
@@ -130,46 +136,30 @@ function readRules(row) {
     counts[entity] = set === null ? null : set.size;
   }
 
-  // Los multiplicadores propios son de la tarea 6.2: aquí solo se leen y se
-  // devuelven tal cual para no perderlos, no se editan.
-  let multipliers = null;
+  // Multiplicadores propios del modo (Tarea 6.2).
+  //
+  // `multipliers` sale SIEMPRE con la tabla completa —los valores por defecto
+  // rellenan lo que falte— para que el frontend no tenga que conocer las
+  // constantes del proyecto: pinta lo que le llega. `multipliers_custom` dice si
+  // el conjunto se aparta de los valores de siempre, que es lo que distingue
+  // «no personalizado» de «personalizado con los mismos números».
+  let guardados = null;
   try {
-    multipliers = row.custom_multipliers_json ? JSON.parse(row.custom_multipliers_json) : null;
+    guardados = row.custom_multipliers_json ? JSON.parse(row.custom_multipliers_json) : null;
   } catch (err) {
-    multipliers = null;
+    // JSON corrupto: se cae a los valores por defecto en vez de romper la ficha.
+    guardados = null;
   }
-
-  return { id: row.id, name: row.name, allowed, counts, multipliers };
-}
-
-/**
- * Lecturas del catálogo global, con la MISMA forma y el MISMO orden que los
- * listados de `/api/pokemon`, `/api/moves`, `/api/abilities` y `/api/items`.
- *
- * Se repiten aquí los SELECT en vez de llamar a esas rutas porque un router de
- * Express no es invocable como función sin montar una petición falsa. Si cambia
- * la forma de un listado, hay que cambiarla en los dos sitios: por eso están
- * juntos y anotados.
- */
-function catalog(db) {
-  const q = {
-    pokemon: db.prepare(
-      `SELECT p.id, p.dex, p.name_es, p.name_en, p.generation
-         FROM pokemon p ORDER BY p.dex ASC`
-    ),
-    moves: db.prepare(
-      `SELECT m.id, m.name_es, m.name_en, m.type_id, t.color, m.category, m.power, m.accuracy, m.pp
-         FROM moves m JOIN types t ON t.id = m.type_id ORDER BY m.name_es`
-    ),
-    abilities: db.prepare(`SELECT id, name_es, name_en FROM abilities ORDER BY name_es`),
-    items: db.prepare(`SELECT id, name_es, name_en, category FROM items ORDER BY name_es`),
-  };
+  const normalizados = normalizeMultipliers(guardados);
+  const multipliers = normalizados.ok ? normalizados.multipliers : null;
 
   return {
-    pokemon: () => q.pokemon.all(),
-    moves: () => q.moves.all(),
-    abilities: () => q.abilities.all(),
-    items: () => q.items.all(),
+    id: row.id,
+    name: row.name,
+    allowed,
+    counts,
+    multipliers: { ...DEFAULT_MULTIPLIERS, ...(multipliers || {}) },
+    multipliers_custom: isCustomized(multipliers),
   };
 }
 
@@ -182,5 +172,4 @@ module.exports = {
   allows,
   filterList,
   readRules,
-  catalog,
 };
