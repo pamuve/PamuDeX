@@ -321,6 +321,68 @@ export const settingsApi = {
     ),
 };
 
+/**
+ * Conjuntos de reglas de Pokémon Champions (Tarea 6.1).
+ *
+ * Van con `session: false`: Champions y las sesiones de ROM Hack son modos
+ * **excluyentes** (ver `docs/tasks/fase6/00-preparacion.md`), así que añadir
+ * `?session=` no significaría nada y solo fragmentaría la caché del SW.
+ *
+ * `allowed.<entidad>` es `null` cuando NO hay restricción (vale todo el
+ * catálogo) y un array de ids cuando la hay. **`null` y `[]` son cosas
+ * distintas**: `[]` es «nada permitido». `counts` refleja lo mismo en número.
+ */
+export type ChampionsEntity = "pokemon" | "moves" | "abilities" | "items";
+
+export interface ChampionsAllowed {
+  pokemon: number[] | null;
+  moves: number[] | null;
+  abilities: number[] | null;
+  items: number[] | null;
+}
+
+export interface ChampionsCounts {
+  pokemon: number | null;
+  moves: number | null;
+  abilities: number | null;
+  items: number | null;
+}
+
+/** Lo que devuelve el listado: sin los ids, que pueden ser miles. */
+export interface ChampionsRulesSummary {
+  id: number;
+  name: string;
+  counts: ChampionsCounts;
+}
+
+export interface ChampionsRules extends ChampionsRulesSummary {
+  allowed: ChampionsAllowed;
+  /** Multiplicadores propios del modo. Los edita la 6.2; aquí solo se leen. */
+  multipliers: Record<string, number> | null;
+}
+
+export const championsApi = {
+  list: () => request<ChampionsRulesSummary[]>("GET", "/champions", undefined, false),
+  get: (id: number) => request<ChampionsRules>("GET", `/champions/${id}`, undefined, false),
+  create: (name: string) => request<ChampionsRules>("POST", "/champions", { name }, false),
+  /** Parcial: lo que no se envía conserva su valor. */
+  update: (id: number, patch: { name?: string; allowed?: Partial<ChampionsAllowed> }) =>
+    request<ChampionsRules>("PUT", `/champions/${id}`, patch, false),
+  remove: (id: number) =>
+    request<{ ok: boolean; id: number }>("DELETE", `/champions/${id}`, undefined, false),
+
+  /**
+   * Catálogo ya filtrado. Devuelve exactamente la misma forma que los listados
+   * normales, para que la 6.3 pueda reutilizar componentes sin adaptarlos.
+   */
+  pokemon: (id: number) => apiGet<PokemonListItem[]>(`/champions/${id}/pokemon`, { session: false }),
+  moves: (id: number) => apiGet<MoveDetail[]>(`/champions/${id}/moves`, { session: false }),
+  abilities: (id: number) =>
+    apiGet<AbilityDetail[]>(`/champions/${id}/abilities`, { session: false }),
+  items: (id: number) =>
+    apiGet<import("../types").ItemSummary[]>(`/champions/${id}/items`, { session: false }),
+};
+
 export const chartApi = {
   get: (session?: SessionParam) =>
     request<TypeChartResponse>("GET", "/chart", undefined, session),
@@ -335,6 +397,8 @@ export const catalogApi = {
   move: (id: number) => apiGet<MoveDetail>(`/moves/${id}`, { session: false }),
   abilities: () => apiGet<AbilityDetail[]>("/abilities", { session: false }),
   ability: (id: number) => apiGet<AbilityDetail>(`/abilities/${id}`, { session: false }),
+  /** Objetos (6.0). El editor de reglas de Champions los pide sin sesión. */
+  items: () => apiGet<import("../types").ItemSummary[]>("/items", { session: false }),
 };
 
 /** Nombre de un tipo en el idioma activo. */

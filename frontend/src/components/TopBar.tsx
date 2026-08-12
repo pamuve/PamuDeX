@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 import { useActiveProfile, profileInitial } from "../lib/profile";
 
-function ComingSoonMenu({ label, items }: { label: string; items: string[] }) {
+/**
+ * Menú «Modo». Sigue siendo un marcador de posición: encender el modo Champions
+ * y volver al estándar es cosa de la tarea 6.3. Lo único real que hay hoy es el
+ * editor de reglas de la 6.1, que se enlaza aquí para que la pantalla sea
+ * alcanzable mientras tanto.
+ */
+function ModeMenu({ label, items }: { label: string; items: string[] }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
@@ -24,7 +31,15 @@ function ComingSoonMenu({ label, items }: { label: string; items: string[] }) {
               {it}
             </div>
           ))}
-          <div className="px-3 pt-2 text-[11px] text-ink-soft/70 border-t border-hover mt-1">Disponible en la Fase 2</div>
+          <Link
+            to="/champions/reglas"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover border-t border-hover mt-1"
+          >
+            <Shield size={16} aria-hidden="true" />
+            {t("champions.title")}
+          </Link>
+          <div className="px-3 pt-2 text-[11px] text-ink-soft/70">{t("champions.modeSoon")}</div>
         </div>
       )}
     </div>
@@ -200,7 +215,7 @@ export function TopBar() {
           <span className="hidden sm:inline">{t("team.title")}</span>
         </Link>
 
-        <ComingSoonMenu label={t("nav.mode")} items={["Modo estándar", "Pokémon Champions", "Sesión ROM Hack"]} />
+        <ModeMenu label={t("nav.mode")} items={["Modo estándar", "Pokémon Champions", "Sesión ROM Hack"]} />
 
         <Link
           to="/ajustes"

@@ -39,7 +39,7 @@ export default defineConfig({
             // cuando no la hay, así que no se pierde el modo offline.
             //
             // Si añades un endpoint que el usuario pueda modificar, va AQUÍ.
-            urlPattern: /\/api\/(favorites|profiles|sessions|history|settings)\b/,
+            urlPattern: /\/api\/(favorites|profiles|sessions|history|settings|champions)\b/,
             handler: "NetworkFirst",
             options: {
               cacheName: "pamudex-user-cache",

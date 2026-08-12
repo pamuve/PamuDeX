@@ -50,6 +50,7 @@ app.use("/api/pokemon", require("./routes/pokemon")(db));
 app.use("/api/moves", require("./routes/moves")(db));
 app.use("/api/abilities", require("./routes/abilities")(db));
 app.use("/api/items", require("./routes/items")(db));
+app.use("/api/champions", require("./routes/champions")(db));
 app.use("/api/search", require("./routes/search")(db));
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));

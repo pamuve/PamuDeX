@@ -25,13 +25,14 @@ backend/
                (`pnpm run seed` BORRA la base y la recrea: se lleva perfiles,
                 sesiones, favoritos, historial y ajustes. Los datos nuevos
                 entran por migrate.js)
-  lib/         effectiveness.js, overrides.js, typechart.js,
-               dataset.js, importValidator.js, pin.js, pinThrottle.js
+  lib/         effectiveness.js, overrides.js, typechart.js, dataset.js,
+               importValidator.js, pin.js, pinThrottle.js, championsFilter.js
   middleware/  sessionOverrides.js
   routes/      types.js, pokemon.js, moves.js, abilities.js, items.js,
                search.js, sessions.js, chart.js, export.js, import.js,
-               profiles.js, favorites.js, history.js, settings.js
-  tests/       overrides.smoke.js, history.smoke.js
+               profiles.js, favorites.js, history.js, settings.js,
+               champions.js
+  tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js
   server.js
 frontend/src/
   components/  TopBar, SearchBar, TypeBadge, EffectivenessPanel,
@@ -42,7 +43,7 @@ frontend/src/
                      AbilityForm, RelationsMatrix, ThemeForm
   pages/       Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail,
                TeamBuilder, Sessions, Editor, EditorPokemon, ImportExport,
-               ProfileSelect, Favorites, History, Settings
+               ProfileSelect, Favorites, History, Settings, ChampionsRules
   hooks/       useSessionOverride.ts
   lib/         api.ts, apiSession.ts, session.ts, profile.ts, favorites.ts,
                history.ts, settings.ts, theme.ts, team.ts, damage.ts,
@@ -51,7 +52,7 @@ frontend/src/
   types.ts, App.tsx, main.tsx, index.css, theme-vars.css
 ```
 
-Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/favoritos`, `/historial`, `/ajustes`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`.
+Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/favoritos`, `/historial`, `/ajustes`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`, `/champions/reglas`.
 
 ### Perfiles y PIN (Tareas 5.1 y 5.2) — leer antes de tocar perfiles
 
@@ -221,6 +222,30 @@ ajustes. Los objetos entran por `db/migrate.js`, que los siembra desde
 `data/items.json` **solo si la tabla está vacía**: idempotente, aditivo, y
 respeta a quien los haya editado.
 
+### Reglas de Pokémon Champions (Tarea 6.1)
+
+- `GET|POST /api/champions`, `GET|PUT|DELETE /api/champions/:id`
+- `GET /api/champions/:id/pokemon|moves|abilities|items` → el catálogo **ya
+  filtrado**, con la misma forma que los listados normales
+
+**`null` NO es lo mismo que `[]`.** Es la decisión de diseño de la tarea:
+columna a NULL = **sin restricción** (vale todo el catálogo), `[]` = **nada
+permitido**, `[1,4,7]` = solo esos. Así un conjunto recién creado ya sirve, en
+vez de obligar a marcar 1025 casillas para poder consultar algo. Cada entidad se
+restringe por su cuenta: un formato que solo limita objetos no dice nada de los
+movimientos. Lo resuelve `backend/lib/championsFilter.js`.
+
+`champions_rules` **no tiene `profile_id`**: los conjuntos de reglas son del
+hogar. Lo que será de cada perfil es cuál tiene puesto, y eso va en `settings`
+(lo montará la 6.3).
+
+El PUT es **parcial** y valida todo antes de escribir nada, así que un cuerpo
+inválido no deja el conjunto a medias. `custom_multipliers_json` se conserva
+pero no se edita: es de la 6.2.
+
+Champions **no toca el modo estándar ni las sesiones**: no reescribe datos, solo
+dice qué contenido es legal. Por eso lee el catálogo global, sin overrides.
+
 ### Sesiones y overrides (Fase 3)
 
 - `GET|POST /api/sessions`, `GET|PUT|DELETE /api/sessions/:id`, `POST /api/sessions/:id/duplicate`
@@ -298,7 +323,9 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
 - 🔄 **Fase 6, en curso**: Pokémon Champions.
   - ✅ **6.0** objetos en el dataset (`/api/items`), tarea añadida al preparar la
     fase porque la 6.1 no tenía objetos que filtrar.
-  - 🔜 **6.1** base de reglas de Champions. **Es la siguiente.**
+  - ✅ **6.1** base de reglas en `/champions/reglas` (`champions_rules`,
+    `lib/championsFilter.js`, `routes/champions.js`).
+  - 🔜 **6.2** multiplicadores propios del modo. **Es la siguiente.**
 
   Las decisiones de la fase están tomadas en
   `docs/tasks/fase6/00-preparacion.md`: el filtro llega por **middleware con

@@ -67,7 +67,7 @@ Siempre, sin excepciones:
 
 ```bash
 cd frontend && pnpm exec tsc --noEmit && pnpm run build
-cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js && node tests/history.smoke.js
+cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js && node tests/history.smoke.js && node tests/champions.smoke.js
 ```
 
 Y comprobar la **paridad exacta de claves entre `es.json` y `en.json`**.
@@ -75,7 +75,8 @@ Y comprobar la **paridad exacta de claves entre `es.json` y `en.json`**.
 Ninguna de las dos pruebas necesita servidor ni SQLite: simulan `db`, `req` y
 `res`. `overrides.smoke.js` cubre overrides, middleware y tabla de tipos;
 `history.smoke.js` cubre el historial (la ventana de deduplicación de 5 minutos
-y la poda) y los ajustes por perfil. Ejecuta la que corresponda a lo que toques.
+y la poda) y los ajustes por perfil; `champions.smoke.js` cubre el filtrado de
+Champions (sobre todo que `null` y `[]` no se confundan). Ejecuta la que corresponda a lo que toques.
 
 Verificación interna, no le pidas al usuario que pruebe por ti lo que puedes
 comprobar tú.
@@ -87,11 +88,12 @@ backend/
   data/        JSON semilla — la fuente de verdad del dataset
   db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
   lib/         effectiveness.js, overrides.js, typechart.js, dataset.js,
-               importValidator.js, pin.js, pinThrottle.js
+               importValidator.js, pin.js, pinThrottle.js, championsFilter.js
   middleware/  sessionOverrides.js
   routes/      types, pokemon, moves, abilities, items, search, sessions,
-               chart, export, import, profiles, favorites, history, settings
-  tests/       overrides.smoke.js, history.smoke.js
+               chart, export, import, profiles, favorites, history, settings,
+               champions
+  tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
   pages/       una por ruta, registrada en App.tsx
@@ -227,9 +229,13 @@ siguiente tarea parte de información falsa.
 Estado: **Fases 1-5 completas.** La 5 cerró con perfiles (`/perfiles`), PIN,
 favoritos (`/favoritos`), historial (`/historial`) y ajustes (`/ajustes`).
 
-**Fase 6 en curso** (Pokémon Champions): hecha la **6.0**, que añadió los objetos
-al dataset (2151 en `/api/items`) porque la 6.1 no tenía objetos que filtrar.
-Siguiente: **6.1, base de reglas**. Las decisiones de la fase están tomadas en
+**Fase 6 en curso** (Pokémon Champions): hechas la **6.0** (2151 objetos en
+`/api/items`) y la **6.1** (base de reglas en `/champions/reglas`).
+Siguiente: **6.2, multiplicadores propios del modo**.
+
+En las reglas de Champions, **`null` no es `[]`**: columna a NULL es «sin
+restricción» y `[]` es «nada permitido». Un conjunto nuevo permite todo el
+catálogo, si no habría que marcar 1025 casillas antes de que sirviera de algo. Las decisiones de la fase están tomadas en
 `docs/tasks/fase6/00-preparacion.md` — la principal, que el filtro de Champions
 llega por **middleware con `?champions=<id>`**, igual que los overrides de sesión,
 para no duplicar rutas ni páginas.

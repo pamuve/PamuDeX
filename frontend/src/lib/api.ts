@@ -3,7 +3,7 @@
 // se encarga de que estas respuestas queden disponibles sin conexión tras la primera sincronización.
 
 import { getActiveSessionId } from "./session";
-import { profilesApi } from "./apiSession";
+import { profilesApi, championsApi } from "./apiSession";
 
 /**
  * Añade `?session=<id>` cuando hay una sesión activa (Fase 3).
@@ -75,4 +75,14 @@ export const api = {
    * Se expone desde `api` para que las páginas tengan un único punto de entrada.
    */
   profiles: profilesApi,
+
+  /**
+   * Pokémon Champions (Tarea 6.1). Como los perfiles, la implementación está en
+   * `apiSession.ts` (es la que sabe hacer POST/PUT/DELETE) y se expone aquí para
+   * que las páginas tengan un único punto de entrada.
+   *
+   * Ojo: `champions.pokemon(id)` y compañía devuelven el catálogo YA FILTRADO
+   * por ese conjunto de reglas, con la misma forma que `api.pokemon.list()`.
+   */
+  champions: championsApi,
 };

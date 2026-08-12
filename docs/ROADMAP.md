@@ -83,20 +83,25 @@ por perfil (`settings.active_session`).
 
 ---
 
-## 🔜 Fase 6 — Pokémon Champions
+## 🔄 Fase 6 — Pokémon Champions — en curso
 
-> **Antes de encargar la 6.1, lee `docs/tasks/fase6/00-preparacion.md`.** Los
-> tres encargos se escribieron antes de las fases 3, 4 y 5. Las decisiones ya
-> están tomadas y anotadas allí: el filtro de Champions llega por **middleware
-> con `?champions=<id>`** (como los overrides de la Fase 3, para no duplicar
-> rutas ni páginas), el modo es **excluyente con las sesiones de ROM Hack**, y
-> los objetos ya existen gracias a la 6.0.
+> **Lee `docs/tasks/fase6/00-preparacion.md` antes de seguir.** Los tres
+> encargos se escribieron antes de las fases 3, 4 y 5. Las decisiones ya están
+> tomadas y anotadas allí: el filtro de Champions llega por **middleware con
+> `?champions=<id>`** (como los overrides de la Fase 3, para no duplicar rutas ni
+> páginas, y lo monta la 6.3), el modo es **excluyente con las sesiones de ROM
+> Hack**, y los objetos existen gracias a la 6.0.
+>
+> De la 6.1 hay que saber que **`null` no es `[]`**: en un conjunto de reglas,
+> columna a NULL significa «sin restricción» y `[]` significa «nada permitido».
+> Un conjunto nuevo permite todo el catálogo; si no, habría que marcar 1025
+> casillas antes de que el modo sirviera para algo.
 
 | # | Tarea | Tamaño | Estado |
 |---|-------|--------|--------|
 | 6.0 | Objetos en el dataset (`items.json`, siembra por migración, `/api/items`) — añadida al preparar la fase | Pequeña | ✅ 2151 objetos en 54 categorías |
-| 6.1 | Base de reglas independiente (`champions_rules`, ya en el esquema): Pokémon/objetos/movimientos/habilidades permitidos | Media | 🔜 **siguiente** |
-| 6.2 | Multiplicador propio del modo ("Hiper eficaz" x4) integrado en `EffectivenessPanel` | Pequeña | 🔜 |
+| 6.1 | Base de reglas independiente (`champions_rules`, ya en el esquema): Pokémon/objetos/movimientos/habilidades permitidos | Media | ✅ `/champions/reglas` |
+| 6.2 | Multiplicador propio del modo ("Hiper eficaz" x4) integrado en `EffectivenessPanel` | Pequeña | 🔜 **siguiente** |
 | 6.3 | Vista Champions separada de la Pokédex general (misma UI, dataset filtrado) | Media | 🔜 |
 
 ---

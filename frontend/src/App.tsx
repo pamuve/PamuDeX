@@ -15,6 +15,7 @@ import EditorPokemon from "./pages/EditorPokemon";
 import ImportExport from "./pages/ImportExport";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import ChampionsRules from "./pages/ChampionsRules";
 import { useAppTheme } from "./lib/theme";
 import { useActiveSession } from "./lib/session";
 import { useProfileSettings } from "./lib/settings";
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/favoritos" element={<Favorites />} />
         <Route path="/historial" element={<History />} />
         <Route path="/ajustes" element={<Settings />} />
+        <Route path="/champions/reglas" element={<ChampionsRules />} />
         <Route path="/equipo" element={<TeamBuilder />} />
         <Route path="/sesiones" element={<Sessions />} />
         <Route path="/editor" element={<Editor />} />
