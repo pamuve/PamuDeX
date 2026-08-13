@@ -24,15 +24,23 @@ export function getActiveSessionId(): number | null {
   }
 }
 
-/** Cambia la sesión activa (null = datos globales) y avisa a toda la app. */
-export function setActiveSessionId(id: number | null): void {
+/**
+ * Cambia la sesión activa (null = datos globales) y avisa a toda la app.
+ *
+ * `silent` marca los cambios que NO son una decisión del usuario: restaurar la
+ * sesión de un perfil al entrar en él (5.4) o pausarla al entrar en el modo
+ * Champions (6.3). `lib/settings.ts` los ve en el evento y no los guarda como
+ * preferencia del perfil — si no, entrar en Champions borraría el ROM Hack que
+ * ese perfil tenía abierto.
+ */
+export function setActiveSessionId(id: number | null, silent = false): void {
   try {
     if (id === null) localStorage.removeItem(ACTIVE_SESSION_KEY);
     else localStorage.setItem(ACTIVE_SESSION_KEY, String(id));
   } catch {
     /* modo privado / almacenamiento lleno: seguimos igualmente */
   }
-  window.dispatchEvent(new CustomEvent(ACTIVE_SESSION_EVENT, { detail: id }));
+  window.dispatchEvent(new CustomEvent(ACTIVE_SESSION_EVENT, { detail: { id, silent } }));
 }
 
 /**

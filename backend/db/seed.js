@@ -28,11 +28,13 @@ function seed() {
     pokemon: readJSON("pokemon.json"),
     moves: readJSON("moves.json"),
     abilities: readJSON("abilities.json"),
+    items: readJSON("items.json"),
   });
 
   console.log(`✔ Base de datos creada en ${DB_PATH}`);
   console.log(
-    `  · ${counts.types} tipos, ${counts.pokemon} Pokémon, ${counts.moves} movimientos, ${counts.abilities} habilidades`
+    `  · ${counts.types} tipos, ${counts.pokemon} Pokémon, ${counts.moves} movimientos, ` +
+      `${counts.abilities} habilidades, ${counts.items} objetos`
   );
   db.close();
 }

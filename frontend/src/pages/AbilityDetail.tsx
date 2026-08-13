@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { AbilityDetail as AbilityDetailT } from "../types";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { NotAllowed } from "../components/NotAllowed";
 import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
@@ -10,13 +11,18 @@ export function AbilityDetail() {
   const { id } = useParams();
   const { t } = useI18n();
   const [ability, setAbility] = useState<AbilityDetailT | null>(null);
+  // En modo Champions el backend responde 404 si la entidad no es legal.
+  const [noPermitido, setNoPermitido] = useState(false);
 
   useEffect(() => {
-    if (id) api.abilities.detail(id).then(setAbility);
+    if (!id) return;
+    setNoPermitido(false);
+    api.abilities.detail(id).then(setAbility).catch(() => setNoPermitido(true));
   }, [id]);
 
   useRecordVisit("ability", ability ? ability.id : undefined);
 
+  if (noPermitido) return <NotAllowed />;
   if (!ability) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 
   return (

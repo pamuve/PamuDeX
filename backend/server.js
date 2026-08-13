@@ -27,13 +27,19 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 const sessionOverrides = require("./middleware/sessionOverrides");
+const championsMode = require("./middleware/championsMode");
 const sessionsRoutes = require("./routes/sessions");
 const chartRoutes = require("./routes/chart");
 
 app.use(express.json());
 
-// IMPORTANTE: el middleware va ANTES de las rutas de datos. Intercepta res.json
-// y aplica los overrides de la sesión; sin ?session= en la query no hace nada.
+// IMPORTANTE: los dos middlewares van ANTES de las rutas de datos. Interceptan
+// res.json; sin su parámetro en la query no hacen nada.
+//
+// El de Champions va PRIMERO a propósito: los dos modos son excluyentes, y al
+// correr antes puede quitar `?session=` de la query para que sessionOverrides
+// ni se entere. Si llegan los dos, manda Champions.
+app.use("/api", championsMode(db));
 app.use("/api", sessionOverrides(db));
 
 app.use("/api/profiles", require("./routes/profiles")(db));
@@ -49,6 +55,8 @@ app.use("/api/types", require("./routes/types")(db));
 app.use("/api/pokemon", require("./routes/pokemon")(db));
 app.use("/api/moves", require("./routes/moves")(db));
 app.use("/api/abilities", require("./routes/abilities")(db));
+app.use("/api/items", require("./routes/items")(db));
+app.use("/api/champions", require("./routes/champions")(db));
 app.use("/api/search", require("./routes/search")(db));
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));

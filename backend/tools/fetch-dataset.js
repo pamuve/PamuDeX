@@ -1,5 +1,5 @@
 /**
- * Regenera backend/data/{abilities,moves,pokemon}.json desde PokeAPI.
+ * Regenera backend/data/{abilities,moves,pokemon,items}.json desde PokeAPI.
  *
  *   node tools/fetch-dataset.js            # todo
  *   node tools/fetch-dataset.js abilities  # solo una parte
@@ -19,6 +19,13 @@
  *
  * `makes_contact` no existe en PokeAPI. Los movimientos importados lo dejan a
  * null = desconocido; la ficha muestra «—» en vez de inventar un Sí/No.
+ *
+ * OJO CON LAS DESCRIPCIONES EN ESPAÑOL (Tarea 6.0): las de PokeAPI vienen por
+ * grupo de versiones, y las del grupo `x-y` están CAMBIADAS DE SITIO en los
+ * objetos — `leftovers` (Restos) devuelve la del Pañuelo Seda, y `life-orb`
+ * (Vidasfera) una de Velocidad. Como `x-y` es el grupo más antiguo, es el
+ * primero de la lista: quedarse con la primera coincidencia importa la
+ * descripción equivocada. Por eso `describe()` toma la MÁS RECIENTE.
  */
 
 const fs = require("fs");
@@ -91,16 +98,27 @@ const localized = (entries, key, lang, fallback) => {
   return hit ? hit[key] : fallback;
 };
 
+/**
+ * Como `localized`, pero se queda con la ÚLTIMA coincidencia en vez de la
+ * primera. PokeAPI ordena los textos por grupo de versiones de más antiguo a
+ * más nuevo, y el grupo `x-y` trae descripciones cruzadas en los objetos (ver
+ * la cabecera). La entrada más reciente es la que describe de verdad la ficha.
+ */
+const localizedLatest = (entries, key, lang, fallback) => {
+  const hits = (entries || []).filter((e) => e.language && e.language.name === lang);
+  return hits.length ? hits[hits.length - 1][key] : fallback;
+};
+
 /** El flavor text trae saltos de línea duros y \f de la caja de texto del juego. */
 const clean = (text) =>
   text ? text.replace(/[\n\f\r]+/g, " ").replace(/\s+/g, " ").trim() : null;
 
 function describe(entry) {
-  const es = clean(localized(entry.flavor_text_entries, "flavor_text", "es", null));
+  const es = clean(localizedLatest(entry.flavor_text_entries, "flavor_text", "es", null));
   if (es) return es;
   const enEffect = (entry.effect_entries || []).find((e) => e.language.name === "en");
   if (enEffect) return clean(enEffect.short_effect || enEffect.effect);
-  return clean(localized(entry.flavor_text_entries, "flavor_text", "en", null));
+  return clean(localizedLatest(entry.flavor_text_entries, "flavor_text", "en", null));
 }
 
 const nameEs = (entry) => localized(entry.names, "name", "es", null) || entry.name;
@@ -212,6 +230,67 @@ async function fetchMoves() {
   return all;
 }
 
+/**
+ * Objetos (Tarea 6.0).
+ *
+ * Dos diferencias con movimientos y habilidades:
+ *  - el texto de la ficha está en `flavor_text_entries[].text`, no en
+ *    `.flavor_text`, así que `describe()` no sirve tal cual;
+ *  - hay que quedarse con la entrada en español MÁS RECIENTE, porque la del
+ *    grupo `x-y` describe otro objeto (ver la cabecera del archivo).
+ *
+ * NO se guarda si el objeto es equipable, aunque haría falta para un formato de
+ * combate: el campo `attributes` de PokeAPI no lo sabe. El Chaleco Asalto y el
+ * Casco Dentado llegan SIN atributos, y en cambio la Poción y la Master Ball
+ * traen `holdable`. Derivarlo de ahí sería inventarse el dato en las dos
+ * direcciones, así que se deja fuera y se guarda `category`, que sí es fiable
+ * (54 categorías) y es con lo que el editor de reglas de Champions (6.1) puede
+ * agrupar y filtrar.
+ */
+function describeItem(entry) {
+  const es = clean(localizedLatest(entry.flavor_text_entries, "text", "es", null));
+  if (es) return es;
+  const enEffect = (entry.effect_entries || []).find((e) => e.language.name === "en");
+  if (enEffect) return clean(enEffect.short_effect || enEffect.effect);
+  return clean(localizedLatest(entry.flavor_text_entries, "text", "en", null));
+}
+
+async function fetchItems() {
+  const index = await get(`${API}/item?limit=3000`);
+
+  // La primera vez el archivo no existe todavía; a partir de ahí manda lo ya
+  // escrito, igual que con el resto del dataset.
+  const existing = fs.existsSync(path.join(DATA_DIR, "items.json")) ? readJSON("items.json") : [];
+  const known = new Set(existing.map((i) => i.name_en));
+
+  const fetched = await pool(index.results, (r) => get(r.url), "objetos");
+
+  // De 2223 entradas de PokeAPI salen 2151 objetos, y esos 72 de diferencia son
+  // CORRECTOS: son variantes del mismo objeto según el juego
+  // (`poke-ball` / `lapoke-ball` de Leyendas Arceus, `firium-z--held` /
+  // `firium-z--bag`, `basement-key--goldenrod` / `--new-mauville`…). Agruparlas
+  // por nombre las colapsa en una sola ficha, que es lo que quiere una Pokédex.
+  // No lo cambies a agrupar por slug pensando que se pierden objetos.
+  const added = [];
+  for (const it of fetched) {
+    if (!it) continue;
+    const en = nameEn(it);
+    if (known.has(en)) continue;
+    known.add(en);
+    added.push({
+      name_es: nameEs(it),
+      name_en: en,
+      category: it.category ? it.category.name : null,
+      effect_es: describeItem(it),
+    });
+  }
+
+  const all = [...existing, ...added];
+  writeJSON("items.json", all);
+  console.log(`  objetos: ${existing.length} conservados + ${added.length} nuevos = ${all.length}`);
+  return all;
+}
+
 async function fetchPokemon(esBySlug) {
   const existing = readJSON("pokemon.json");
   const byDex = new Map(existing.map((p) => [p.dex, p]));
@@ -290,9 +369,13 @@ async function fetchPokemon(esBySlug) {
   let esBySlug = null;
   if (!only || only === "abilities") ({ esBySlug } = await fetchAbilities());
   if (!only || only === "moves") await fetchMoves();
+  if (!only || only === "items") await fetchItems();
   if (!only || only === "pokemon") await fetchPokemon(esBySlug || (await loadAbilitySlugMap()));
 
-  console.log(`\nListo en ${Math.round((Date.now() - t0) / 1000)}s. Ahora: npm run seed`);
+  // `pnpm run seed` BORRA la base de datos (y con ella perfiles, sesiones,
+  // favoritos, historial y ajustes). En una instalación en marcha basta con
+  // reiniciar: db/migrate.js siembra los objetos si la tabla está vacía.
+  console.log(`\nListo en ${Math.round((Date.now() - t0) / 1000)}s. Ahora: pnpm run seed (¡recrea la base!)`);
 })().catch((err) => {
   console.error("\nError:", err.message);
   process.exit(1);

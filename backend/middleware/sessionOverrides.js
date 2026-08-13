@@ -31,7 +31,12 @@ const { TYPE_IDS, buildChart, defensiveMultiplier } = require("../lib/typechart"
 /** Etiquetas por defecto, por si la respuesta original no trae ese multiplicador. */
 const DEFAULT_LABELS = {
   4: { label: "HIPER EFICAZ", key: "hiper_eficaz" },
-  2: { label: "SUPEREFICAZ", key: "supereficaz" },
+  // OJO: `super_eficaz` CON guion bajo. Es el valor canónico del proyecto (el
+  // que emite lib/effectiveness.js y contra el que comparan lib/damage.ts y
+  // EffectivenessPanel.tsx). Aquí ponía `supereficaz` y no se notaba porque
+  // estas etiquetas solo se usan cuando la respuesta original no traía ese
+  // multiplicador; desde la 6.2 el panel indexa por clave y sí se notaría.
+  2: { label: "SUPEREFICAZ", key: "super_eficaz" },
   1: { label: "NORMAL", key: "normal" },
   0.5: { label: "POCO EFICAZ", key: "poco_eficaz" },
   0.25: { label: "MUY POCO EFICAZ", key: "muy_poco_eficaz" },

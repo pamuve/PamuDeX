@@ -71,7 +71,7 @@ const pikachu = run(
     stats: { hp: 35, atk: 55, spe: 90 },
     types: [{ id: "electrico", name_es: "Eléctrico", color: "#F7D02C" }],
     efectividad: [
-      { multiplier: 2, label: "SUPEREFICAZ", key: "supereficaz", types: ["tierra"] },
+      { multiplier: 2, label: "SUPEREFICAZ", key: "super_eficaz", types: ["tierra"] },
       { multiplier: 0.5, label: "POCO EFICAZ", key: "poco_eficaz", types: ["volador", "acero", "electrico"] },
     ],
   }

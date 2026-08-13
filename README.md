@@ -12,6 +12,7 @@ El objetivo es ofrecer una herramienta rápida, instalable y que funcione **100%
 *   ⚔️ **Simulador Táctico:** Comparador avanzado de equipos que analiza la "Mejor Respuesta" basándose en coberturas, resistencias, inmunidades y movimientos esperados del rival.
 *   🛠️ **Sesiones Personalizadas (ROM Hacks):** Base de datos adaptable para crear entornos de juego donde puedes modificar tipos, estadísticas o habilidades a través de un editor visual.
 *   👥 **Sistema Multi-Perfil:** Soporte para múltiples usuarios locales con configuraciones, favoritos, historial y temas independientes, con PIN opcional por perfil (ver [Alcance de seguridad](#-alcance-de-seguridad)).
+*   🛡️ **Modo Pokémon Champions:** Un modo aparte con su propia base de reglas — qué Pokémon, movimientos, habilidades y objetos son legales — y multiplicadores de efectividad propios. Reutiliza toda la interfaz de consulta, con un distintivo permanente para no confundirlo con la Pokédex estándar.
 *   🐳 **Autoalojable:** Despliegue en un solo contenedor Docker con persistencia de datos mediante volúmenes, compatible con Docker Compose.
 
 ## 🏗️ Arquitectura y Tecnologías
@@ -36,7 +37,8 @@ El objetivo es ofrecer una herramienta rápida, instalable y que funcione **100%
 ```
 pamudex/
 ├── backend/
-│   ├── data/              # JSON semilla: types, type_chart, pokemon, moves, abilities
+│   ├── data/              # JSON semilla: types, type_chart, pokemon, moves,
+│   │                      # abilities, items
 │   ├── db/
 │   │   ├── schema.sql     # esquema SQLite completo (núcleo + tablas Fase 4+)
 │   │   ├── seed.js        # recrea la DB desde los JSON de /data
@@ -48,15 +50,20 @@ pamudex/
 │   │   ├── typechart.js       # tabla de tipos 18x18 + overrides de relaciones
 │   │   ├── dataset.js         # dataset con overrides resueltos (export e import)
 │   │   ├── importValidator.js # validación de JSON/CSV antes de aplicar
-│   │   └── pin.js, pinThrottle.js  # PIN de perfil (scrypt) y límite de intentos
+│   │   ├── pin.js, pinThrottle.js  # PIN de perfil (scrypt) y límite de intentos
+│   │   ├── catalog.js         # lecturas del catálogo (listados y fichas)
+│   │   └── championsFilter.js # reglas de Champions: qué contenido es legal
 │   ├── middleware/
-│   │   └── sessionOverrides.js  # aplica ?session=<id> interceptando res.json
-│   ├── routes/             # types, pokemon, moves, abilities, search, sessions,
-│   │                       # chart, export, import, profiles, favorites,
-│   │                       # history, settings
+│   │   ├── sessionOverrides.js  # aplica ?session=<id> interceptando res.json
+│   │   └── championsMode.js     # aplica ?champions=<id> igual (Fase 6)
+│   ├── routes/             # types, pokemon, moves, abilities, items, search,
+│   │                       # sessions, chart, export, import, profiles,
+│   │                       # favorites, history, settings, champions
 │   ├── tests/              # pruebas de humo sin servidor ni SQLite
 │   │   ├── overrides.smoke.js
-│   │   └── history.smoke.js     # historial (ventana de 5 min) y ajustes
+│   │   ├── history.smoke.js       # historial (ventana de 5 min) y ajustes
+│   │   ├── champions.smoke.js     # reglas y multiplicadores de Champions
+│   │   └── championsMode.smoke.js # el middleware del modo
 │   ├── server.js
 │   └── package.json
 ├── frontend/
@@ -65,18 +72,19 @@ pamudex/
 │   │   ├── components/     # TopBar, SearchBar, TypeBadge, EffectivenessPanel,
 │   │   │   │               # TeamSlotCard, RivalSlotCard, RecommendationCard,
 │   │   │   │               # CoverageMap, SessionRequired, ImportPanel,
-│   │   │   │               # PinPad, PinDialog, FavoriteButton
+│   │   │   │               # PinPad, PinDialog, FavoriteButton, NotAllowed
 │   │   │   └── forms/      # PokemonForm, TypeForm, MoveForm, AbilityForm,
 │   │   │                   # RelationsMatrix, ThemeForm, EntityPicker, FormField
 │   │   ├── pages/          # Home, PokemonDetail, TypeDetail, MoveDetail,
 │   │   │                   # AbilityDetail, TeamBuilder, Sessions, Editor,
 │   │   │                   # EditorPokemon, ImportExport, ProfileSelect,
-│   │   │                   # Favorites, History, Settings
+│   │   │                   # Favorites, History, Settings,
+│   │   │                   # ChampionsHome, ChampionsRules
 │   │   ├── hooks/          # useSessionOverride.ts
 │   │   ├── i18n/           # es.json, en.json, index.tsx (contexto)
 │   │   ├── lib/            # api, apiSession, session, profile, favorites,
-│   │   │                   # history, settings, theme, team, damage,
-│   │   │                   # recommendation, coverage
+│   │   │                   # history, settings, champions, theme, team,
+│   │   │                   # damage, recommendation, coverage
 │   │   ├── theme-vars.css  # variables CSS de la paleta (las pisan el tema de
 │   │   │                   # sesión y, por debajo, el del perfil)
 │   │   ├── types.ts
@@ -203,7 +211,7 @@ con token. Nada de eso está implementado.
 
 ## ⚙️ Estado del proyecto
 
-> Estado actual: **Fases 1 a 5 completas y verificadas.**
+> Estado actual: **Fases 1 a 6 completas y verificadas.**
 >
 > - **Fase 1** — núcleo de datos + consulta + PWA offline + Docker.
 > - **Fase 2** — comparador de equipos táctico en `/equipo` (motor de daño, «mejor respuesta», mapa de cobertura).
@@ -213,8 +221,13 @@ con token. Nada de eso está implementado.
 >   historial en `/historial` y ajustes en `/ajustes`. Cada perfil tiene su
 >   idioma, su tema, su historial y su sesión de ROM Hack.
 >
-> Siguiente: **Fase 6 — Pokémon Champions**, con nota previa en
-> [`docs/tasks/fase6/00-preparacion.md`](docs/tasks/fase6/00-preparacion.md).
+> - **Fase 6** — modo Pokémon Champions en `/champions`, con su base de reglas en
+>   `/champions/reglas`: qué Pokémon, movimientos, habilidades y objetos son
+>   legales, y multiplicadores de efectividad propios. Es un modo aparte: no toca
+>   la Pokédex estándar y es excluyente con las sesiones de ROM Hack. Trajo además
+>   los **2151 objetos** al dataset.
+>
+> Siguiente: **Fase 7 — Multi-generación avanzada**.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

@@ -30,6 +30,12 @@ function hasTable(db, table) {
   return Boolean(row);
 }
 
+/** ¿Está vacía esa tabla? (false si ni siquiera existe) */
+function isEmpty(db, table) {
+  if (!hasTable(db, table)) return false;
+  return db.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get().c === 0;
+}
+
 /** ¿Existe ese índice? */
 function hasIndex(db, index) {
   const row = db
@@ -77,6 +83,30 @@ const MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_history_perfil
           ON history (profile_id, viewed_at);
       `),
+  },
+  {
+    // Tarea 6.0 — objetos. Es la primera migración que trae DATOS, no esquema,
+    // y hace falta porque `pnpm run seed` BORRA la base entera: una instalación
+    // en marcha perdería perfiles, sesiones, favoritos, historial y ajustes solo
+    // por incorporar una entidad nueva del dataset. Aquí entran sin tocar nada.
+    //
+    // La condición es que la tabla esté VACÍA, así que es idempotente y además
+    // respeta al usuario que haya editado sus objetos: si tiene aunque sea uno,
+    // esto no vuelve a ejecutarse nunca.
+    name: "siembra de items",
+    needed: (db) => isEmpty(db, "items"),
+    run: (db) => {
+      const fs = require("fs");
+      const path = require("path");
+      const file = path.join(__dirname, "..", "data", "items.json");
+      if (!fs.existsSync(file)) return;
+
+      const { insertItems } = require("./populate");
+      const items = JSON.parse(fs.readFileSync(file, "utf-8"));
+      // En una transacción: son ~2.150 escrituras y sin ella el arranque se va
+      // a varios segundos de I/O.
+      db.transaction(() => insertItems(db, items))();
+    },
   },
 ];
 

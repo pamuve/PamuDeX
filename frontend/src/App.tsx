@@ -15,6 +15,9 @@ import EditorPokemon from "./pages/EditorPokemon";
 import ImportExport from "./pages/ImportExport";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import ChampionsRules from "./pages/ChampionsRules";
+import ChampionsHome from "./pages/ChampionsHome";
+import { useActiveChampions } from "./lib/champions";
 import { useAppTheme } from "./lib/theme";
 import { useActiveSession } from "./lib/session";
 import { useProfileSettings } from "./lib/settings";
@@ -23,6 +26,7 @@ export default function App() {
   useAppTheme();                        // tema efectivo: la sesión pisa al perfil
   useProfileSettings();                 // ajustes del perfil + su sesión de ROM Hack
   const [sessionId] = useActiveSession();
+  const { champions } = useActiveChampions();
   const [profile] = useActiveProfile();
   const { pathname } = useLocation();
 
@@ -30,12 +34,16 @@ export default function App() {
   // barra superior, porque desde ella todavía no hay perfil con el que navegar.
   const isProfileGate = pathname === "/perfiles";
 
-  // `lib/api.ts` añade ?session=<id> a cada petición. Al cambiar de sesión hay
-  // que volver a pedir los datos: la key remonta las páginas y se refrescan solas.
+  // `lib/api.ts` añade ?session=<id> o ?champions=<id> a cada petición. Al
+  // cambiar de modo hay que volver a pedir los datos: la key remonta las páginas
+  // y se refrescan solas. Los dos modos son excluyentes, así que una sola key
+  // los cubre.
+  const modeKey = champions ? `champions:${champions.id}` : `session:${sessionId ?? "global"}`;
+
   return (
     <div className="min-h-full bg-base">
       {!isProfileGate && <TopBar />}
-      <Routes key={sessionId ?? "global"}>
+      <Routes key={modeKey}>
         <Route path="/perfiles" element={<ProfileSelect />} />
         {/* Sin perfil activo, la portada lleva a elegir uno. */}
         <Route path="/" element={profile ? <Home /> : <Navigate to="/perfiles" replace />} />
@@ -46,6 +54,9 @@ export default function App() {
         <Route path="/favoritos" element={<Favorites />} />
         <Route path="/historial" element={<History />} />
         <Route path="/ajustes" element={<Settings />} />
+        {/* La ruta con más segmentos va primero para que no la capture /champions. */}
+        <Route path="/champions/reglas" element={<ChampionsRules />} />
+        <Route path="/champions" element={<ChampionsHome />} />
         <Route path="/equipo" element={<TeamBuilder />} />
         <Route path="/sesiones" element={<Sessions />} />
         <Route path="/editor" element={<Editor />} />

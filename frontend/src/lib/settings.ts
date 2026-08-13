@@ -24,9 +24,15 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { settingsApi, type ProfileSettings } from "./apiSession";
+import { settingsApi, championsApi, type ProfileSettings } from "./apiSession";
 import { getActiveProfileId, ACTIVE_PROFILE_EVENT } from "./profile";
 import { getActiveSessionId, setActiveSessionId, ACTIVE_SESSION_EVENT } from "./session";
+import {
+  getActiveChampionsId,
+  enterChampions,
+  exitChampions,
+  ACTIVE_CHAMPIONS_EVENT,
+} from "./champions";
 
 export type { ProfileSettings };
 
@@ -36,6 +42,7 @@ export const SETTINGS_EVENT = "pamudex:settings";
 export const DEFAULT_SETTINGS: ProfileSettings = {
   active_session: "",
   history_enabled: "1",
+  champions_rules: "",
 };
 
 /** Ajustes del perfil activo. null = todavía no se han cargado. */
@@ -50,8 +57,11 @@ let loading: Promise<ProfileSettings> | null = null;
  */
 let primeraCarga = true;
 
-/** Evita que restaurar la sesión de un perfil se vuelva a guardar como cambio. */
-let aplicandoSesion = false;
+/**
+ * Conjuntos de reglas de Champions ya vistos, para no pedir el nombre otra vez
+ * al restaurar el modo de un perfil.
+ */
+const nombresChampions = new Map<number, string>();
 
 function announce() {
   window.dispatchEvent(new CustomEvent(SETTINGS_EVENT));
@@ -65,14 +75,13 @@ export function resetSettings() {
   announce();
 }
 
-/** Cambia la sesión activa sin que el cambio se reinterprete como del usuario. */
+/**
+ * Cambia la sesión activa sin que el cambio se reinterprete como del usuario.
+ * El `true` es el `silent` de `setActiveSessionId`: el oyente de más abajo lo ve
+ * en el evento y no lo guarda como preferencia del perfil.
+ */
 function aplicarSesion(id: number | null) {
-  aplicandoSesion = true;
-  try {
-    setActiveSessionId(id);
-  } finally {
-    aplicandoSesion = false;
-  }
+  setActiveSessionId(id, true);
 }
 
 /**
@@ -103,6 +112,62 @@ function sincronizarSesion(settings: ProfileSettings, cambioDePerfil: boolean) {
 }
 
 /**
+ * Sincroniza el modo Champions con la preferencia del perfil (Tarea 6.3).
+ *
+ * Misma regla que con la sesión de ROM Hack: al arrancar la app se respeta lo
+ * que ya hubiera en el navegador, y al CAMBIAR de perfil se aplica lo suyo. Hace
+ * falta pedir el conjunto para saber su nombre (el distintivo de la TopBar lo
+ * pinta), así que esto es asíncrono y silencioso: si no hay red, el modo
+ * simplemente no se restaura.
+ *
+ * Los conjuntos son del hogar y solo la elección es de cada perfil, por eso aquí
+ * se guarda el id y no una copia del conjunto.
+ */
+function sincronizarChampions(settings: ProfileSettings, cambioDePerfil: boolean) {
+  const guardado = Number.parseInt(settings.champions_rules, 10);
+  const valido = Number.isInteger(guardado) && guardado > 0 ? guardado : null;
+  const actual = getActiveChampionsId();
+
+  if (valido === null) {
+    if (cambioDePerfil && actual !== null) exitChampions();
+    return;
+  }
+  if (valido === actual) return;
+
+  const cacheado = nombresChampions.get(valido);
+  if (cacheado !== undefined) {
+    enterChampions({ id: valido, name: cacheado });
+    return;
+  }
+  championsApi
+    .get(valido)
+    .then((reglas) => {
+      nombresChampions.set(reglas.id, reglas.name);
+      // El perfil pudo cambiar otra vez mientras llegaba la respuesta.
+      if (getActiveProfileId() === cacheProfile) {
+        enterChampions({ id: reglas.id, name: reglas.name });
+      }
+    })
+    .catch(() => {
+      /* sin red o conjunto borrado: no se entra en el modo */
+    });
+}
+
+/** Guarda en el perfil el conjunto de Champions activo. */
+function guardarChampions() {
+  const profileId = getActiveProfileId();
+  if (profileId === null || cacheProfile !== profileId || cache === null) return;
+
+  const id = getActiveChampionsId();
+  const value = id === null ? "" : String(id);
+  if (cache.champions_rules === value) return;
+
+  cache = { ...cache, champions_rules: value };
+  announce();
+  settingsApi.update(profileId, { champions_rules: value }).catch(() => {});
+}
+
+/**
  * Carga los ajustes del perfil activo si hacen falta.
  * Varias llamadas simultáneas comparten la misma petición.
  */
@@ -127,6 +192,7 @@ export function loadSettings(cambioDePerfil = false): Promise<ProfileSettings> {
       if (cacheProfile !== profileId) return cache || DEFAULT_SETTINGS;
       cache = { ...DEFAULT_SETTINGS, ...res.settings };
       sincronizarSesion(cache, cambioDePerfil && !inicial);
+      sincronizarChampions(cache, cambioDePerfil && !inicial);
       announce();
       return cache;
     })
@@ -224,16 +290,23 @@ export function useProfileSettings(): void {
       resetSettings();
       loadSettings(true);
     };
-    const onSession = () => {
-      if (!aplicandoSesion) guardarSesionActiva();
+    // `silent` = el cambio no lo decidió el usuario (restaurar la sesión de un
+    // perfil, o pausarla al entrar en Champions): no se guarda como preferencia.
+    const onSession = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.silent) return;
+      guardarSesionActiva();
     };
+    const onChampions = () => guardarChampions();
 
     window.addEventListener(ACTIVE_PROFILE_EVENT, onProfile);
     window.addEventListener(ACTIVE_SESSION_EVENT, onSession);
+    window.addEventListener(ACTIVE_CHAMPIONS_EVENT, onChampions);
     window.addEventListener("storage", onProfile);
     return () => {
       window.removeEventListener(ACTIVE_PROFILE_EVENT, onProfile);
       window.removeEventListener(ACTIVE_SESSION_EVENT, onSession);
+      window.removeEventListener(ACTIVE_CHAMPIONS_EVENT, onChampions);
       window.removeEventListener("storage", onProfile);
     };
   }, []);

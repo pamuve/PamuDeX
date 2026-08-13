@@ -1,11 +1,32 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 import { useActiveProfile, profileInitial } from "../lib/profile";
+import { useActiveChampions } from "../lib/champions";
+import { useActiveSession } from "../lib/session";
 
-function ComingSoonMenu({ label, items }: { label: string; items: string[] }) {
+/**
+ * Menú «Modo» (Tarea 6.3). Deja de ser un marcador de posición: desde aquí se
+ * entra en Pokémon Champions y se vuelve a la Pokédex estándar.
+ *
+ * La sesión de ROM Hack aparece aquí solo como información: se elige en
+ * `/sesiones`, y entrar en Champions la pausa porque los dos modos son
+ * excluyentes.
+ */
+function ModeMenu({ label }: { label: string }) {
+  const { t } = useI18n();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const { champions, exit } = useActiveChampions();
+  const [sessionId] = useActiveSession();
+
+  const modoActual = champions
+    ? t("mode.champions")
+    : sessionId !== null
+      ? t("mode.session")
+      : t("mode.standard");
+
   return (
     <div className="relative">
       <button
@@ -18,16 +39,86 @@ function ComingSoonMenu({ label, items }: { label: string; items: string[] }) {
         <ChevronDown size={14} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-56 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein">
-          {items.map((it) => (
-            <div key={it} className="px-3 py-2 rounded-lg text-sm text-ink-soft hover:bg-hover hover:text-ink cursor-not-allowed opacity-70">
-              {it}
-            </div>
-          ))}
-          <div className="px-3 pt-2 text-[11px] text-ink-soft/70 border-t border-hover mt-1">Disponible en la Fase 2</div>
+        <div className="absolute right-0 mt-2 w-60 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein">
+          <p className="px-3 py-1.5 text-[11px] text-ink-soft/70 border-b border-hover mb-1">
+            {t("mode.current", { name: modoActual })}
+          </p>
+
+          {champions ? (
+            <button
+              onClick={() => {
+                exit();
+                setOpen(false);
+                navigate("/");
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
+            >
+              <LogOut size={16} aria-hidden="true" />
+              {t("mode.exitChampions")}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setOpen(false);
+                navigate("/champions");
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
+            >
+              <Shield size={16} aria-hidden="true" />
+              {t("mode.enterChampions")}
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              setOpen(false);
+              navigate("/sesiones");
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
+          >
+            <Layers size={16} aria-hidden="true" />
+            {t("sessions.nav")}
+          </button>
+
+          <Link
+            to="/champions/reglas"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink-soft hover:bg-hover hover:text-ink border-t border-hover mt-1"
+          >
+            <SlidersHorizontal size={16} aria-hidden="true" />
+            {t("champions.title")}
+          </Link>
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Distintivo permanente del modo Champions.
+ *
+ * Criterio de aceptación de la 6.3: tiene que verse siempre y sin ambigüedad en
+ * qué modo estás, porque las fichas son las mismas que las de la Pokédex normal
+ * y de un vistazo no se distinguirían. Va en la barra, que está en todas las
+ * pantallas menos en la de perfiles.
+ */
+function ChampionsBadge() {
+  const { t } = useI18n();
+  const { champions } = useActiveChampions();
+  if (!champions) return null;
+
+  return (
+    <Link
+      to="/champions"
+      title={t("mode.badgeTitle", { name: champions.name })}
+      className="flex items-center gap-1.5 rounded-lg px-2 py-1 bg-[#F08030]/20 border border-[#F08030]/50 text-ink text-xs sm:text-sm transition-colors hover:bg-[#F08030]/30"
+    >
+      <Shield size={14} className="shrink-0" aria-hidden="true" />
+      <span className="font-display tracking-wide">{t("mode.champions")}</span>
+      <span className="hidden sm:inline text-ink-soft max-w-[8rem] truncate">
+        · {champions.name}
+      </span>
+    </Link>
   );
 }
 
@@ -164,12 +255,18 @@ export function TopBar() {
           )}
         </div>
 
-        <Link to="/" className="flex items-center gap-2 mr-auto">
+        <Link to="/" className="flex items-center gap-2">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6890F0] to-[#F85888] flex items-center justify-center font-display font-bold text-ink">
             P
           </span>
           <span className="font-display font-bold tracking-tight text-lg text-ink">{t("app.name")}</span>
         </Link>
+
+        {/* Junto al logo y antes del hueco flexible: se ve siempre, también en
+            móvil, que es donde el resto de iconos empieza a apretarse. */}
+        <span className="mr-auto">
+          <ChampionsBadge />
+        </span>
 
         <Link to="/favoritos" title={t("favorites.title")} aria-label={t("favorites.title")}
               className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
@@ -200,7 +297,7 @@ export function TopBar() {
           <span className="hidden sm:inline">{t("team.title")}</span>
         </Link>
 
-        <ComingSoonMenu label={t("nav.mode")} items={["Modo estándar", "Pokémon Champions", "Sesión ROM Hack"]} />
+        <ModeMenu label={t("nav.mode")} />
 
         <Link
           to="/ajustes"
