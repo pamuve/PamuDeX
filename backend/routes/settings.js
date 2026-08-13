@@ -17,9 +17,13 @@
  * Guardarlos también en `settings` solo podría producir incoherencias.
  *
  * `settings` se reserva para las preferencias que no merecen una columna
- * propia. Hoy son dos, declaradas en ALLOWED_KEYS:
+ * propia. Hoy son tres, declaradas en ALLOWED_KEYS:
  *   - `active_session`   qué sesión de ROM Hack usa este perfil ("" = ninguna)
  *   - `history_enabled`  "1" | "0", para poder desactivar el registro de visitas
+ *   - `champions_rules`  qué conjunto de reglas de Champions usa ("" = ninguno)
+ *
+ * Los conjuntos de reglas en sí son del hogar (`champions_rules` no tiene
+ * `profile_id`): lo que es de cada perfil es CUÁL tiene puesto.
  *
  * LA LISTA BLANCA ES INTENCIONADA. Una tabla clave/valor abierta acaba siendo
  * un cajón de sastre imposible de auditar; añadir una preferencia nueva es
@@ -41,12 +45,13 @@ const express = require("express");
  * Claves admitidas. Cualquier otra se rechaza con `clave_invalida`.
  * Añadir una preferencia nueva = añadirla aquí (y documentarla arriba).
  */
-const ALLOWED_KEYS = ["active_session", "history_enabled"];
+const ALLOWED_KEYS = ["active_session", "history_enabled", "champions_rules"];
 
 /** Valores por defecto, para que el frontend no tenga que repetirlos. */
 const DEFAULTS = {
   active_session: "",
   history_enabled: "1",
+  champions_rules: "",
 };
 
 const MAX_VALUE = 200;

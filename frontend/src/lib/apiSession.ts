@@ -301,6 +301,11 @@ export interface ProfileSettings {
   active_session: string;
   /** "1" | "0" — permite desactivar el registro de visitas. */
   history_enabled: string;
+  /**
+   * Id del conjunto de reglas de Champions de este perfil (6.3). "" = ninguno.
+   * Los conjuntos son del hogar; lo de cada perfil es CUÁL tiene puesto.
+   */
+  champions_rules: string;
 }
 
 export const settingsApi = {

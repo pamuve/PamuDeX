@@ -5,6 +5,7 @@ import { PokemonDetail as PokemonDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { NotAllowed } from "../components/NotAllowed";
 import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
@@ -16,10 +17,13 @@ export function PokemonDetail() {
   const { t } = useI18n();
   const [poke, setPoke] = useState<PokemonDetailT | null>(null);
   const [typesById, setTypesById] = useState<Record<string, PokeType>>({});
+  // En modo Champions el backend responde 404 si la entidad no es legal.
+  const [noPermitido, setNoPermitido] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    api.pokemon.detail(id).then(setPoke);
+    setNoPermitido(false);
+    api.pokemon.detail(id).then(setPoke).catch(() => setNoPermitido(true));
     api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((t) => [t.id, t]))));
   }, [id]);
 
@@ -27,6 +31,7 @@ export function PokemonDetail() {
   // Pokédex, y el historial (como los favoritos) se indexa siempre por id.
   useRecordVisit("pokemon", poke ? poke.id : undefined);
 
+  if (noPermitido) return <NotAllowed />;
   if (!poke) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 
   return (

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { MoveDetail as MoveDetailT } from "../types";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { NotAllowed } from "../components/NotAllowed";
 import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
@@ -10,13 +11,18 @@ export function MoveDetail() {
   const { id } = useParams();
   const { t } = useI18n();
   const [move, setMove] = useState<MoveDetailT | null>(null);
+  // En modo Champions el backend responde 404 si la entidad no es legal.
+  const [noPermitido, setNoPermitido] = useState(false);
 
   useEffect(() => {
-    if (id) api.moves.detail(id).then(setMove);
+    if (!id) return;
+    setNoPermitido(false);
+    api.moves.detail(id).then(setMove).catch(() => setNoPermitido(true));
   }, [id]);
 
   useRecordVisit("move", move ? move.id : undefined);
 
+  if (noPermitido) return <NotAllowed />;
   if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
 
   const rows: [string, string | number][] = [

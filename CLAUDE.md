@@ -8,8 +8,8 @@ alguna vez se contradicen.
 
 PWA autoalojada y **offline-first** tipo Pokédex para ROM Hacks de Pokémon
 (Radical Red, Elite Redux…): tipos, Pokémon, movimientos, habilidades,
-comparador de equipos, sesiones de ROM Hack con editor visual, y más adelante
-perfiles multiusuario y modo Pokémon Champions.
+comparador de equipos, sesiones de ROM Hack con editor visual, perfiles
+multiusuario y modo Pokémon Champions.
 
 - **Frontend**: React 18 + TypeScript + Vite + TailwindCSS + `vite-plugin-pwa` + `react-router-dom` + `lucide-react`
 - **Backend**: Node.js + Express + SQLite (`better-sqlite3`)
@@ -67,16 +67,21 @@ Siempre, sin excepciones:
 
 ```bash
 cd frontend && pnpm exec tsc --noEmit && pnpm run build
-cd backend  && node --check <cada archivo tocado> && node tests/overrides.smoke.js && node tests/history.smoke.js && node tests/champions.smoke.js
+cd backend  && node --check <cada archivo tocado> && node tests/*.smoke.js
 ```
 
 Y comprobar la **paridad exacta de claves entre `es.json` y `en.json`**.
 
-Ninguna de las dos pruebas necesita servidor ni SQLite: simulan `db`, `req` y
-`res`. `overrides.smoke.js` cubre overrides, middleware y tabla de tipos;
-`history.smoke.js` cubre el historial (la ventana de deduplicación de 5 minutos
-y la poda) y los ajustes por perfil; `champions.smoke.js` cubre el filtrado de
-Champions (sobre todo que `null` y `[]` no se confundan). Ejecuta la que corresponda a lo que toques.
+Ninguna prueba necesita servidor ni SQLite: simulan `db`, `req` y `res`.
+
+- `overrides.smoke.js` — overrides de sesión, middleware y tabla de tipos.
+- `history.smoke.js` — historial (ventana de 5 minutos y poda) y ajustes.
+- `champions.smoke.js` — reglas de Champions (sobre todo que `null` y `[]` no se
+  confundan) y multiplicadores propios.
+- `championsMode.smoke.js` — el middleware del modo: filtrado, 404 en ficha no
+  permitida y exclusividad con las sesiones.
+
+Ejecuta la que corresponda a lo que toques.
 
 Verificación interna, no le pidas al usuario que pruebe por ti lo que puedes
 comprobar tú.
@@ -90,17 +95,18 @@ backend/
   lib/         effectiveness.js, catalog.js, overrides.js, typechart.js,
                dataset.js, importValidator.js, pin.js, pinThrottle.js,
                championsFilter.js
-  middleware/  sessionOverrides.js
+  middleware/  sessionOverrides.js, championsMode.js
   routes/      types, pokemon, moves, abilities, items, search, sessions,
                chart, export, import, profiles, favorites, history, settings,
                champions
-  tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js
+  tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js,
+               championsMode.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
   pages/       una por ruta, registrada en App.tsx
   hooks/       useSessionOverride.ts
   lib/         api, apiSession, session, profile, favorites, history, settings,
-               theme, team, damage, recommendation, coverage
+               champions, theme, team, damage, recommendation, coverage
   i18n/        es.json, en.json, index.tsx
 ```
 
@@ -153,8 +159,8 @@ formularios guardaban `abilities` como array de cadenas cuando
   esté activa; si la sesión no define tema, se cae al del perfil. Lo resuelve
   `useAppTheme()` en `App.tsx`.
 - **`settings` es para lo que no merece columna**, con lista blanca de claves en
-  `routes/settings.js` (`active_session`, `history_enabled`). Añadir una
-  preferencia es añadirla ahí y en `ProfileSettings` de `apiSession.ts`.
+  `routes/settings.js` (`active_session`, `history_enabled`, `champions_rules`).
+  Añadir una preferencia es añadirla ahí y en `ProfileSettings` de `apiSession.ts`.
 - **`history` no lleva índice único** (a diferencia de `favorites`): es una
   bitácora. La regla de «no dos veces en 5 minutos» la aplica la ruta, y el
   historial se poda a las 300 visitas más recientes por perfil.
@@ -230,9 +236,23 @@ siguiente tarea parte de información falsa.
 Estado: **Fases 1-5 completas.** La 5 cerró con perfiles (`/perfiles`), PIN,
 favoritos (`/favoritos`), historial (`/historial`) y ajustes (`/ajustes`).
 
-**Fase 6 en curso** (Pokémon Champions): hechas la **6.0** (2151 objetos en
-`/api/items`), la **6.1** (base de reglas en `/champions/reglas`) y la **6.2**
-(multiplicadores propios del modo). Siguiente: **6.3, la vista del modo**.
+**Fase 6 completa** (Pokémon Champions): objetos en el dataset (**6.0**), base de
+reglas en `/champions/reglas` (**6.1**), multiplicadores propios (**6.2**) y el
+modo en marcha en `/champions` (**6.3**). Siguiente: **Fase 7, multi-generación**.
+
+### El modo Champions (Fase 6)
+
+`?champions=<id>` lo aplica `middleware/championsMode.js`, montado **antes** que
+`sessionOverrides`: filtra listados y `/search`, responde 404 en una ficha no
+permitida y remapea los multiplicadores. **Ninguna ruta de datos conoce el
+modo.** Va primero porque si llegan los dos parámetros descarta `?session=`:
+Champions y las sesiones de ROM Hack son **excluyentes**.
+
+En el frontend es `lib/champions.ts` (estado de módulo + eventos, como
+`lib/session.ts`, **no** un context: `lib/api.ts` lo lee de forma síncrona).
+Entrar pausa la sesión y salir la devuelve; esos cambios van con
+`setActiveSessionId(id, silent)` para que no se guarden como preferencia del
+perfil.
 
 En las reglas de Champions, **`null` no es `[]`**: columna a NULL es «sin
 restricción» y `[]` es «nada permitido». Un conjunto nuevo permite todo el

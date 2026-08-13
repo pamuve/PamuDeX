@@ -3,27 +3,40 @@
 // se encarga de que estas respuestas queden disponibles sin conexión tras la primera sincronización.
 
 import { getActiveSessionId } from "./session";
+import { getActiveChampionsId } from "./champions";
 import { profilesApi, championsApi } from "./apiSession";
 
 /**
- * Añade `?session=<id>` cuando hay una sesión activa (Fase 3).
+ * Añade el parámetro del modo activo, si hay alguno.
  *
- * Sin sesión activa la URL sale idéntica a la de la Fase 1, así que el
- * middleware `sessionOverrides` hace `next()` y la API responde el dato global.
- * Con sesión activa, la Pokédex, los tipos y /equipo ven los mismos datos
- * editados que el editor visual.
+ * - `?champions=<id>` en modo Champions (Fase 6.3).
+ * - `?session=<id>` con una sesión de ROM Hack activa (Fase 3).
  *
- * Cada sesión genera URLs distintas, así que el Service Worker las cachea por
- * separado y el modo offline sigue funcionando sesión por sesión.
+ * **Nunca los dos**: son modos excluyentes, y Champions manda. Entrar en el
+ * modo ya pausa la sesión (`lib/champions.ts`), así que en la práctica no
+ * coinciden; esto lo deja garantizado también aquí, y el middleware del backend
+ * lo vuelve a garantizar por su cuenta.
+ *
+ * Sin modo activo la URL sale idéntica a la de la Fase 1, así que los dos
+ * middlewares hacen `next()` y la API responde el dato global.
+ *
+ * Cada modo y cada sesión generan URLs distintas, así que el Service Worker las
+ * cachea por separado y el modo offline sigue funcionando en cada uno.
  */
-function withSession(path: string): string {
-  const id = getActiveSessionId();
-  if (id === null) return path;
-  return path + (path.includes("?") ? "&" : "?") + `session=${id}`;
+function withMode(path: string): string {
+  const sep = path.includes("?") ? "&" : "?";
+
+  const championsId = getActiveChampionsId();
+  if (championsId !== null) return `${path}${sep}champions=${championsId}`;
+
+  const sessionId = getActiveSessionId();
+  if (sessionId !== null) return `${path}${sep}session=${sessionId}`;
+
+  return path;
 }
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`/api${withSession(path)}`);
+  const res = await fetch(`/api${withMode(path)}`);
   if (!res.ok) throw new Error(`Error ${res.status} al pedir ${path}`);
   return res.json();
 }

@@ -28,32 +28,34 @@ backend/
   lib/         effectiveness.js, catalog.js, overrides.js, typechart.js,
                dataset.js, importValidator.js, pin.js, pinThrottle.js,
                championsFilter.js
-  middleware/  sessionOverrides.js
+  middleware/  sessionOverrides.js, championsMode.js
   routes/      types.js, pokemon.js, moves.js, abilities.js, items.js,
                search.js, sessions.js, chart.js, export.js, import.js,
                profiles.js, favorites.js, history.js, settings.js,
                champions.js
-  tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js
+  tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js,
+               championsMode.smoke.js
   server.js
 frontend/src/
   components/  TopBar, SearchBar, TypeBadge, EffectivenessPanel,
                TeamSlotCard, RivalSlotCard, RecommendationCard, CoverageMap,
                SessionRequired, ImportPanel,
-               PinPad, PinDialog, FavoriteButton
+               PinPad, PinDialog, FavoriteButton, NotAllowed
   components/forms/  FormField, EntityPicker, PokemonForm, TypeForm, MoveForm,
                      AbilityForm, RelationsMatrix, ThemeForm
   pages/       Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail,
                TeamBuilder, Sessions, Editor, EditorPokemon, ImportExport,
-               ProfileSelect, Favorites, History, Settings, ChampionsRules
+               ProfileSelect, Favorites, History, Settings, ChampionsRules,
+               ChampionsHome
   hooks/       useSessionOverride.ts
   lib/         api.ts, apiSession.ts, session.ts, profile.ts, favorites.ts,
-               history.ts, settings.ts, theme.ts, team.ts, damage.ts,
-               recommendation.ts, coverage.ts
+               history.ts, settings.ts, champions.ts, theme.ts, team.ts,
+               damage.ts, recommendation.ts, coverage.ts
   i18n/        es.json, en.json, index.tsx
   types.ts, App.tsx, main.tsx, index.css, theme-vars.css
 ```
 
-Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/favoritos`, `/historial`, `/ajustes`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`, `/champions/reglas`.
+Rutas del frontend: `/`, `/perfiles`, `/pokemon/:id`, `/tipo/:id`, `/movimiento/:id`, `/habilidad/:id`, `/favoritos`, `/historial`, `/ajustes`, `/equipo`, `/sesiones`, `/editor`, `/editor/pokemon`, `/datos`, `/champions`, `/champions/reglas`.
 
 ### Perfiles y PIN (Tareas 5.1 y 5.2) — leer antes de tocar perfiles
 
@@ -128,8 +130,9 @@ El historial además tiene techo: se conservan las **300** visitas más reciente
 por perfil (lo escribe la app sola, sin poda crecería sin fin).
 
 `settings` queda para lo que no merece columna, con **lista blanca** de claves en
-`backend/routes/settings.js` (hoy `active_session` e `history_enabled`). Añadir
-una preferencia = añadirla a `ALLOWED_KEYS` y a `ProfileSettings`.
+`backend/routes/settings.js` (hoy `active_session`, `history_enabled` y
+`champions_rules`). Añadir una preferencia = añadirla a `ALLOWED_KEYS` y a
+`ProfileSettings`.
 
 **La sesión de ROM Hack pasó a ser de cada perfil.** `localStorage` sigue siendo
 la fuente de verdad inmediata (`lib/api.ts` la lee de forma síncrona en cada
@@ -344,22 +347,16 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
   - ✅ **5.3** favoritos por perfil en `/favoritos` (tabla `favorites`).
   - ✅ **5.4** historial en `/historial` y ajustes en `/ajustes` (tablas `history`
     y `settings`), idioma y tema por perfil, sesión de ROM Hack por perfil.
-- 🔄 **Fase 6, en curso**: Pokémon Champions.
+- ✅ **Fase 6**: Pokémon Champions, modo aparte en `/champions`.
   - ✅ **6.0** objetos en el dataset (`/api/items`), tarea añadida al preparar la
     fase porque la 6.1 no tenía objetos que filtrar.
   - ✅ **6.1** base de reglas en `/champions/reglas` (`champions_rules`,
     `lib/championsFilter.js`, `routes/champions.js`).
   - ✅ **6.2** multiplicadores propios del modo (`custom_multipliers_json`),
     con `lib/effectiveness.js` convertido en factoría.
-  - 🔜 **6.3** vista Champions con el middleware `?champions=`. **Es la siguiente.**
-
-  Las decisiones de la fase están tomadas en
-  `docs/tasks/fase6/00-preparacion.md`: el filtro llega por **middleware con
-  `?champions=<id>`** (como los overrides de la Fase 3, para no duplicar rutas ni
-  páginas), el modo es **excluyente con las sesiones de ROM Hack**, y
-  `custom_multipliers_json` puede cambiar los **valores** de las claves de
-  efectividad pero nunca las claves.
-- 🔜 Fases 7-9: ver `docs/ROADMAP.md`.
+  - ✅ **6.3** el modo en sí: `middleware/championsMode.js` con `?champions=<id>`,
+    `lib/champions.ts`, `/champions` y el distintivo permanente de la TopBar.
+- 🔜 **Fase 7, la siguiente**: multi-generación. Ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 
@@ -370,15 +367,14 @@ Ya en uso: `sessions` (Fase 3), `profiles` (5.1 y 5.2), `favorites` (5.3),
 `history` y `settings` (5.4), `items` (6.0). `users` existe pero **sigue vacía a
 propósito**: se reserva para un login real.
 
-## Antes de empezar la Fase 6
+## Decisiones ya tomadas, no las reabras sin motivo
 
-Las tres decisiones que había abiertas para la 5.4 (idioma, tema e historial)
-están **tomadas y documentadas** más arriba, en «Historial y ajustes (Tarea
-5.4)». No las reabras sin motivo.
+Las tres de la 5.4 (idioma, tema e historial) están documentadas más arriba, en
+«Historial y ajustes (Tarea 5.4)».
 
-La Fase 6 tiene su propia nota previa: **`docs/tasks/fase6/00-preparacion.md`**.
-Los encargos `06-01`, `06-02` y `06-03` se escribieron antes de que existieran
-las fases 3, 4 y 5, así que sus cinco puntos ya están **decididos** allí:
+Las cinco de la Fase 6 se decidieron en **`docs/tasks/fase6/00-preparacion.md`**,
+porque los encargos `06-01`, `06-02` y `06-03` se escribieron antes de que
+existieran las fases 3, 4 y 5:
 
 1. El filtro llega por **middleware con `?champions=<id>`**, como los overrides
    de la Fase 3. Las rutas `/api/champions/:id/pokemon` quedan para el editor de
@@ -391,6 +387,33 @@ las fases 3, 4 y 5, así que sus cinco puntos ya están **decididos** allí:
 4. El conjunto de reglas activo es **de cada perfil**, en `settings` (los
    conjuntos en sí son del hogar: `champions_rules` no tiene `profile_id`).
 5. Los objetos ya existen: se hizo la **tarea 6.0** antes que la 6.1.
+
+### El modo Champions en marcha (Tarea 6.3)
+
+`?champions=<id>` lo aplica **`backend/middleware/championsMode.js`**, montado
+con `app.use("/api", championsMode(db))` **antes** que `sessionOverrides`:
+intercepta `res.json`, filtra los listados y `/search`, responde **404** en una
+ficha no permitida y remapea los multiplicadores por clave. Sin el parámetro
+hace `next()` y la API responde igual que siempre. **Ninguna ruta de datos
+conoce el modo — no las modifiques para añadirle soporte, ya lo tienen.**
+
+Va antes que `sessionOverrides` a propósito: si llegan los dos parámetros,
+descarta `?session=`. Los dos modos son excluyentes y manda Champions.
+
+En el frontend, **`lib/champions.ts`** (no un context de React: `lib/api.ts`
+tiene que leer el modo de forma síncrona en cada petición, igual que la sesión).
+Guarda `{ id, name }` porque la TopBar pinta el nombre en el distintivo desde el
+primer render. Entrar **pausa** la sesión de ROM Hack y salir la devuelve;
+`setActiveSessionId(id, silent)` marca esos cambios para que `lib/settings.ts` no
+los guarde como preferencia del perfil.
+
+Las páginas de ficha son **las mismas** dentro y fuera del modo. Por eso las tres
+que pueden dar 404 (Pokémon, movimiento, habilidad) pintan
+`components/NotAllowed.tsx`: se llega a una ficha prohibida desde los favoritos,
+el historial o escribiendo la URL.
+
+Lo que **no** filtra el modo: los tipos y la tabla de tipos (son la física del
+juego, no contenido) y `/equipo`, cuyos datos viven en `localStorage`.
 
 Recordatorio permanente: si añades endpoints que el usuario pueda modificar,
 **mételos en la regla NetworkFirst de `vite.config.ts`** o se verán con una

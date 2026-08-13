@@ -83,26 +83,34 @@ por perfil (`settings.active_session`).
 
 ---
 
-## 🔄 Fase 6 — Pokémon Champions — en curso
+## ✅ Fase 6 — Pokémon Champions — completada
 
-> **Lee `docs/tasks/fase6/00-preparacion.md` antes de seguir.** Los tres
-> encargos se escribieron antes de las fases 3, 4 y 5. Las decisiones ya están
-> tomadas y anotadas allí: el filtro de Champions llega por **middleware con
-> `?champions=<id>`** (como los overrides de la Fase 3, para no duplicar rutas ni
-> páginas, y lo monta la 6.3), el modo es **excluyente con las sesiones de ROM
-> Hack**, y los objetos existen gracias a la 6.0.
->
-> De la 6.1 hay que saber que **`null` no es `[]`**: en un conjunto de reglas,
-> columna a NULL significa «sin restricción» y `[]` significa «nada permitido».
-> Un conjunto nuevo permite todo el catálogo; si no, habría que marcar 1025
-> casillas antes de que el modo sirviera para algo.
+Modo aparte en `/champions`, con su base de reglas en `/champions/reglas`. Los
+tres encargos originales se escribieron antes de las fases 3, 4 y 5, así que la
+fase empezó con una nota previa (`docs/tasks/fase6/00-preparacion.md`) y una
+tarea añadida, la **6.0**: la tabla `items` estaba vacía y la 6.1 no tenía
+objetos que filtrar.
+
+Cuatro decisiones que conviene no reabrir sin motivo:
+
+- **El filtro llega por middleware con `?champions=<id>`**, como los overrides de
+  la Fase 3. Así las rutas de datos y las páginas de ficha que ya existían
+  funcionan filtradas sin tocarlas, en vez de duplicar cada endpoint.
+- **`null` no es `[]`**: en un conjunto de reglas, columna a NULL significa «sin
+  restricción» y `[]` significa «nada permitido». Un conjunto nuevo permite todo
+  el catálogo; si no, habría que marcar 1025 casillas antes de que sirviera.
+- **Champions y las sesiones de ROM Hack son excluyentes.** Entrar pausa la
+  sesión y salir la devuelve, sin perder la preferencia del perfil.
+- **Los multiplicadores propios cambian los valores, nunca las claves.**
+  `hiper_eficaz`, `super_eficaz`… son canónicas; un formato solo decide qué
+  número se enseña en cada categoría.
 
 | # | Tarea | Tamaño | Estado |
 |---|-------|--------|--------|
 | 6.0 | Objetos en el dataset (`items.json`, siembra por migración, `/api/items`) — añadida al preparar la fase | Pequeña | ✅ 2151 objetos en 54 categorías |
 | 6.1 | Base de reglas independiente (`champions_rules`, ya en el esquema): Pokémon/objetos/movimientos/habilidades permitidos | Media | ✅ `/champions/reglas` |
 | 6.2 | Multiplicador propio del modo ("Hiper eficaz" x4) integrado en `EffectivenessPanel` | Pequeña | ✅ `custom_multipliers_json` editable |
-| 6.3 | Vista Champions separada de la Pokédex general (misma UI, dataset filtrado) | Media | 🔜 **siguiente** |
+| 6.3 | Vista Champions separada de la Pokédex general (misma UI, dataset filtrado) | Media | ✅ `/champions`, middleware `?champions=` |
 
 ---
 

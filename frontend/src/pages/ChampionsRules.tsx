@@ -728,9 +728,9 @@ export default function ChampionsRules() {
       )}
 
       <p className="text-ink-soft text-xs">
-        {t("champions.modeSoon")}{" "}
-        <Link to="/" className="underline hover:text-ink">
-          {t("champions.backHome")}
+        {t("champions.enterHint")}{" "}
+        <Link to="/champions" className="underline hover:text-ink">
+          {t("championsHome.title")}
         </Link>
       </p>
     </main>

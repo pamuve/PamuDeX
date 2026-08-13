@@ -20,8 +20,8 @@ Con esos dos archivos, la IA no necesita saber nada más del proyecto.
 | 3 — Sesiones + editor visual | `fase3/` (5) | ✅ Implementada |
 | 4 — Import / export | `fase4/` (4) | ✅ Implementada |
 | 5 — Usuarios y perfiles | `fase5/` (4) | ✅ Implementada |
-| 6 — Pokémon Champions | `fase6/` (3 + preparación) | 🔜 **la siguiente** — lee antes `fase6/00-preparacion.md` |
-| 7 — Multi-generación | `fase7/` (3) | 🔜 |
+| 6 — Pokémon Champions | `fase6/` (4 + preparación) | ✅ Implementada — se añadió la 6.0 (objetos) al preparar la fase |
+| 7 — Multi-generación | `fase7/` (3) | 🔜 **la siguiente** |
 | 8 — Accesibilidad y rendimiento | `fase8/` (4) | 🔜 |
 | 9 — Ampliaciones | `fase9/` (5) | 🔜 |
 
