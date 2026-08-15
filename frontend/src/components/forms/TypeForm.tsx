@@ -79,6 +79,10 @@ export default function TypeForm({ base, override, saving, t, onSave, onReset }:
               className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-hover bg-base" />
             <input aria-label={t("editor.fields.color")} className={inputClass} value={color}
               onChange={(e) => setColor(e.target.value)} />
+            {/* A propósito SIN `color-chip`: en alto contraste esa clase cambia
+                el color de fondo por un marco (8.1), y aquí el fondo ES lo que
+                se está previsualizando. Repintarlo dejaría al usuario eligiendo
+                un color a ciegas. */}
             <span className="hidden shrink-0 rounded-full px-3 py-1 text-xs font-medium sm:inline"
               style={{ backgroundColor: HEX.test(color) ? color : "#132238", color: "#0A1425" }}>
               {nameEs || "—"}

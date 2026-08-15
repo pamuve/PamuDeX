@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield, Gamepad2 } from "lucide-react";
@@ -189,8 +189,8 @@ function ProfileMenu() {
         title={t("profiles.activeProfile", { name: profile.name })}
       >
         <span
-          className="w-8 h-8 rounded-full flex items-center justify-center font-display font-bold text-sm shrink-0 select-none"
-          style={{ backgroundColor: color, color: "#0A1425" }}
+          className="color-chip w-8 h-8 rounded-full flex items-center justify-center font-display font-bold text-sm shrink-0 select-none"
+          style={{ backgroundColor: color, color: "#0A1425", "--chip-color": color } as CSSProperties}
           aria-hidden="true"
         >
           {profile.avatar || profileInitial(profile.name)}
@@ -309,8 +309,16 @@ export function TopBar() {
         </span>
 
         {/* De `lg` en adelante los enlaces caben en la propia fila. Por debajo
-            se van a la fila desplazable de abajo. */}
-        <nav className="hidden lg:flex items-center gap-3">
+            se van a la fila desplazable de abajo.
+
+            `min-w-0` + `scroll-row` por el escalado de texto (8.1): el punto de
+            corte está en píxeles y las media queries NO ven el `font-size` de
+            la raíz, así que a 1024px con el texto al 130% esta fila pedía
+            1033px y sacaba scroll horizontal a todo el documento. Ahora se
+            desplaza ella, igual que la fila de móvil. Cuando cabe —el caso
+            normal— no se nota nada. Aquí tampoco puede haber desplegables:
+            `overflow-x` los recortaría. */}
+        <nav className="hidden lg:flex items-center gap-3 min-w-0 overflow-x-auto scroll-row">
           {NAV_LINKS.map(({ to, Icon, labelKey, desktopLabelKey }) => (
             <Link
               key={to}

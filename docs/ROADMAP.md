@@ -132,14 +132,22 @@ Notas de la fase:
 
 ---
 
-## 🔜 Fase 8 — Accesibilidad, rendimiento y PWA avanzada
+## 🚧 Fase 8 — Accesibilidad, rendimiento y PWA avanzada (en curso)
 
-| # | Tarea | Tamaño |
-|---|-------|--------|
-| 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña |
-| 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media |
-| 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña |
-| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña |
+| # | Tarea | Tamaño | Estado |
+|---|-------|--------|--------|
+| 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña | ✅ `lib/a11y.ts`, `.high-contrast`, cuatro niveles de texto |
+| 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media | 🔜 |
+| 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña | 🔜 |
+| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | 🔜 |
+
+Notas de la fase:
+
+- **El alto contraste pisa al tema de sesión y al del perfil.** `lib/theme.ts` escribe las `--color-*` como estilo *inline* en `<html>`, así que `.high-contrast` las redeclara con `!important`, que es lo único que gana a un inline. La identidad visual de un ROM Hack no puede dejar la app ilegible.
+- **Es el único sitio del proyecto donde se usa negro puro**, y solo porque el usuario lo activa a mano por accesibilidad. `panel` y `base` son el mismo negro: las tarjetas se distinguen por un `outline` blanco de 1px con `outline-offset: -1px`, que se dibuja dentro de la caja y no mueve ningún diseño.
+- **Las fichas de color (`.color-chip`) cambian el fondo por un marco**: distintivos de tipo y avatares de perfil. Con el color del dataset detrás, los tipos apagados (siniestro 2.8:1, fantasma 3.1:1, lucha 3.2:1) no llegan a AAA y no hay forma de arreglarlo sin repintar el dataset.
+- **La preferencia vive en `localStorage` y se copia al perfil**, como `active_session`: hay que aplicarla antes del primer render y también en `/perfiles`, donde aún no hay perfil que consultar.
+- **Bug preexistente encontrado y corregido de camino**: el color `base` en `extend.colors` generaba un segundo `.text-base { color: var(--color-base) }` que pisaba al `.text-base` de tamaño de fuente de Tailwind, así que todo lo que llevara `text-base` se pintaba del color del fondo. Ahora `base` se declara solo en `backgroundColor` y `borderColor`.
 
 ---
 

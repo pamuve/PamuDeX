@@ -306,6 +306,10 @@ export interface ProfileSettings {
    * Los conjuntos son del hogar; lo de cada perfil es CUÁL tiene puesto.
    */
   champions_rules: string;
+  /** "1" | "0" — modo de alto contraste (8.1). */
+  high_contrast: string;
+  /** "90" | "100" | "115" | "130" — escalado de texto (8.1). */
+  text_scale: string;
 }
 
 export const settingsApi = {

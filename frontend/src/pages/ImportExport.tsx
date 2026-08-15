@@ -128,8 +128,12 @@ export default function ImportExport() {
               key={entity}
               href={csvHref(entity)}
               download
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hover
-                         px-3 py-2 text-sm text-ink-soft transition hover:bg-hover hover:text-ink
+              /* `px-2 sm:px-3` y `flex-wrap`: en dos columnas a 4" con el texto
+                 al 130% (8.1), «Movimientos» más el icono y el relleno se
+                 pasaban de la celda. Ahora la etiqueta baja bajo el icono en
+                 vez de salirse; a tamaño normal siguen cabiendo en una línea. */
+              className="inline-flex flex-wrap items-center justify-center gap-1.5 rounded-lg border border-hover
+                         px-2 sm:px-3 py-2 text-sm text-ink-soft transition hover:bg-hover hover:text-ink
                          focus:outline-none focus:ring-2 focus:ring-ink-soft/40"
             >
               <Download size={14} aria-hidden="true" />

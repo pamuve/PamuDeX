@@ -295,7 +295,13 @@ con token. Nada de eso está implementado.
 >   historial se amplía editando un JSON (ver «Historial de cambios entre
 >   generaciones»).
 >
-> Siguiente: **Fase 8 — Accesibilidad, rendimiento y PWA avanzada**.
+> - **Fase 8** (en curso) — accesibilidad, rendimiento y PWA avanzada. De momento,
+>   **modo de alto contraste** y **escalado de texto** en cuatro niveles (90, 100,
+>   115 y 130 %) desde `/ajustes`: se aplican al instante, sobreviven a recargar y
+>   se recuerdan por perfil. El alto contraste manda sobre el tema del ROM Hack y
+>   sobre el del perfil, y es el único sitio de la app donde se usa negro puro.
+>
+> Siguiente: **8.2 — teclado y lectores de pantalla**.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

@@ -130,9 +130,9 @@ El historial además tiene techo: se conservan las **300** visitas más reciente
 por perfil (lo escribe la app sola, sin poda crecería sin fin).
 
 `settings` queda para lo que no merece columna, con **lista blanca** de claves en
-`backend/routes/settings.js` (hoy `active_session`, `history_enabled` y
-`champions_rules`). Añadir una preferencia = añadirla a `ALLOWED_KEYS` y a
-`ProfileSettings`.
+`backend/routes/settings.js` (hoy `active_session`, `history_enabled`,
+`champions_rules`, `high_contrast` y `text_scale`). Añadir una preferencia =
+añadirla a `ALLOWED_KEYS` y a `ProfileSettings`.
 
 **La sesión de ROM Hack pasó a ser de cada perfil.** `localStorage` sigue siendo
 la fuente de verdad inmediata (`lib/api.ts` la lee de forma síncrona en cada
@@ -272,6 +272,42 @@ Los **tipos no se filtran**, son la física del juego y no contenido.
 
 Champions **no toca el modo estándar ni las sesiones**: no reescribe datos, solo
 dice qué contenido es legal. Por eso lee el catálogo global, sin overrides.
+
+### Accesibilidad (Fase 8) — leer antes de tocar colores o tamaños
+
+`lib/a11y.ts` guarda dos preferencias: **alto contraste** y **escalado de texto**
+(90 / 100 / 115 / 130 %). Mismo patrón que `lib/session.ts`: estado de módulo +
+eventos de `window`, `localStorage` como verdad inmediata, **no** un context.
+
+**Se aplican antes de montar React**, con `applyA11y()` en `main.tsx`: la clase
+`.high-contrast` en `<html>` y `font-size` en la raíz. Si se aplicaran en un
+efecto, la app parpadearía con el tamaño equivocado.
+
+**No son columnas de `profiles` aunque se parezcan al tema.** Se resuelven como
+`active_session`: `localStorage` manda, y `settings.high_contrast` /
+`settings.text_scale` son la copia por perfil que se restaura al cambiar de uno
+a otro. Motivo: en `/perfiles` todavía no hay perfil del que leer nada, y esa es
+justo la pantalla donde alguien que necesita alto contraste más lo echaría de
+menos. La regla es la otra mitad de la de la sesión: **al arrancar manda el
+aparato** (y se copia al perfil), **al cambiar de perfil manda el perfil**.
+
+**El alto contraste pisa al tema de sesión y al del perfil.** `lib/theme.ts`
+escribe las `--color-*` como estilo *inline* en `<html>`, así que `.high-contrast`
+las redeclara con `!important` — lo único que gana a un inline. La identidad
+visual de un ROM Hack no puede dejar la app ilegible.
+
+En ese modo `panel` y `base` son **el mismo negro puro**; las tarjetas se
+distinguen por un `outline` blanco de 1px con `outline-offset: -1px`, que se
+dibuja *dentro* de la caja y por tanto no mueve ningún diseño. Es la única
+excepción a la regla del negro puro en todo el proyecto, y la activa el usuario.
+
+**El escalado va en `font-size` de la raíz**, así que arrastra todos los `rem` de
+Tailwind (paddings, huecos, anchos máximos): es un zoom coherente, no letras más
+grandes dentro de cajas del mismo tamaño. Al tocar diseño, compruébalo a **320px
+de ancho con el 130 %**; los mínimos en `rem` (`min-w-[14rem]`) y los tamaños
+fijos (`w-28`) hay que envolverlos en `min(…, 100%)`. Ojo con un detalle: **las
+media queries NO ven el `font-size` de la raíz**, así que un punto de corte en
+píxeles no se mueve al escalar y una fila que cabía deja de caber.
 
 ### Multi-generación (Fase 7) — leer antes de tocar el historial
 
@@ -413,7 +449,9 @@ Lo que no aparece conserva el valor global. Dos reglas que no son obvias:
 
 ## Convenciones obligatorias
 
-- **Paleta OLED, nunca negro puro**: base `#0A1425`, panel `#132238`, hover `#1C3350`, texto `#F5F7FA`, texto secundario `#A9BDD2`. En Tailwind: `bg-base`, `bg-panel`, `bg-hover`, `text-ink`, `text-ink-soft`.
+- **Paleta OLED, nunca negro puro**: base `#0A1425`, panel `#132238`, hover `#1C3350`, texto `#F5F7FA`, texto secundario `#A9BDD2`. En Tailwind: `bg-base`, `bg-panel`, `bg-hover`, `text-ink`, `text-ink-soft`. La **única** excepción es el modo de alto contraste de la 8.1, que el usuario activa a mano.
+  - **`text-base` es el tamaño de letra, no un color.** El color `base` se declara solo en `backgroundColor` y `borderColor` de `tailwind.config.js`, no en `colors`: metido en `colors` generaba un segundo `.text-base { color: var(--color-base) }` que pisaba al de Tailwind y pintaba el texto del color del fondo. No lo devuelvas a `colors`.
+- **Texto sobre un color del dataset o del usuario**: clase `color-chip` + `--chip-color` en el `style`. En alto contraste esa clase cambia el fondo de color por un marco de 2px y pone el texto en blanco sobre negro, porque los tipos apagados no llegan a AAA. Lo usan `TypeBadge` y los avatares de perfil.
 - **Tarjetas**: `rounded-xl2 shadow-card bg-panel` + `animate-fadein` (ya definidos en `tailwind.config.js`).
 - **i18n**: nunca texto suelto en JSX. Añade la clave a `src/i18n/es.json` Y `en.json`, y usa `useI18n().t("clave")`. Admite parámetros: `t("clave", { name: "X" })` sustituye `{{name}}`.
   - **Los JSON son PLANOS**: `"editor.fields.dex": "Nº de Pokédex"`. `i18n/index.tsx` hace `dict[key]` directo y **no recorre objetos anidados**: si pegas un bloque anidado, la app pinta la clave cruda. Si te entregan claves anidadas, aplánalas antes.
@@ -467,7 +505,11 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     siembra por `db/migrate.js`, `GET /api/changes/:tipo/:ref`,
     `components/ChangeHistory.tsx` (colapsable, cerrada por defecto) y el
     validador `pnpm run check:changes`.
-- 🔜 **Fase 8, la siguiente**: accesibilidad, rendimiento y PWA avanzada.
+- 🚧 **Fase 8, en curso**: accesibilidad, rendimiento y PWA avanzada.
+  - ✅ **8.1** alto contraste real y escalado de texto: `lib/a11y.ts`, la clase
+    `.high-contrast` de `index.css`, cuatro niveles (90/100/115/130 %) y la
+    sección «Accesibilidad» de `/ajustes`. Ver «Accesibilidad (Fase 8)».
+  - 🔜 **8.2, la siguiente**: teclado y lectores de pantalla.
   Ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía

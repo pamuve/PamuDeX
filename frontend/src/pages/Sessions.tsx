@@ -232,7 +232,10 @@ export default function Sessions() {
         }
       >
         <Database size={20} className="mt-0.5 shrink-0 text-ink-soft" aria-hidden="true" />
-        <span className="min-w-0 flex-1">
+        {/* `break-words`: con el distintivo «Activa» a la derecha quedan ~110px
+            para el texto, y al 130% de escalado (8.1) una palabra larga
+            («modificaciones.») no cabe entera en esa columna. */}
+        <span className="min-w-0 flex-1 break-words">
           <span className="block font-medium text-ink">{t("sessions.global")}</span>
           <span className="block text-sm text-ink-soft">{t("sessions.globalHint")}</span>
         </span>

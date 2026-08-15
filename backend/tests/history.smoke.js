@@ -356,4 +356,28 @@ assert.strictEqual(pedir(settings, "PUT", "/1", { params: { profileId: "1" }, bo
 assert.strictEqual(pedir(settings, "GET", "/99", { params: { profileId: "99" } }).status, 404);
 console.log("11 OK  lista blanca de claves y errores de ajustes");
 
+/* ================================================================ */
+/* 12. Ajustes: accesibilidad (Tarea 8.1)                            */
+/* ================================================================ */
+// Por defecto la app NO está en alto contraste ni escalada: activarlos es una
+// decisión explícita del usuario, nunca algo que se herede sin pedirlo.
+s = pedir(settings, "GET", "/2", { params: { profileId: "2" } });
+assert.strictEqual(s.body.settings.high_contrast, "0", "el alto contraste viene apagado");
+assert.strictEqual(s.body.settings.text_scale, "100", "el texto viene sin escalar");
+
+s = pedir(settings, "PUT", "/2", {
+  params: { profileId: "2" },
+  body: { high_contrast: true, text_scale: 130 },
+});
+assert.strictEqual(s.body.settings.high_contrast, "1", "el booleano se guarda como 1/0");
+assert.strictEqual(s.body.settings.text_scale, "130", "el número se guarda como texto");
+
+// Son del perfil, igual que el resto: la accesibilidad de uno no se le impone al otro.
+s = pedir(settings, "GET", "/1", { params: { profileId: "1" } });
+assert.strictEqual(s.body.settings.high_contrast, "0", "el perfil 1 no hereda el alto contraste");
+
+s = pedir(settings, "PUT", "/2", { params: { profileId: "2" }, body: { text_scale: null } });
+assert.strictEqual(s.body.settings.text_scale, "100", "null devuelve el escalado a su defecto");
+console.log("12 OK  alto contraste y escalado de texto por perfil");
+
 console.log("\nTodas las pruebas pasan.");

@@ -15,7 +15,7 @@
  * errata. No lo quites sin poner antes una vía de recuperación.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { X, Loader2, ShieldAlert } from "lucide-react";
 import { PinPad } from "./PinPad";
 import { profilesApi, ApiError } from "../lib/apiSession";
@@ -166,8 +166,14 @@ export function PinDialog({ mode, profile, onDone, onCancel }: PinDialogProps) {
       >
         <div className="flex items-start gap-3 mb-4">
           <span
-            className="w-10 h-10 rounded-full flex items-center justify-center font-display font-bold shrink-0"
-            style={{ backgroundColor: profile.color || "#7FB4E8", color: "#0A1425" }}
+            className="color-chip w-10 h-10 rounded-full flex items-center justify-center font-display font-bold shrink-0"
+            style={
+              {
+                backgroundColor: profile.color || "#7FB4E8",
+                color: "#0A1425",
+                "--chip-color": profile.color || "#7FB4E8",
+              } as CSSProperties
+            }
             aria-hidden="true"
           >
             {profile.avatar || profile.name.trim().charAt(0).toUpperCase()}

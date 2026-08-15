@@ -250,7 +250,43 @@ modo en marcha en `/champions` (**6.3**).
 **Fase 7 completa** (multi-generación): selector condicional y `?gen=` por
 middleware (**7.1**), vista «Todas las generaciones» con etiquetas de cambios
 (**7.2**) e historial por entidad con su conjunto inicial de datos (**7.3**).
-Siguiente: **Fase 8, accesibilidad, rendimiento y PWA avanzada**.
+
+**Fase 8 en curso** (accesibilidad, rendimiento y PWA avanzada): alto contraste
+y escalado de texto (**8.1**). Siguiente: **8.2, teclado y lectores de
+pantalla**.
+
+### Accesibilidad (Fase 8)
+
+`lib/a11y.ts` guarda alto contraste y escalado de texto (90/100/115/130 %) con el
+patrón de `lib/session.ts` (estado de módulo + eventos, `localStorage` como
+verdad inmediata). `main.tsx` llama a `applyA11y()` **antes de montar React**:
+en un efecto la app parpadearía con el tamaño equivocado.
+
+No son columnas de `profiles` aunque se parezcan al tema: se resuelven como
+`active_session`, con `settings.high_contrast` y `settings.text_scale` como copia
+por perfil. **Al arrancar manda el aparato, al cambiar de perfil manda el
+perfil** — en `/perfiles` todavía no hay perfil que consultar, y es justo donde
+más falta hace.
+
+**El alto contraste pisa a los dos temas.** `lib/theme.ts` escribe las
+`--color-*` inline en `<html>`, así que `.high-contrast` las redeclara con
+`!important`, lo único que gana a un inline. Ahí `panel` y `base` son el mismo
+negro puro — la única excepción del proyecto, y la elige el usuario — y las
+tarjetas se distinguen por `outline` de 1px con `outline-offset: -1px`, que no
+mueve el diseño.
+
+El texto sobre un color del dataset usa la clase `color-chip` + `--chip-color`:
+en alto contraste el color pasa de fondo a marco. Los tipos apagados (siniestro
+2.8:1) no llegan a AAA de ninguna otra forma.
+
+**`text-base` es tamaño de letra, no color.** El color `base` va solo en
+`backgroundColor` y `borderColor` de `tailwind.config.js`; en `colors` generaba
+un `.text-base { color: var(--color-base) }` que pisaba al de Tailwind y pintaba
+el texto del color del fondo.
+
+Al tocar diseño, compruébalo a **320px con el 130 %**. Los mínimos en `rem` y los
+tamaños fijos necesitan `min(…, 100%)`, y recuerda que **las media queries no ven
+el `font-size` de la raíz**: un punto de corte en píxeles no se mueve al escalar.
 
 ### Multi-generación (Fase 7)
 

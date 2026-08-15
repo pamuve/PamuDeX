@@ -101,9 +101,16 @@ export function MoveDetail() {
           <ChangeTag changes={cambios} field="type_id" format={nombreDeTipo} />
           <span className="ml-auto"><FavoriteButton type="move" entityRef={move.id} /></span>
         </div>
-        <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+        {/* `auto-fit` con mínimo de 7rem en vez de dos columnas fijas: al 130%
+            de escalado (8.1) ese mínimo pasa de 112 a 146px, dejan de caber dos
+            columnas en una pantalla de 4" y la rejilla baja sola a una. A
+            tamaño normal siguen siendo dos. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(7rem,100%),1fr))] gap-y-3 gap-x-6">
           {rows.map(([label, val, field, format]) => (
-            <div key={label} className="flex justify-between border-b border-hover pb-2">
+            // `flex-wrap`: en dos columnas a 4" y con el texto al 130% (8.1) la
+            // etiqueta y el valor no caben en la misma línea; así el valor baja
+            // en vez de salirse de la celda.
+            <div key={label} className="flex flex-wrap justify-between gap-x-2 border-b border-hover pb-2">
               <span className="text-ink-soft text-sm">
                 {label}
                 {field && <ChangeTag changes={cambios} field={field} format={format} />}

@@ -45,7 +45,10 @@ export function Home() {
               className="bg-panel hover:bg-hover rounded-xl2 p-4 shadow-card transition-colors flex flex-col items-center gap-1 animate-fadein"
             >
               <span className="text-ink-soft font-mono text-xs">#{String(p.dex).padStart(3, "0")}</span>
-              <span className="text-ink font-medium text-center">{p.name_es}</span>
+              {/* `break-words`: al 130% de escalado (8.1) un nombre largo
+                  («Crabominable») no cabe en una columna de 4" y se salía de
+                  la tarjeta en vez de partirse. */}
+              <span className="text-ink font-medium text-center break-words w-full">{p.name_es}</span>
             </Link>
           ))}
         </div>

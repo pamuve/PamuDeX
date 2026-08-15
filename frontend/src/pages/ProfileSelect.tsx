@@ -7,7 +7,7 @@
  * del mínimo táctil de 44px), y crece a 3/4 columnas según el ancho.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Check, X, Loader2, AlertTriangle, Lock, LockOpen } from "lucide-react";
 import { profilesApi } from "../lib/apiSession";
@@ -21,14 +21,21 @@ import {
 } from "../lib/profile";
 import { useI18n } from "../i18n";
 
-/** Avatar circular: emoji del perfil si lo tiene, si no su inicial. */
+/**
+ * Avatar circular: emoji del perfil si lo tiene, si no su inicial.
+ *
+ * El tamaño grande es `min(7rem, 100%)` y no `w-28 h-28` fijo por el escalado
+ * de texto de la 8.1: al 130% ese 7rem se convierte en 145px y no cabe en una
+ * columna de la rejilla de dos a 320px de ancho. Con `aspect-square` el círculo
+ * se encoge sin deformarse.
+ */
 function Avatar({ profile, size }: { profile: Profile; size: "lg" | "sm" }) {
   const color = profile.color || "#7FB4E8";
-  const box = size === "lg" ? "w-28 h-28 text-4xl" : "w-10 h-10 text-lg";
+  const box = size === "lg" ? "w-[min(7rem,100%)] aspect-square text-4xl" : "w-10 h-10 text-lg";
   return (
     <span
-      className={`${box} rounded-full flex items-center justify-center font-display font-bold shrink-0 select-none`}
-      style={{ backgroundColor: color, color: "#0A1425" }}
+      className={`color-chip ${box} rounded-full flex items-center justify-center font-display font-bold shrink-0 select-none`}
+      style={{ backgroundColor: color, color: "#0A1425", "--chip-color": color } as CSSProperties}
       aria-hidden="true"
     >
       {profile.avatar || profileInitial(profile.name)}
@@ -382,7 +389,10 @@ export default function ProfileSelect() {
                     }`}
                     aria-current={isActive ? "true" : undefined}
                   >
-                    <span className="relative">
+                    {/* `w-full max-w-28`: da al avatar el ancho de la columna
+                        contra el que medir su `min()`, y mantiene el candado
+                        pegado al borde del círculo y no al de la tarjeta. */}
+                    <span className="relative w-full max-w-28">
                       <Avatar profile={profile} size="lg" />
                       {profile.has_pin && (
                         <span
@@ -445,9 +455,9 @@ export default function ProfileSelect() {
             {!creating && (
               <button
                 onClick={() => startCreate()}
-                className="flex flex-col items-center gap-3 p-3 rounded-xl2 transition-colors hover:bg-panel animate-fadein self-start"
+                className="flex flex-col items-center gap-3 p-3 rounded-xl2 w-full transition-colors hover:bg-panel animate-fadein self-start"
               >
-                <span className="w-28 h-28 rounded-full border-2 border-dashed border-hover flex items-center justify-center text-ink-soft">
+                <span className="w-[min(7rem,100%)] aspect-square rounded-full border-2 border-dashed border-hover flex items-center justify-center text-ink-soft">
                   <Plus size={36} aria-hidden="true" />
                 </span>
                 <span className="font-medium text-ink-soft text-sm sm:text-base">

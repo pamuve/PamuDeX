@@ -100,7 +100,10 @@ export function GenerationSelector({ visible, value, onChange }: GenerationSelec
           Fila desplazable en horizontal: en 4" no caben diez botones, y
           envolverlos en dos líneas descoloca la cabecera de la ficha.
         */}
-        <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 py-0.5">
+        {/* `min-w-0`: sin él, el ancho mínimo automático de un elemento flex es
+            el de su contenido, así que la fila desplazable ensanchaba a su
+            padre en vez de desplazarse. Solo se notaba al escalar el texto. */}
+        <div className="flex gap-1.5 overflow-x-auto min-w-0 -mx-1 px-1 py-0.5">
           {opciones.map((o) => {
             const activo = o.gen === value;
             return (
