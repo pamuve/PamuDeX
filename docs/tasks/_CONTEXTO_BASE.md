@@ -273,6 +273,103 @@ Los **tipos no se filtran**, son la física del juego y no contenido.
 Champions **no toca el modo estándar ni las sesiones**: no reescribe datos, solo
 dice qué contenido es legal. Por eso lee el catálogo global, sin overrides.
 
+### Multi-generación (Fase 7) — leer antes de tocar el historial
+
+**`?gen=<n>` es opcional en las cuatro rutas de ficha** (`/api/pokemon/:id`,
+`/api/moves/:id`, `/api/abilities/:id`, `/api/types/:id`) y lo aplica
+`middleware/generationMode.js`. **Ninguna ruta de datos conoce las
+generaciones**, igual que no conocen las sesiones ni Champions.
+
+Toda ficha de esas cuatro entidades lleva dos campos, con `?gen=` o sin él:
+
+- **`has_generational_differences`** (booleano) — decide si el frontend pinta el
+  `GenerationSelector`.
+- **`generational_changes`** (array, Tarea 7.2) — la lista de cambios, ordenada
+  de la generación más antigua a la más nueva, con `old_value`/`new_value` ya
+  parseados de JSON. Vacía si no hay ninguno.
+
+En el resto de rutas y en los listados no se añade nada.
+
+**Los cambios viajan EMBEBIDOS.** `ChangeTag` y `ChangeHistory` los pintan sin
+pedir nada al servidor, así que funcionan sin conexión con la respuesta que el
+Service Worker ya cacheó.
+
+Existe además **`GET /api/changes/:entityType/:entityRef`** (`routes/changes.js`),
+que devuelve `{ entity_type, entity_ref, has_generational_differences, changes }`
+y sirve para consultar el historial **sin cargar una ficha entera** — es lo que se
+usa para comprobar una entrada recién añadida al JSON. La interfaz no la usa.
+**No está en `/api/history`**, que desde la Tarea 5.4 es el historial de consultas
+por perfil y es otra cosa.
+
+#### Cómo se amplía el historial
+
+El conjunto vive en `backend/data/entity_changes.json` — **49 cambios, inicial y
+corto a propósito**. Las instrucciones completas están en el README, sección
+«Historial de cambios entre generaciones». Lo esencial:
+
+- `ref` es la **clave natural**, no el id interno: nº de Pokédex en Pokémon,
+  `name_es` en movimientos y habilidades, id en tipos. Los resuelve
+  `db/populate.js` → `insertEntityChanges`, que salta con aviso lo que no
+  resuelva en vez de romper el arranque.
+- Entra por **`db/migrate.js`** cuando la tabla está vacía, nunca resembrando.
+- **`pnpm run check:changes`** (`tools/check-entity-changes.js`) valida contra la
+  base real las dos invariantes que nada más puede comprobar: que las cadenas
+  empalmen y que el último eslabón cuadre con el dataset. Escribiendo el conjunto
+  inicial pilló un par Bicho/Veneno con los `new_value` intercambiados. **Ejecútalo
+  siempre que toques el archivo.**
+
+**Limitación conocida:** los tipos que aún no existían siguen apareciendo en las
+vistas antiguas (Acero, Siniestro y Hada salen en la tabla de la Gen 1). Haría
+falta una generación de nacimiento por tipo, que el dataset no guarda.
+
+**Este middleware SÍ actúa sin su parámetro**, a diferencia de los otros dos:
+tiene que poner el indicador aunque el usuario no haya elegido generación.
+
+**Se monta el ÚLTIMO de los tres** (`server.js`). Los wrappers de `res.json` se
+aplican en orden inverso al de montaje, así que el orden real de transformación
+es **generación → sesión → Champions**: se reconstruye el dato histórico y
+encima pisan los overrides del ROM Hack, que son una edición explícita. `?gen=`
+y `?session=` **se combinan** (Champions sigue siendo excluyente con la sesión).
+
+#### La tabla `entity_changes` y cómo se lee
+
+`entity_changes(id, entity_type, entity_ref, generation, field, old_value,
+new_value, note)`. Una fila se lee «en la generación N este campo pasó de
+`old_value` a `new_value`»: la generación es la de **entrada en vigor**.
+
+El dataset sembrado son los valores de **hoy** y no hay copia del catálogo por
+generación, así que el valor en una generación G es el `old_value` del cambio
+**más antiguo posterior a G** — se camina hacia atrás (`lib/generations.js`).
+Consecuencias al cargar datos (7.3): cada cambio de un campo debe **empalmar**
+con el siguiente (`new_value` de uno = `old_value` del otro) y el último de la
+cadena debe coincidir con lo que hay en la base; una entrada mal fechada
+desplaza todo lo anterior de ese campo.
+
+- `entity_type` es el **singular** de `favorites` e `history` (`pokemon`,
+  `move`, `ability`, `type`), no el plural de las URLs.
+- `entity_ref` es el **id interno** (cadena en los tipos: `'acero'`). En Pokémon
+  se compara contra el id de la RESPUESTA, porque la URL admite el nº de Pokédex.
+- `old_value` / `new_value` van en **JSON**, no en texto plano: los campos no son
+  todos del mismo tipo (`power` número, `category` cadena, `types` array).
+- Los cambios de la tabla de tipos se anotan en el tipo **DEFENSOR** con
+  `field = 'relation:<atacante>'`. Acero perdiendo su resistencia a Fantasma en
+  la Gen 6 es `entity_ref='acero'`, `field='relation:fantasma'`, `old_value=0.5`.
+  Un tipo cuenta como «con diferencias» también cuando el cambio está anotado en
+  otro: su perfil ofensivo se movió igual. En la respuesta, esos cambios «desde
+  el otro lado» salen con el prefijo **sintético** `relation_out:<defensor>`,
+  que no existe en la base — lo compone `changesFor`. Constantes del frontend en
+  `lib/generations.ts`.
+- `field` admite **un nivel de anidamiento con punto** (`stats.atk`).
+
+La tabla **está vacía a propósito hasta la 7.3**: la 7.1 es solo la
+infraestructura. Los datos entran por `db/migrate.js` o por la siembra, nunca
+resembrando (`pnpm run seed` borra perfiles, sesiones, favoritos e historial).
+
+`lib/buckets.js` (`rebuildGroups`) es la reconstrucción de los grupos de
+efectividad sobre una tabla de tipos modificada. Vivía dentro de
+`sessionOverrides.js` y se extrajo en la 7.1, que la necesitaba igual. Lo usan
+los dos middlewares.
+
 ### Sesiones y overrides (Fase 3)
 
 - `GET|POST /api/sessions`, `GET|PUT|DELETE /api/sessions/:id`, `POST /api/sessions/:id/duplicate`
@@ -356,16 +453,33 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     con `lib/effectiveness.js` convertido en factoría.
   - ✅ **6.3** el modo en sí: `middleware/championsMode.js` con `?champions=<id>`,
     `lib/champions.ts`, `/champions` y el distintivo permanente de la TopBar.
-- 🔜 **Fase 7, la siguiente**: multi-generación. Ver `docs/ROADMAP.md`.
+- ✅ **Fase 7**: multi-generación.
+  - ✅ **7.1** infraestructura: tabla `entity_changes`, `lib/generations.js`,
+    `middleware/generationMode.js` con `?gen=<n>`,
+    `has_generational_differences` en las cuatro fichas y
+    `components/GenerationSelector.tsx`. Ver «Multi-generación (Fase 7)».
+  - ✅ **7.2** vista «Todas las generaciones»: `generational_changes` embebido en
+    la ficha, `components/ChangeTag.tsx` (pulsación **y** hover, con teclado) y
+    `lib/generations.ts`. «Todas» **sustituyó** a «Actual» como valor `null` por
+    defecto del selector; elegir una generación concreta apaga las etiquetas,
+    porque allí el dato ya es el histórico.
+  - ✅ **7.3** `backend/data/entity_changes.json` (49 cambios documentados),
+    siembra por `db/migrate.js`, `GET /api/changes/:tipo/:ref`,
+    `components/ChangeHistory.tsx` (colapsable, cerrada por defecto) y el
+    validador `pnpm run check:changes`.
+- 🔜 **Fase 8, la siguiente**: accesibilidad, rendimiento y PWA avanzada.
+  Ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 
-`champions_rules`. Está en `backend/db/schema.sql` — reutilízala antes de
-inventar tablas nuevas.
+Ninguna. `champions_rules` la estrenó la 6.1.
 
 Ya en uso: `sessions` (Fase 3), `profiles` (5.1 y 5.2), `favorites` (5.3),
-`history` y `settings` (5.4), `items` (6.0). `users` existe pero **sigue vacía a
-propósito**: se reserva para un login real.
+`history` y `settings` (5.4), `items` (6.0), `champions_rules` (6.1). `users`
+existe pero **sigue vacía a propósito**: se reserva para un login real.
+
+`entity_changes` (7.1) existe y tiene lógica, pero **está vacía hasta la 7.3**:
+sin filas, la app se comporta exactamente igual que antes de la Fase 7.
 
 ## Decisiones ya tomadas, no las reabras sin motivo
 

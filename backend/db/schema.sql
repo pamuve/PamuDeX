@@ -161,6 +161,50 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Cambios históricos entre generaciones (Tarea 7.1).
+--
+-- `generation` es la generación en la que el cambio ENTRÓ EN VIGOR: desde ella
+-- el campo vale `new_value`, y antes valía `old_value`. Es la única lectura
+-- posible, porque el dataset sembrado son los valores ACTUALES y no hay ni va a
+-- haber una copia del catálogo por generación: el valor en una generación G se
+-- reconstruye caminando hacia atrás desde hoy (ver backend/lib/generations.js).
+--
+-- `entity_type` usa el singular de `favorites` e `history` ('pokemon', 'move',
+-- 'ability', 'type'), no el plural de las URLs. `entity_ref` es TEXT por lo
+-- mismo que en esas dos tablas: los tipos se refieren por cadena ('acero') y el
+-- resto por id interno.
+--
+-- `field` es el nombre del campo tal y como lo devuelve la API ('power',
+-- 'category', 'types'…). Los cambios de la tabla de tipos se anotan en el tipo
+-- DEFENSOR con `relation:<atacante>`: Acero perdiendo su resistencia a Fantasma
+-- en la Gen 6 es entity_ref='acero', field='relation:fantasma', old_value=0.5,
+-- new_value=1. Así el historial de tipos cabe aquí y no hace falta sembrar
+-- `relations` nueve veces.
+--
+-- `old_value` y `new_value` son JSON, no texto plano: los campos no son todos
+-- del mismo tipo (`power` es número, `category` cadena, `types` un array) y así
+-- el valor vuelve con la forma que la API espera.
+CREATE TABLE IF NOT EXISTS entity_changes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  entity_type TEXT NOT NULL,     -- 'pokemon' | 'move' | 'ability' | 'type'
+  entity_ref TEXT NOT NULL,
+  generation INTEGER NOT NULL,
+  field TEXT NOT NULL,
+  old_value TEXT,                -- JSON
+  new_value TEXT,                -- JSON
+  note TEXT
+);
+
+-- Las dos consultas de lib/generations.js filtran por entidad; la de valores
+-- históricos además acota por generación.
+CREATE INDEX IF NOT EXISTS idx_entity_changes_entidad
+  ON entity_changes (entity_type, entity_ref, generation);
+
+-- La reconstrucción de la tabla de tipos en una generación busca por campo, sin
+-- saber de qué tipo, así que necesita su propio índice.
+CREATE INDEX IF NOT EXISTS idx_entity_changes_campo
+  ON entity_changes (field, generation);
+
 -- Pokémon Champions: modo independiente con su propia base de reglas
 CREATE TABLE IF NOT EXISTS champions_rules (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

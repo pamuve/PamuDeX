@@ -4,7 +4,7 @@
 const path = require("path");
 const fs = require("fs");
 const Database = require("better-sqlite3");
-const { populate } = require("./populate");
+const { populate, insertEntityChanges } = require("./populate");
 
 // Ruta compartida con server.js: en Docker la lleva a /data (ver db/paths.js).
 const { DB_PATH, SCHEMA_PATH, ensureDbDir } = require("./paths");
@@ -31,11 +31,16 @@ function seed() {
     items: readJSON("items.json"),
   });
 
+  // Va DESPUÉS de `populate`: resuelve las referencias del archivo (nº de
+  // Pokédex, name_es) contra las filas recién insertadas.
+  const cambios = insertEntityChanges(db, readJSON("entity_changes.json"));
+
   console.log(`✔ Base de datos creada en ${DB_PATH}`);
   console.log(
     `  · ${counts.types} tipos, ${counts.pokemon} Pokémon, ${counts.moves} movimientos, ` +
       `${counts.abilities} habilidades, ${counts.items} objetos`
   );
+  console.log(`  · ${cambios} cambios históricos entre generaciones`);
   db.close();
 }
 
