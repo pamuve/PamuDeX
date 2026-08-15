@@ -352,7 +352,7 @@ export default function ChampionsRules() {
   const ocultas = filtradas.length - visibles.length;
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-start gap-3 flex-wrap">
         {/* `min(14rem,100%)`: el mínimo evita que el título y el botón se
             partan en escritorio, pero al 130% de escalado (8.1) 14rem son
@@ -736,6 +736,6 @@ export default function ChampionsRules() {
           {t("championsHome.title")}
         </Link>
       </p>
-    </main>
+    </div>
   );
 }

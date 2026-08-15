@@ -4,6 +4,14 @@ import { PokemonDetail, RivalSlot, MoveSummary } from "../types";
 import { TypeBadge } from "./TypeBadge";
 import { useI18n } from "../i18n";
 
+/**
+ * Lista de movimientos con casillas.
+ *
+ * `title` ya no vale solo de rótulo visual (8.2): también nombra el grupo y el
+ * campo de filtro. En una tarjeta de rival hay DOS de estas —«conocidos» y
+ * «sospechados»— y en un equipo de seis rivales, doce en la misma página. Sin
+ * nombre propio, un lector de pantalla las anuncia todas igual.
+ */
 function MoveMultiSelect({
   title,
   allMoves,
@@ -17,14 +25,19 @@ function MoveMultiSelect({
   disabledIds: number[];
   onToggle: (id: number) => void;
 }) {
+  const { t, lang } = useI18n();
   const [filter, setFilter] = useState("");
-  const filtered = allMoves.filter((m) => m.name_es.toLowerCase().includes(filter.toLowerCase()));
+  const nombre = (o: { name_es: string; name_en: string }) =>
+    lang === "en" ? o.name_en : o.name_es;
+  const filtered = allMoves.filter((m) => nombre(m).toLowerCase().includes(filter.toLowerCase()));
   return (
-    <div>
+    <div role="group" aria-label={title}>
       <div className="text-xs text-ink-soft mb-1">{title}</div>
       <input
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
+        placeholder={t("search.placeholder")}
+        aria-label={t("team.filterMovesIn", { name: title })}
         className="w-full bg-hover rounded-lg px-2 py-1.5 text-sm text-ink outline-none mb-2"
       />
       <div className="max-h-28 overflow-auto space-y-1 pr-1">
@@ -36,6 +49,7 @@ function MoveMultiSelect({
               key={m.id}
               onClick={() => !disabled && onToggle(m.id)}
               disabled={disabled}
+              aria-pressed={selected}
               className={`w-full flex items-center justify-between text-left px-2 py-1 rounded-lg text-sm transition-colors ${
                 selected
                   ? "bg-[#1C3350] text-ink"
@@ -45,10 +59,18 @@ function MoveMultiSelect({
               }`}
             >
               <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                {m.name_es}
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: m.color }}
+                  aria-hidden="true"
+                />
+                {nombre(m)}
               </span>
-              {selected && <span className="text-xs">✓</span>}
+              {selected && (
+                <span className="text-xs" aria-hidden="true">
+                  ✓
+                </span>
+              )}
             </button>
           );
         })}
@@ -70,7 +92,9 @@ export function RivalSlotCard({
   onChange: (updated: RivalSlot) => void;
   onRemove: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const nombre = (o: { name_es: string; name_en: string }) =>
+    lang === "en" ? o.name_en : o.name_es;
 
   if (!pokemon) {
     return <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">Cargando...</div>;
@@ -94,14 +118,14 @@ export function RivalSlotCard({
     <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein space-y-3 border-l-2 border-l-[#C03028]/40">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-display font-semibold text-ink">{pokemon.name_es}</span>
+          <span className="font-display font-semibold text-ink">{nombre(pokemon)}</span>
           <div className="flex gap-1">
             {pokemon.types.map((tp) => (
               <TypeBadge key={tp.id} type={tp} size="sm" />
             ))}
           </div>
         </div>
-        <button onClick={onRemove} className="text-ink-soft hover:text-[#C03028] transition-colors" aria-label={t("team.remove")}>
+        <button onClick={onRemove} className="text-ink-soft hover:text-[#C03028] transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
           <X size={18} />
         </button>
       </div>
@@ -134,14 +158,14 @@ export function RivalSlotCard({
       </div>
 
       <MoveMultiSelect
-        title={t("team.known_moves")}
+        title={t("team.knownMovesOf", { name: nombre(pokemon) })}
         allMoves={allMoves}
         selectedIds={slot.knownMoveIds}
         disabledIds={slot.suspectedMoveIds}
         onToggle={toggleKnown}
       />
       <MoveMultiSelect
-        title={t("team.suspected_moves")}
+        title={t("team.suspectedMovesOf", { name: nombre(pokemon) })}
         allMoves={allMoves}
         selectedIds={slot.suspectedMoveIds}
         disabledIds={slot.knownMoveIds}

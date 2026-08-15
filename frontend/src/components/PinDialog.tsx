@@ -20,6 +20,7 @@ import { X, Loader2, ShieldAlert } from "lucide-react";
 import { PinPad } from "./PinPad";
 import { profilesApi, ApiError } from "../lib/apiSession";
 import { PIN_LENGTH, type Profile } from "../lib/profile";
+import { readableInk } from "../lib/theme";
 import { useI18n } from "../i18n";
 
 export type PinMode = "enter" | "set" | "change" | "remove";
@@ -63,13 +64,51 @@ export function PinDialog({ mode, profile, onDone, onCancel }: PinDialogProps) {
 
   // Escape cierra, y el foco entra en el diálogo para que el teclado físico
   // llegue al PinPad sin tener que pinchar antes.
+  //
+  // Además el foco queda ATRAPADO dentro (Tarea 8.2). `aria-modal="true"` solo
+  // le dice al lector de pantalla que ignore el resto de la página; no impide
+  // que un tabulador se escape a la barra superior, que sigue detrás. Sin la
+  // trampa se puede acabar escribiendo el PIN con el foco fuera del diálogo.
+  //
+  // Al cerrar, el foco vuelve a donde estaba: normalmente el botón del perfil
+  // que abrió el diálogo, que es donde el usuario espera reaparecer.
   useEffect(() => {
+    const previo = document.activeElement as HTMLElement | null;
     dialogRef.current?.focus();
+
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onCancel();
+      if (e.key === "Escape") {
+        onCancel();
+        return;
+      }
+      if (e.key !== "Tab" || !dialogRef.current) return;
+
+      const dentro = [
+        ...dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href],button:not(:disabled),input:not(:disabled),select,textarea,[tabindex]:not([tabindex="-1"])'
+        ),
+      ].filter((el) => el.offsetParent !== null);
+      if (!dentro.length) return;
+
+      const primero = dentro[0];
+      const ultimo = dentro[dentro.length - 1];
+      const activo = document.activeElement;
+
+      // Tabular desde el último vuelve al primero, y al revés con Shift.
+      if (!e.shiftKey && (activo === ultimo || !dialogRef.current.contains(activo))) {
+        e.preventDefault();
+        primero.focus();
+      } else if (e.shiftKey && (activo === primero || activo === dialogRef.current)) {
+        e.preventDefault();
+        ultimo.focus();
+      }
     }
+
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previo?.focus?.();
+    };
   }, [onCancel]);
 
   /** Traduce el código de error del backend a un mensaje. */
@@ -170,7 +209,7 @@ export function PinDialog({ mode, profile, onDone, onCancel }: PinDialogProps) {
             style={
               {
                 backgroundColor: profile.color || "#7FB4E8",
-                color: "#0A1425",
+                color: readableInk(profile.color || "#7FB4E8"),
                 "--chip-color": profile.color || "#7FB4E8",
               } as CSSProperties
             }

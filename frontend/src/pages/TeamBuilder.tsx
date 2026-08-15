@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { api } from "../lib/api";
 import {
@@ -16,23 +16,57 @@ import { TeamSlotCard } from "../components/TeamSlotCard";
 import { RivalSlotCard } from "../components/RivalSlotCard";
 import { RecommendationCard } from "../components/RecommendationCard";
 import { CoverageMap } from "../components/CoverageMap";
+import { useCombobox } from "../hooks/useCombobox";
 import { useI18n } from "../i18n";
 import { Team, RivalTeam, PokemonSummary, PokemonDetail, MoveSummary, TypeDetail } from "../types";
 
+/**
+ * Autocompletado para añadir un Pokémon al equipo.
+ *
+ * Es el segundo `combobox` de la app (8.2) y comparte el teclado con el
+ * buscador global a través de `hooks/useCombobox`: flechas para recorrer,
+ * `Enter` para añadir, `Escape` para cerrar y otra vez `Escape` para limpiar.
+ * El foco no se mueve del campo, que es lo que distingue este patrón del menú
+ * de la barra superior.
+ *
+ * `label` sustituye al marcador de posición como nombre accesible: el
+ * marcador desaparece en cuanto se escribe, y aquí hay DOS campos idénticos en
+ * la misma página (equipo propio y rival) que sin nombre no se distinguen.
+ */
 function AddPokemonBox({
   allPokemon,
   disabled,
+  label,
   placeholder,
   onAdd,
 }: {
   allPokemon: PokemonSummary[];
   disabled: boolean;
+  label: string;
   placeholder: string;
   onAdd: (dex: number, id: number) => void;
 }) {
+  const { t, lang } = useI18n();
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  const filtered = allPokemon.filter((p) => p.name_es.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+  const nombre = (p: PokemonSummary) => (lang === "en" ? p.name_en : p.name_es);
+  const filtered = allPokemon
+    .filter((p) => nombre(p).toLowerCase().includes(q.toLowerCase()))
+    .slice(0, 8);
+
+  function elegir(p: PokemonSummary) {
+    onAdd(p.dex, p.id);
+    setQ("");
+    combo.setOpen(false);
+    combo.setActivo(-1);
+  }
+
+  const combo = useCombobox({
+    count: filtered.length,
+    onSelect: (i) => elegir(filtered[i]),
+    onEscapeClosed: () => setQ(""),
+  });
+
+  const abierta = combo.open && q.length > 0;
 
   if (disabled) return null;
 
@@ -42,37 +76,63 @@ function AddPokemonBox({
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
-          setOpen(true);
+          combo.setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => combo.setOpen(true)}
+        onBlur={() => combo.setOpen(false)}
         placeholder={placeholder}
+        aria-label={label}
+        {...combo.inputProps}
+        aria-expanded={abierta}
         className="w-full bg-hover rounded-xl2 px-4 py-3 text-sm text-ink outline-none"
       />
-      {open && q.length > 0 && (
-        <div className="absolute mt-1 w-full bg-panel border border-hover rounded-xl2 shadow-card max-h-56 overflow-auto z-20 animate-fadein">
-          {filtered.map((p) => (
-            <button
+      <span className="sr-only" role="status" aria-live="polite">
+        {abierta ? t("search.count", { count: filtered.length }) : ""}
+      </span>
+      {abierta && (
+        <ul
+          ref={combo.listRef}
+          id={combo.listId}
+          role="listbox"
+          aria-label={label}
+          className="absolute mt-1 w-full bg-panel border border-hover rounded-xl2 shadow-card max-h-56 overflow-auto z-20 animate-fadein"
+        >
+          {filtered.map((p, i) => (
+            <li
               key={p.id}
-              onClick={() => {
-                onAdd(p.dex, p.id);
-                setQ("");
-                setOpen(false);
+              id={combo.optionId(i)}
+              role="option"
+              aria-selected={i === combo.activo}
+              // `onMouseDown`: el `blur` del campo cierra la lista antes de que
+              // llegue el `click`, así que para entonces la fila ya no existe.
+              onMouseDown={(e) => {
+                e.preventDefault();
+                elegir(p);
               }}
-              className="w-full flex items-center justify-between text-left px-4 py-2 hover:bg-hover text-sm text-ink"
+              onMouseEnter={() => combo.setActivo(i)}
+              className={`flex items-center justify-between px-4 py-2 text-sm text-ink cursor-pointer ${
+                i === combo.activo ? "bg-hover" : ""
+              }`}
             >
-              <span>{p.name_es}</span>
-              <Plus size={14} className="text-ink-soft" />
-            </button>
+              <span>{nombre(p)}</span>
+              <Plus size={14} className="text-ink-soft" aria-hidden="true" />
+            </li>
           ))}
-          {filtered.length === 0 && <div className="px-4 py-2 text-sm text-ink-soft">—</div>}
-        </div>
+          {filtered.length === 0 && (
+            <li className="px-4 py-2 text-sm text-ink-soft">{t("empty.results")}</li>
+          )}
+        </ul>
       )}
     </div>
   );
 }
 
 export function TeamBuilder() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const nombreDe = useCallback(
+    (p: { name_es: string; name_en: string }) => (lang === "en" ? p.name_en : p.name_es),
+    [lang]
+  );
   const [ownTeam, setOwnTeam] = useState<Team>({ slots: [] });
   const [rivalTeam, setRivalTeam] = useState<RivalTeam>({ slots: [] });
   const [allPokemon, setAllPokemon] = useState<PokemonSummary[]>([]);
@@ -126,6 +186,49 @@ export function TeamBuilder() {
     [ownTeam, pokemonCache, movesById, typesById]
   );
 
+  /*
+    Las recomendaciones salen del render y pasan a un `useMemo` (8.2). Hace
+    falta para poder resumirlas en la región `aria-live` sin calcularlas dos
+    veces —`bestResponseAgainst` recorre movimientos y tipos por cada rival— y
+    de paso dejan de recalcularse en cada repintado por cualquier motivo.
+  */
+  const recomendaciones = useMemo(
+    () =>
+      rivalTeam.slots
+        .map((rival, idx) => {
+          const rivalPokemon = pokemonCache[rival.pokemonId];
+          if (!rivalPokemon) return null;
+          return {
+            key: `${rival.pokemonId}-${idx}`,
+            rival,
+            rivalPokemon,
+            recommendation: bestResponseAgainst(
+              rival,
+              rivalPokemon,
+              ownTeam.slots,
+              pokemonCache,
+              movesById
+            ),
+          };
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null),
+    [rivalTeam, ownTeam, pokemonCache, movesById]
+  );
+
+  /** Lo que se anuncia: contra quién, a quién sacar. Vacío si no hay rivales. */
+  const resumenRecomendaciones = useMemo(() => {
+    if (!recomendaciones.length) return "";
+    const partes = recomendaciones.map((r) => {
+      const mejor = r.recommendation.ranked[0];
+      const elegido = mejor ? pokemonCache[mejor.pokemonId] : null;
+      return t("recommendation.announceOne", {
+        rival: nombreDe(r.rivalPokemon),
+        name: elegido ? nombreDe(elegido) : t("recommendation.no_candidates"),
+      });
+    });
+    return t("recommendation.announce", { list: partes.join("; ") });
+  }, [recomendaciones, pokemonCache, t, nombreDe]);
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <h1 className="font-display text-2xl font-bold text-ink text-center">{t("team.title")}</h1>
@@ -140,7 +243,13 @@ export function TeamBuilder() {
           {ownTeam.slots.length >= MAX_TEAM_SIZE ? (
             <div className="text-sm text-ink-soft bg-hover rounded-xl2 px-4 py-3 text-center">{t("team.full")}</div>
           ) : (
-            <AddPokemonBox allPokemon={allPokemon} disabled={false} placeholder={t("team.search_placeholder")} onAdd={addOwn} />
+            <AddPokemonBox
+              allPokemon={allPokemon}
+              disabled={false}
+              label={t("team.addToOwn")}
+              placeholder={t("team.search_placeholder")}
+              onAdd={addOwn}
+            />
           )}
 
           {ownTeam.slots.length === 0 && <p className="text-ink-soft text-sm">{t("team.empty_own")}</p>}
@@ -170,7 +279,13 @@ export function TeamBuilder() {
           {rivalTeam.slots.length >= MAX_TEAM_SIZE ? (
             <div className="text-sm text-ink-soft bg-hover rounded-xl2 px-4 py-3 text-center">{t("team.full")}</div>
           ) : (
-            <AddPokemonBox allPokemon={allPokemon} disabled={false} placeholder={t("team.search_placeholder")} onAdd={addRival} />
+            <AddPokemonBox
+              allPokemon={allPokemon}
+              disabled={false}
+              label={t("team.addToRival")}
+              placeholder={t("team.search_placeholder")}
+              onAdd={addRival}
+            />
           )}
 
           {rivalTeam.slots.length === 0 && <p className="text-ink-soft text-sm">{t("team.empty_rival")}</p>}
@@ -192,23 +307,34 @@ export function TeamBuilder() {
         </section>
       </div>
 
+      {/*
+        Región `aria-live` de las recomendaciones (Tarea 8.2).
+
+        Es el cambio dinámico importante de la app: tocar un movimiento o una
+        naturaleza en cualquier tarjeta puede cambiar a quién conviene sacar, y
+        eso pasa lejos del control que se acaba de usar. Sin anunciarlo, quien
+        no ve la pantalla no se entera de que ha cambiado nada.
+
+        `polite` y no `assertive`: no debe cortar al lector mientras el usuario
+        sigue configurando. Va SIEMPRE montada aunque no haya rivales: una
+        región que aparece y desaparece del DOM no se anuncia de forma fiable.
+      */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {resumenRecomendaciones}
+      </span>
+
       {rivalTeam.slots.length > 0 && (
         <section className="space-y-3">
           <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase">{t("recommendation.title")}</h2>
           <div className="grid sm:grid-cols-2 gap-3">
-            {rivalTeam.slots.map((rival, idx) => {
-              const rivalPokemon = pokemonCache[rival.pokemonId];
-              if (!rivalPokemon) return null;
-              const recommendation = bestResponseAgainst(rival, rivalPokemon, ownTeam.slots, pokemonCache, movesById);
-              return (
-                <RecommendationCard
-                  key={`${rival.pokemonId}-${idx}`}
-                  recommendation={recommendation}
-                  rivalPokemon={rivalPokemon}
-                  pokemonById={pokemonCache}
-                />
-              );
-            })}
+            {recomendaciones.map(({ rival, rivalPokemon, recommendation, key }) => (
+              <RecommendationCard
+                key={key}
+                recommendation={recommendation}
+                rivalPokemon={rivalPokemon}
+                pokemonById={pokemonCache}
+              />
+            ))}
           </div>
         </section>
       )}

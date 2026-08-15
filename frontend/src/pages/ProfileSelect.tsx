@@ -19,6 +19,7 @@ import {
   profileInitial,
   type Profile,
 } from "../lib/profile";
+import { readableInk } from "../lib/theme";
 import { useI18n } from "../i18n";
 
 /**
@@ -35,7 +36,9 @@ function Avatar({ profile, size }: { profile: Profile; size: "lg" | "sm" }) {
   return (
     <span
       className={`color-chip ${box} rounded-full flex items-center justify-center font-display font-bold shrink-0 select-none`}
-      style={{ backgroundColor: color, color: "#0A1425", "--chip-color": color } as CSSProperties}
+      style={
+        { backgroundColor: color, color: readableInk(color), "--chip-color": color } as CSSProperties
+      }
       aria-hidden="true"
     >
       {profile.avatar || profileInitial(profile.name)}
@@ -320,7 +323,7 @@ export default function ProfileSelect() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="font-display font-bold text-2xl sm:text-3xl text-ink text-center">
         {t("profiles.title")}
       </h1>
@@ -504,6 +507,6 @@ export default function ProfileSelect() {
           onCancel={() => setPinTarget(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

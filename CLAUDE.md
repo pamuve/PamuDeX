@@ -252,8 +252,8 @@ middleware (**7.1**), vista «Todas las generaciones» con etiquetas de cambios
 (**7.2**) e historial por entidad con su conjunto inicial de datos (**7.3**).
 
 **Fase 8 en curso** (accesibilidad, rendimiento y PWA avanzada): alto contraste
-y escalado de texto (**8.1**). Siguiente: **8.2, teclado y lectores de
-pantalla**.
+y escalado de texto (**8.1**), teclado y lectores de pantalla (**8.2**).
+Siguiente: **8.3, iconos definitivos y notificaciones opcionales**.
 
 ### Accesibilidad (Fase 8)
 
@@ -287,6 +287,21 @@ el texto del color del fondo.
 Al tocar diseño, compruébalo a **320px con el 130 %**. Los mínimos en `rem` y los
 tamaños fijos necesitan `min(…, 100%)`, y recuerda que **las media queries no ven
 el `font-size` de la raíz**: un punto de corte en píxeles no se mueve al escalar.
+
+Para teclado y lectores hay **dos hooks que no son intercambiables**:
+`hooks/useMenu.ts` para menús (el foco viaja a la opción, con `Escape` y
+devolución del foco al disparador) y `hooks/useCombobox.ts` para autocompletados
+(el foco se queda en el campo y la opción activa va con `aria-activedescendant`).
+Usa el que toque en vez de escribir el teclado a mano.
+
+**`<main id="contenido">` vive en `App.tsx`**, no en las páginas: una página
+nueva no debe traer el suyo o habría dos hitos y el enlace «saltar al contenido»
+dejaría de ser fiable. Cada página empieza por un `<h1>` y no salta niveles.
+
+Todo control necesita nombre accesible, y el marcador de posición no cuenta.
+El texto sobre un color del dataset usa `readableInk(color)`, nunca un color
+fijo. Lo que cambia lejos del control que lo provoca se anuncia con
+`role="status" aria-live="polite"`, con la región siempre montada.
 
 ### Multi-generación (Fase 7)
 

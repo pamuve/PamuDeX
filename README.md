@@ -300,8 +300,12 @@ con token. Nada de eso está implementado.
 >   115 y 130 %) desde `/ajustes`: se aplican al instante, sobreviven a recargar y
 >   se recuerdan por perfil. El alto contraste manda sobre el tema del ROM Hack y
 >   sobre el del perfil, y es el único sitio de la app donde se usa negro puro.
+>   La app se maneja además **entera con el teclado**: enlace para saltar al
+>   contenido, menús y autocompletados con flechas y `Escape`, nombre accesible
+>   en todos los controles y aviso hablado cuando cambian las recomendaciones
+>   del comparador.
 >
-> Siguiente: **8.2 — teclado y lectores de pantalla**.
+> Siguiente: **8.3 — iconos definitivos y notificaciones opcionales**.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

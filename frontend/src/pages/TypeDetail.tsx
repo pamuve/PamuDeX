@@ -76,8 +76,13 @@ export function TypeDetail() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      {/* El distintivo hace de título de la ficha, así que va dentro de un `h1`
+          (8.2): era la única página sin encabezado de nivel 1 y empezaba
+          directamente en `h2`, lo que rompe el índice del lector de pantalla. */}
       <div className="flex justify-center items-center gap-1">
-        <TypeBadge type={type} size="lg" />
+        <h1 className="flex">
+          <TypeBadge type={type} size="lg" />
+        </h1>
         <FavoriteButton type="type" entityRef={type.id} />
       </div>
 

@@ -137,7 +137,7 @@ Notas de la fase:
 | # | Tarea | Tamaño | Estado |
 |---|-------|--------|--------|
 | 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña | ✅ `lib/a11y.ts`, `.high-contrast`, cuatro niveles de texto |
-| 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media | 🔜 |
+| 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media | ✅ `useMenu`, `useCombobox`, un solo `<main>` y enlace de salto |
 | 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña | 🔜 |
 | 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | 🔜 |
 
@@ -148,6 +148,11 @@ Notas de la fase:
 - **Las fichas de color (`.color-chip`) cambian el fondo por un marco**: distintivos de tipo y avatares de perfil. Con el color del dataset detrás, los tipos apagados (siniestro 2.8:1, fantasma 3.1:1, lucha 3.2:1) no llegan a AAA y no hay forma de arreglarlo sin repintar el dataset.
 - **La preferencia vive en `localStorage` y se copia al perfil**, como `active_session`: hay que aplicarla antes del primer render y también en `/perfiles`, donde aún no hay perfil que consultar.
 - **Bug preexistente encontrado y corregido de camino**: el color `base` en `extend.colors` generaba un segundo `.text-base { color: var(--color-base) }` que pisaba al `.text-base` de tamaño de fuente de Tailwind, así que todo lo que llevara `text-base` se pintaba del color del fondo. Ahora `base` se declara solo en `backgroundColor` y `borderColor`.
+- **Menú y combobox son dos patrones distintos, y por eso son dos hooks.** En un menú (`hooks/useMenu.ts`) el foco **viaja** a la opción; en un autocompletado (`hooks/useCombobox.ts`) el foco **se queda en el campo** —hay que poder seguir escribiendo— y la opción activa se señala con `aria-activedescendant`. Cada uno tiene dos o tres usos, así que unificarlos daría un componente que no cumple ninguno de los dos.
+- **Un solo `<main>`, en `App.tsx` y no en cada página.** Solo seis de dieciséis páginas tenían el hito, así que el enlace «saltar al contenido» no habría tenido a dónde saltar en las otras diez. Centralizarlo garantiza uno por documento y que las páginas futuras lo hereden.
+- **Al cambiar de ruta el foco vuelve al `<main>`.** En una SPA el navegador no recarga nada: sin esto el foco se queda en el enlace pulsado, el lector no anuncia la página nueva y el siguiente tabulador sigue por la barra.
+- **El color del texto de los distintivos se calcula, no se fija** (`readableInk` en `lib/theme.ts`). Con `#0A1425` fijo, siniestro (2.79:1), fantasma (3.1), dragón (3.17), lucha (3.24) y veneno (3.28) no llegaban a AA; en blanco suben a 5.6-6.6. No hay un color que sirva para los dieciocho tipos, y además el usuario puede elegir colores libres en el editor de un ROM Hack.
+- **`aria-modal` no atrapa el foco**: solo le dice al lector de pantalla que ignore el resto de la página. El diálogo del PIN necesitaba una trampa de verdad para que un tabulador no acabase escribiendo el PIN con el foco en la barra superior.
 
 ---
 

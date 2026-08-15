@@ -163,7 +163,7 @@ export default function Favorites() {
   // Sin perfil no hay favoritos que enseñar.
   if (!profile) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-12 text-center">
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center">
         <UserCircle2 size={40} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
         <h1 className="font-display font-bold text-2xl text-ink mb-2">{t("favorites.title")}</h1>
         <p className="text-ink-soft mb-5">{t("favorites.needProfile")}</p>
@@ -173,7 +173,7 @@ export default function Favorites() {
         >
           {t("profiles.choose")}
         </Link>
-      </main>
+      </div>
     );
   }
 
@@ -185,7 +185,7 @@ export default function Favorites() {
   ];
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div>
         <h1 className="font-display font-bold text-2xl text-ink">{t("favorites.title")}</h1>
         <p className="text-ink-soft text-sm mt-1">
@@ -235,6 +235,6 @@ export default function Favorites() {
           );
         })
       )}
-    </main>
+    </div>
   );
 }

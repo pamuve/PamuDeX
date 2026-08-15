@@ -301,6 +301,27 @@ distinguen por un `outline` blanco de 1px con `outline-offset: -1px`, que se
 dibuja *dentro* de la caja y por tanto no mueve ningún diseño. Es la única
 excepción a la regla del negro puro en todo el proyecto, y la activa el usuario.
 
+**Teclado y lectores (8.2).** Hay dos hooks y NO son intercambiables:
+`hooks/useMenu.ts` para menús (el foco viaja a la opción) y
+`hooks/useCombobox.ts` para autocompletados (el foco se queda en el campo y la
+opción activa va con `aria-activedescendant`). Si añades un desplegable o un
+autocompletado, usa el que toque en vez de escribir el teclado a mano.
+
+Reglas que hay que mantener:
+
+- **`<main id="contenido">` está en `App.tsx`, no en las páginas.** Una página
+  nueva NO debe traer su propio `<main>`: habría dos hitos y el enlace «saltar
+  al contenido» dejaría de ser fiable. Cada página empieza por un `<h1>` y no
+  se salta niveles de encabezado.
+- **Todo control necesita nombre accesible**, y el marcador de posición no
+  cuenta: desaparece al escribir. Botón solo con icono -> `aria-label`; icono
+  decorativo dentro de un botón con texto -> `aria-hidden="true"`.
+- **Texto sobre un color del dataset**: `readableInk(color)` de `lib/theme.ts`
+  elige entre claro y oscuro por contraste. No pongas un color de texto fijo.
+- **Los cambios importantes que ocurren lejos del control** se anuncian con
+  `role="status" aria-live="polite"`, y la región va SIEMPRE montada: una que
+  aparece y desaparece del DOM no se anuncia de forma fiable.
+
 **El escalado va en `font-size` de la raíz**, así que arrastra todos los `rem` de
 Tailwind (paddings, huecos, anchos máximos): es un zoom coherente, no letras más
 grandes dentro de cajas del mismo tamaño. Al tocar diseño, compruébalo a **320px
@@ -509,7 +530,11 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
   - ✅ **8.1** alto contraste real y escalado de texto: `lib/a11y.ts`, la clase
     `.high-contrast` de `index.css`, cuatro niveles (90/100/115/130 %) y la
     sección «Accesibilidad» de `/ajustes`. Ver «Accesibilidad (Fase 8)».
-  - 🔜 **8.2, la siguiente**: teclado y lectores de pantalla.
+  - ✅ **8.2** teclado y lectores de pantalla: `hooks/useMenu.ts`,
+    `hooks/useCombobox.ts`, un único `<main>` con enlace de salto en `App.tsx`,
+    `readableInk` para el texto de los distintivos y región `aria-live` en el
+    comparador. Ver «Accesibilidad (Fase 8)».
+  - 🔜 **8.3, la siguiente**: iconos definitivos y notificaciones opcionales.
   Ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía

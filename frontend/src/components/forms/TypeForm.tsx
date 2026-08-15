@@ -8,6 +8,7 @@ import { RotateCcw, Save, Loader2 } from "lucide-react";
 import type { TypeMeta } from "../../lib/apiSession";
 import type { EntityPatch } from "../../hooks/useSessionOverride";
 import { Field, inputClass, btnGhost, btnPrimary } from "./FormField";
+import { readableInk } from "../../lib/theme";
 
 interface Props {
   base: TypeMeta;
@@ -84,7 +85,10 @@ export default function TypeForm({ base, override, saving, t, onSave, onReset }:
                 se está previsualizando. Repintarlo dejaría al usuario eligiendo
                 un color a ciegas. */}
             <span className="hidden shrink-0 rounded-full px-3 py-1 text-xs font-medium sm:inline"
-              style={{ backgroundColor: HEX.test(color) ? color : "#132238", color: "#0A1425" }}>
+              style={{
+                backgroundColor: HEX.test(color) ? color : "#132238",
+                color: readableInk(HEX.test(color) ? color : "#132238"),
+              }}>
               {nameEs || "—"}
             </span>
           </div>

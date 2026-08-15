@@ -147,7 +147,7 @@ export default function Settings() {
   // Sin perfil no hay ajustes: son de alguien, no de la app.
   if (!profile) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">
         <div className="text-center">
           <UserCircle2 size={40} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
           <h1 className="font-display font-bold text-2xl text-ink mb-2">{t("settings.title")}</h1>
@@ -161,7 +161,7 @@ export default function Settings() {
         </div>
         {/* La accesibilidad sí se puede tocar sin perfil: es del aparato. */}
         <Accesibilidad />
-      </main>
+      </div>
     );
   }
 
@@ -193,7 +193,7 @@ export default function Settings() {
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div>
         <h1 className="font-display font-bold text-2xl text-ink">{t("settings.title")}</h1>
         <p className="text-ink-soft text-sm mt-1">
@@ -345,6 +345,6 @@ export default function Settings() {
           {t("profiles.title")}
         </Link>
       </section>
-    </main>
+    </div>
   );
 }

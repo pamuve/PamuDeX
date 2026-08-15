@@ -1,9 +1,11 @@
-import { useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield, Gamepad2 } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield, Gamepad2, Check } from "lucide-react";
+import { useMenu } from "../hooks/useMenu";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 import { useActiveProfile, profileInitial } from "../lib/profile";
+import { readableInk } from "../lib/theme";
 import { useActiveChampions } from "../lib/champions";
 import { useActiveSession } from "../lib/session";
 
@@ -44,9 +46,16 @@ const NAV_LINKS: {
 function ModeMenu({ label }: { label: string }) {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const menu = useMenu();
   const { champions, exit } = useActiveChampions();
   const [sessionId] = useActiveSession();
+
+  /** Ir a una ruta cerrando el menú. Sin devolver el foco: la navegación
+   *  ya lo lleva al contenido de la página nueva (ver App.tsx). */
+  function ir(ruta: string) {
+    menu.close(false);
+    navigate(ruta);
+  }
 
   const modoActual = champions
     ? t("mode.champions")
@@ -57,10 +66,12 @@ function ModeMenu({ label }: { label: string }) {
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={menu.triggerRef}
+        onClick={menu.toggle}
+        onKeyDown={menu.onTriggerKeyDown}
         className="flex items-center gap-1 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors"
-        aria-haspopup="true"
-        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-expanded={menu.open}
         aria-label={label}
         title={label}
       >
@@ -70,18 +81,24 @@ function ModeMenu({ label }: { label: string }) {
         <span className="hidden sm:inline">{label}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
-      {open && (
-        <div className="absolute right-0 mt-2 w-60 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein">
+      {menu.open && (
+        <div
+          ref={menu.menuRef}
+          onKeyDown={menu.onMenuKeyDown}
+          role="menu"
+          aria-label={label}
+          className="absolute right-0 mt-2 w-60 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein"
+        >
           <p className="px-3 py-1.5 text-[11px] text-ink-soft/70 border-b border-hover mb-1">
             {t("mode.current", { name: modoActual })}
           </p>
 
           {champions ? (
             <button
+              role="menuitem"
               onClick={() => {
                 exit();
-                setOpen(false);
-                navigate("/");
+                ir("/");
               }}
               className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
             >
@@ -90,10 +107,8 @@ function ModeMenu({ label }: { label: string }) {
             </button>
           ) : (
             <button
-              onClick={() => {
-                setOpen(false);
-                navigate("/champions");
-              }}
+              role="menuitem"
+              onClick={() => ir("/champions")}
               className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
             >
               <Shield size={16} aria-hidden="true" />
@@ -102,10 +117,8 @@ function ModeMenu({ label }: { label: string }) {
           )}
 
           <button
-            onClick={() => {
-              setOpen(false);
-              navigate("/sesiones");
-            }}
+            role="menuitem"
+            onClick={() => ir("/sesiones")}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
           >
             <Layers size={16} aria-hidden="true" />
@@ -114,7 +127,8 @@ function ModeMenu({ label }: { label: string }) {
 
           <Link
             to="/champions/reglas"
-            onClick={() => setOpen(false)}
+            role="menuitem"
+            onClick={() => menu.close(false)}
             className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink-soft hover:bg-hover hover:text-ink border-t border-hover mt-1"
           >
             <SlidersHorizontal size={16} aria-hidden="true" />
@@ -162,7 +176,12 @@ function ProfileMenu() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [profile, setProfile] = useActiveProfile();
-  const [open, setOpen] = useState(false);
+  const menu = useMenu();
+
+  function ir(ruta: string) {
+    menu.close(false);
+    navigate(ruta);
+  }
 
   if (!profile) {
     return (
@@ -182,15 +201,20 @@ function ProfileMenu() {
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={menu.triggerRef}
+        onClick={menu.toggle}
+        onKeyDown={menu.onTriggerKeyDown}
         className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-ink-soft hover:text-ink hover:bg-hover transition-colors"
-        aria-haspopup="true"
-        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-expanded={menu.open}
+        aria-label={t("profiles.activeProfile", { name: profile.name })}
         title={t("profiles.activeProfile", { name: profile.name })}
       >
         <span
           className="color-chip w-8 h-8 rounded-full flex items-center justify-center font-display font-bold text-sm shrink-0 select-none"
-          style={{ backgroundColor: color, color: "#0A1425", "--chip-color": color } as CSSProperties}
+          style={
+            { backgroundColor: color, color: readableInk(color), "--chip-color": color } as CSSProperties
+          }
           aria-hidden="true"
         >
           {profile.avatar || profileInitial(profile.name)}
@@ -199,48 +223,48 @@ function ProfileMenu() {
         <ChevronDown size={14} aria-hidden="true" />
       </button>
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-52 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein">
+      {menu.open && (
+        <div
+          ref={menu.menuRef}
+          onKeyDown={menu.onMenuKeyDown}
+          role="menu"
+          aria-label={t("profiles.activeProfile", { name: profile.name })}
+          className="absolute right-0 mt-2 w-52 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein"
+        >
           <p className="px-3 py-1.5 text-[11px] text-ink-soft/70 border-b border-hover mb-1">
             {t("profiles.activeProfile", { name: profile.name })}
           </p>
           {/* Historial y ajustes viven aquí y no en la barra: son del perfil,
               y la barra ya va justa de sitio en móvil. */}
           <button
-            onClick={() => {
-              setOpen(false);
-              navigate("/historial");
-            }}
+            role="menuitem"
+            onClick={() => ir("/historial")}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
           >
             <History size={16} aria-hidden="true" />
             {t("history.title")}
           </button>
           <button
-            onClick={() => {
-              setOpen(false);
-              navigate("/ajustes");
-            }}
+            role="menuitem"
+            onClick={() => ir("/ajustes")}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
           >
             <Settings size={16} aria-hidden="true" />
             {t("nav.settings")}
           </button>
           <button
-            onClick={() => {
-              setOpen(false);
-              navigate("/perfiles");
-            }}
+            role="menuitem"
+            onClick={() => ir("/perfiles")}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
           >
             <Users size={16} aria-hidden="true" />
             {t("profiles.switch")}
           </button>
           <button
+            role="menuitem"
             onClick={() => {
               setProfile(null);
-              setOpen(false);
-              navigate("/perfiles");
+              ir("/perfiles");
             }}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
           >
@@ -255,7 +279,7 @@ function ProfileMenu() {
 
 export function TopBar() {
   const { lang, setLang, t } = useI18n();
-  const [langOpen, setLangOpen] = useState(false);
+  const langMenu = useMenu();
   const current = AVAILABLE_LANGS.find((l) => l.code === lang) ?? AVAILABLE_LANGS[0];
 
   return (
@@ -266,24 +290,43 @@ export function TopBar() {
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2 sm:gap-3">
         <div className="relative shrink-0">
           <button
-            onClick={() => setLangOpen((o) => !o)}
+            ref={langMenu.triggerRef}
+            onClick={langMenu.toggle}
+            onKeyDown={langMenu.onTriggerKeyDown}
             className="text-xl sm:text-2xl leading-none hover:scale-110 transition-transform"
-            aria-label="Cambiar idioma"
+            aria-haspopup="menu"
+            aria-expanded={langMenu.open}
+            // La bandera es un emoji decorativo: el nombre accesible dice qué
+            // idioma hay puesto, no solo que esto cambia el idioma.
+            aria-label={t("a11y.changeLanguage", { name: current.label })}
+            title={t("a11y.changeLanguage", { name: current.label })}
           >
-            {current.flag}
+            <span aria-hidden="true">{current.flag}</span>
           </button>
-          {langOpen && (
-            <div className="absolute left-0 mt-2 w-40 bg-panel border border-hover rounded-xl2 shadow-card p-1 z-20 animate-fadein">
+          {langMenu.open && (
+            <div
+              ref={langMenu.menuRef}
+              onKeyDown={langMenu.onMenuKeyDown}
+              role="menu"
+              aria-label={t("settings.language")}
+              className="absolute left-0 mt-2 w-40 bg-panel border border-hover rounded-xl2 shadow-card p-1 z-20 animate-fadein"
+            >
               {AVAILABLE_LANGS.map((l) => (
                 <button
                   key={l.code}
+                  role="menuitemradio"
+                  aria-checked={l.code === lang}
                   onClick={() => {
                     setLang(l.code);
-                    setLangOpen(false);
+                    langMenu.close();
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-ink hover:bg-hover"
                 >
-                  <span className="text-lg">{l.flag}</span> {l.label}
+                  <span className="text-lg" aria-hidden="true">
+                    {l.flag}
+                  </span>{" "}
+                  {l.label}
+                  {l.code === lang && <Check size={14} className="ml-auto" aria-hidden="true" />}
                 </button>
               ))}
             </div>

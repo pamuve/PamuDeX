@@ -67,6 +67,55 @@ export function isNearBlack(value: string): boolean {
   return channels(value).every((c) => c < 10) && !isPureBlack(value);
 }
 
+/* ------------------------------------------------------------------ */
+/* Contraste (Tarea 8.2)                                              */
+/* ------------------------------------------------------------------ */
+
+/** Luminancia relativa según WCAG 2.1. */
+function luminance(hex: string): number {
+  const canal = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const [r, g, b] = channels(hex);
+  return 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b);
+}
+
+/** Razón de contraste WCAG entre dos colores, de 1 a 21. */
+export function contrastRatio(a: string, b: string): number {
+  if (!HEX.test(a) || !HEX.test(b)) return 1;
+  const la = luminance(a) + 0.05;
+  const lb = luminance(b) + 0.05;
+  return la > lb ? la / lb : lb / la;
+}
+
+/** Texto oscuro de los distintivos. El claro es blanco puro, a propósito:
+ *  aquí no es un fondo, es texto de 12-16px sobre un color saturado. */
+export const CHIP_INK_DARK = "#0A1425";
+export const CHIP_INK_LIGHT = "#FFFFFF";
+
+/**
+ * Color de texto legible sobre un fondo cualquiera (Tarea 8.2).
+ *
+ * POR QUÉ NO VALE UN COLOR FIJO
+ * -----------------------------
+ * Los distintivos de tipo llevaban `#0A1425` fijo, y con los cinco tipos
+ * oscuros del dataset eso da entre 2.79:1 (siniestro) y 3.28:1 (veneno):
+ * por debajo del 4.5:1 de AA. Con blanco esos mismos cinco suben a 5.6-6.6:1,
+ * y los otros trece se quedarían en 1.5-3.1:1. No hay un color que sirva para
+ * los dieciocho, así que se elige por contraste, color a color.
+ *
+ * Sirve además para los colores que elige el usuario —la paleta de perfiles
+ * tiene el mismo problema con `#A040A0`, y en el editor de tipos de un ROM Hack
+ * el color es libre— sin tener que revisar ninguna lista a mano.
+ */
+export function readableInk(background: string): string {
+  if (!HEX.test(background)) return CHIP_INK_DARK;
+  return contrastRatio(background, CHIP_INK_DARK) >= contrastRatio(background, CHIP_INK_LIGHT)
+    ? CHIP_INK_DARK
+    : CHIP_INK_LIGHT;
+}
+
 export interface ThemeValidation {
   errors: Partial<Record<keyof ThemeColors, "hex" | "black">>;
   warnings: Partial<Record<keyof ThemeColors, "nearBlack">>;
