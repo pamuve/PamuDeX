@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, esFalloDeRed } from "../lib/api";
+import { LoadError } from "../components/LoadError";
 import { TypeDetail as TypeDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
@@ -20,15 +21,24 @@ export function TypeDetail() {
   // Generación que se está viendo; null = la actual (Fase 7).
   const [gen, setGen] = useGenerationView(id);
 
+  // Ver `components/LoadError.tsx` (8.4): sin esto la ficha se quedaba en
+  // «Cargando...» para siempre en cuanto fallaba la petición.
+  const [fallo, setFallo] = useState<null | "red" | "otro">(null);
+  const [reintento, setReintento] = useState(0);
+
   useEffect(() => {
     if (!id) return;
+    setFallo(null);
     // Ver PokemonDetail: descarta la respuesta de una generación ya no elegida.
     let cancelado = false;
-    api.types.detail(id, gen).then((tp) => !cancelado && setType(tp));
+    api.types
+      .detail(id, gen)
+      .then((tp) => !cancelado && setType(tp))
+      .catch((err) => !cancelado && setFallo(esFalloDeRed(err) ? "red" : "otro"));
     return () => {
       cancelado = true;
     };
-  }, [id, gen]);
+  }, [id, gen, reintento]);
 
   // El listado es solo para pintar nombres y colores en los paneles: se pide
   // una vez y no depende de la generación.
@@ -38,7 +48,8 @@ export function TypeDetail() {
 
   useRecordVisit("type", type ? type.id : undefined);
 
-  if (!type) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
+  if (fallo) return <LoadError offline={fallo === "red"} onRetry={() => setReintento((n) => n + 1)} />;
+  if (!type) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">{t("common.loading")}</div>;
 
   // Las etiquetas solo tienen sentido en «Todas las generaciones» (ver
   // PokemonDetail).

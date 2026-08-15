@@ -15,8 +15,9 @@ import { useI18n } from "../i18n";
 export function NotAllowed() {
   const { t } = useI18n();
 
+  // `div` y no `main`: el único hito de la página lo pone App.tsx (8.2).
   return (
-    <main className="max-w-2xl mx-auto px-4 py-12 text-center animate-fadein">
+    <div className="max-w-2xl mx-auto px-4 py-12 text-center animate-fadein">
       <ShieldOff size={40} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
       <p className="text-ink font-medium mb-1">{t("championsHome.notAllowed")}</p>
       <p className="text-ink-soft text-sm mb-5">{t("championsHome.notAllowedHint")}</p>
@@ -34,6 +35,6 @@ export function NotAllowed() {
           {t("champions.title")}
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, esFalloDeRed } from "../lib/api";
 import { PokemonDetail as PokemonDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
@@ -10,6 +10,7 @@ import { ChangeTag } from "../components/ChangeTag";
 import { ChangeHistory } from "../components/ChangeHistory";
 import { makeChangeLine } from "../lib/generations";
 import { NotAllowed } from "../components/NotAllowed";
+import { LoadError } from "../components/LoadError";
 import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
 
@@ -25,10 +26,15 @@ export function PokemonDetail() {
   const [gen, setGen] = useGenerationView(id);
   // En modo Champions el backend responde 404 si la entidad no es legal.
   const [noPermitido, setNoPermitido] = useState(false);
+  // Fallo de red, que NO es lo mismo (8.4): antes cualquier error acababa en
+  // «no permitida en Champions», y sin cobertura eso era mentira.
+  const [sinRed, setSinRed] = useState(false);
+  const [reintento, setReintento] = useState(0);
 
   useEffect(() => {
     if (!id) return;
     setNoPermitido(false);
+    setSinRed(false);
     // `cancelado` descarta la respuesta de una generación que ya no es la
     // elegida: pulsar rápido varias deja peticiones en vuelo que pueden
     // resolverse en otro orden.
@@ -36,11 +42,15 @@ export function PokemonDetail() {
     api.pokemon
       .detail(id, gen)
       .then((p) => !cancelado && setPoke(p))
-      .catch(() => !cancelado && setNoPermitido(true));
+      .catch((err) => {
+        if (cancelado) return;
+        if (esFalloDeRed(err)) setSinRed(true);
+        else setNoPermitido(true);
+      });
     return () => {
       cancelado = true;
     };
-  }, [id, gen]);
+  }, [id, gen, reintento]);
 
   useEffect(() => {
     api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((t) => [t.id, t]))));
@@ -51,7 +61,8 @@ export function PokemonDetail() {
   useRecordVisit("pokemon", poke ? poke.id : undefined);
 
   if (noPermitido) return <NotAllowed />;
-  if (!poke) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
+  if (sinRed) return <LoadError offline onRetry={() => setReintento((n) => n + 1)} />;
+  if (!poke) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">{t("common.loading")}</div>;
 
   // Las etiquetas solo tienen sentido en «Todas las generaciones»: si se está
   // viendo una concreta, el dato de la ficha YA es el histórico.

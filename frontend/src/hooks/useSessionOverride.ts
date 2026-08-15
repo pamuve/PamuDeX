@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { sessionsApi, type Session } from "../lib/apiSession";
 import { useActiveSession } from "../lib/session";
+import { invalidarSesion } from "../lib/localCache";
 
 export type OverrideEntity = "types" | "pokemon" | "moves" | "abilities";
 
@@ -103,6 +104,12 @@ export function useSessionOverrides(): SessionOverrides {
       setDoc(next); // optimista: la vista responde al instante
       try {
         await sessionsApi.update(sessionId, { data: next });
+        // La caché local del catálogo (8.4) responde sin preguntar a nadie, así
+        // que hay que tirarle la copia de ESTA sesión: si no, editar un Pokémon
+        // y volver al listado seguiría enseñando el valor de antes. `persist`
+        // es el único camino de escritura del hook, así que basta con hacerlo
+        // aquí y no en cada una de las cinco funciones que lo llaman.
+        void invalidarSesion(sessionId);
         setSavedAt(Date.now());
       } catch {
         setDoc(previous);

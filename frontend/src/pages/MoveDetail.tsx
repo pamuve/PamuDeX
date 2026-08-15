@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, esFalloDeRed } from "../lib/api";
+import { LoadError } from "../components/LoadError";
 import { MoveDetail as MoveDetailT, PokeType } from "../types";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { GenerationSelector, useGenerationView } from "../components/GenerationSelector";
@@ -23,20 +24,29 @@ export function MoveDetail() {
   const [gen, setGen] = useGenerationView(id);
   // En modo Champions el backend responde 404 si la entidad no es legal.
   const [noPermitido, setNoPermitido] = useState(false);
+  // Un fallo de RED no es lo mismo (8.4): antes acababa también en «no
+  // permitida en Champions», que sin cobertura es un mensaje falso.
+  const [sinRed, setSinRed] = useState(false);
+  const [reintento, setReintento] = useState(0);
 
   useEffect(() => {
     if (!id) return;
     setNoPermitido(false);
+    setSinRed(false);
     // Ver PokemonDetail: descarta la respuesta de una generación ya no elegida.
     let cancelado = false;
     api.moves
       .detail(id, gen)
       .then((m) => !cancelado && setMove(m))
-      .catch(() => !cancelado && setNoPermitido(true));
+      .catch((err) => {
+        if (cancelado) return;
+        if (esFalloDeRed(err)) setSinRed(true);
+        else setNoPermitido(true);
+      });
     return () => {
       cancelado = true;
     };
-  }, [id, gen]);
+  }, [id, gen, reintento]);
 
   useEffect(() => {
     api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((tp) => [tp.id, tp]))));
@@ -45,7 +55,8 @@ export function MoveDetail() {
   useRecordVisit("move", move ? move.id : undefined);
 
   if (noPermitido) return <NotAllowed />;
-  if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
+  if (sinRed) return <LoadError offline onRetry={() => setReintento((n) => n + 1)} />;
+  if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">{t("common.loading")}</div>;
 
   // Las etiquetas solo tienen sentido en «Todas las generaciones» (ver
   // PokemonDetail).

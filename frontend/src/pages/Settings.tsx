@@ -35,6 +35,7 @@ import { useActiveSession } from "../lib/session";
 import { useSettings } from "../lib/settings";
 import { useA11y, TEXT_SCALES } from "../lib/a11y";
 import { useNotifications } from "../lib/notifications";
+import { OfflineData } from "../components/OfflineData";
 import { PROFILE_THEMES, PROFILE_THEME_IDS } from "../lib/theme";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 
@@ -247,6 +248,7 @@ export default function Settings() {
         {/* La accesibilidad sí se puede tocar sin perfil: es del aparato. */}
         <Accesibilidad />
         <Notificaciones />
+        <OfflineData />
       </div>
     );
   }
@@ -298,6 +300,9 @@ export default function Settings() {
 
       {/* Notificaciones ---------------------------------------------- */}
       <Notificaciones />
+
+      {/* Datos sin conexión y depuración --------------------------- */}
+      <OfflineData />
 
       {/* Idioma ------------------------------------------------------- */}
       <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
