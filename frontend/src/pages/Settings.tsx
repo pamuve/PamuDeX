@@ -17,6 +17,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Bell,
+  BellOff,
   Check,
   Contrast,
   History as HistoryIcon,
@@ -32,6 +34,7 @@ import { useActiveProfile, syncActiveProfile } from "../lib/profile";
 import { useActiveSession } from "../lib/session";
 import { useSettings } from "../lib/settings";
 import { useA11y, TEXT_SCALES } from "../lib/a11y";
+import { useNotifications } from "../lib/notifications";
 import { PROFILE_THEMES, PROFILE_THEME_IDS } from "../lib/theme";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 
@@ -135,6 +138,88 @@ function Accesibilidad() {
   );
 }
 
+/**
+ * Notificaciones opcionales (Tarea 8.3).
+ *
+ * Va junto a la accesibilidad, y también fuera de la puerta del perfil, porque
+ * es otra preferencia del APARATO: el permiso lo concede el navegador al sitio
+ * entero. Ver la cabecera de `lib/notifications.ts`.
+ *
+ * Las tres reglas del encargo, aquí:
+ *  1. Empieza apagado y el permiso NO se pide hasta que se pulsa.
+ *  2. Se dice para qué sirven antes de pedir nada.
+ *  3. Con el permiso denegado se explica cómo revertirlo UNA vez, el
+ *     interruptor se queda deshabilitado y no se vuelve a insistir.
+ */
+function Notificaciones() {
+  const { t } = useI18n();
+  const { activadas, permiso, alternar } = useNotifications();
+  const [ocupado, setOcupado] = useState(false);
+
+  const denegado = permiso === "denied";
+  const sinSoporte = permiso === "unsupported";
+
+  async function pulsar() {
+    setOcupado(true);
+    try {
+      await alternar();
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  return (
+    <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
+      <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1 flex items-center gap-2">
+        <Bell size={14} aria-hidden="true" />
+        {t("settings.notifications")}
+      </h2>
+      <p className="text-ink-soft text-xs mb-3">{t("settings.notificationsHint")}</p>
+
+      {sinSoporte ? (
+        <p className="flex items-start gap-2 text-ink-soft text-xs bg-base rounded-lg p-3">
+          <BellOff size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
+          <span>{t("settings.notificationsUnsupported")}</span>
+        </p>
+      ) : (
+        <>
+          <button
+            onClick={pulsar}
+            role="switch"
+            aria-checked={activadas}
+            disabled={denegado || ocupado}
+            className="flex items-center gap-2 bg-base hover:bg-hover disabled:opacity-60
+                       disabled:cursor-not-allowed rounded-lg px-4 py-2.5 text-sm text-ink transition-colors"
+          >
+            <span
+              className={`w-9 h-5 rounded-full flex items-center px-0.5 shrink-0 transition-colors ${
+                activadas ? "bg-[#78C850]" : "bg-hover"
+              }`}
+              aria-hidden="true"
+            >
+              <span
+                className={`w-4 h-4 rounded-full bg-ink transition-transform ${
+                  activadas ? "translate-x-4" : ""
+                }`}
+              />
+            </span>
+            {activadas ? t("settings.on") : t("settings.off")}
+          </button>
+
+          {/* Permiso denegado: se explica cómo deshacerlo y no se insiste más.
+              El navegador no deja volver a preguntar desde la página. */}
+          {denegado && (
+            <p className="flex items-start gap-2 text-ink-soft text-xs mt-3 border-t border-hover pt-3">
+              <BellOff size={14} className="shrink-0 mt-0.5" aria-hidden="true" />
+              <span>{t("settings.notificationsBlocked")}</span>
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 export default function Settings() {
   const { t, lang, setLang } = useI18n();
   const [profile] = useActiveProfile();
@@ -161,6 +246,7 @@ export default function Settings() {
         </div>
         {/* La accesibilidad sí se puede tocar sin perfil: es del aparato. */}
         <Accesibilidad />
+        <Notificaciones />
       </div>
     );
   }
@@ -209,6 +295,9 @@ export default function Settings() {
 
       {/* Accesibilidad ------------------------------------------------ */}
       <Accesibilidad />
+
+      {/* Notificaciones ---------------------------------------------- */}
+      <Notificaciones />
 
       {/* Idioma ------------------------------------------------------- */}
       <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">

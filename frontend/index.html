@@ -6,8 +6,16 @@
     <meta name="theme-color" content="#0A1425" />
     <meta name="description" content="PamuDeX — Consulta de tipos, combates y equipos Pokémon, offline y autoalojada." />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <!-- El .ico lleva 16, 32 y 48 px: Windows y varios navegadores siguen
+         pidiendo /favicon.ico a pelo, sin mirar estas etiquetas. -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <!-- iOS aplica su propio redondeo, así que aquí va la versión a sangre:
+         con esquinas transparentes las pintaría de negro. -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PamuDeX" />
     <title>PamuDeX</title>
   </head>
   <body class="bg-base text-ink font-body">

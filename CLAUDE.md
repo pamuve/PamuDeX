@@ -252,8 +252,30 @@ middleware (**7.1**), vista «Todas las generaciones» con etiquetas de cambios
 (**7.2**) e historial por entidad con su conjunto inicial de datos (**7.3**).
 
 **Fase 8 en curso** (accesibilidad, rendimiento y PWA avanzada): alto contraste
-y escalado de texto (**8.1**), teclado y lectores de pantalla (**8.2**).
-Siguiente: **8.3, iconos definitivos y notificaciones opcionales**.
+y escalado de texto (**8.1**), teclado y lectores de pantalla (**8.2**), iconos
+definitivos y notificaciones opcionales (**8.3**). Siguiente: **8.4, IndexedDB,
+medición de <100 ms y auditoría Lighthouse**.
+
+### PWA: iconos y actualizaciones (Fase 8)
+
+El service worker **se registra a mano** en `lib/serviceWorker.ts` desde
+`main.tsx`, con `injectRegister: null` en `vite.config.ts`. No uses
+`virtual:pwa-register/react`: importa `workbox-window`, que no está instalado,
+y **rompe `pnpm run build`**.
+
+`registerType` es **`prompt`**: la versión nueva espera y la aplica el usuario
+desde `components/UpdatePrompt.tsx`. Con `autoUpdate` recargaría sin avisar, y
+en mitad de una edición en el editor de ROM Hacks eso pierde trabajo.
+
+**El icono maestro es `public/icons/icon.svg`** y los PNG y el `.ico` salen de
+él (comando en el README). El `maskable` es un SVG distinto: a sangre y sin
+esquinas redondeadas, porque el sistema aplica su propia máscara.
+
+**Las notificaciones no piden permiso solas.** Solo desde el interruptor de
+`/ajustes`, y son preferencia del aparato (`localStorage`), no del perfil: el
+permiso lo concede el navegador al sitio entero. Denegado = no se guarda como
+activada. Hay un único caso de uso, avisar de versión nueva; añadir otros exige
+el mismo listón: que pasen con la app en segundo plano.
 
 ### Accesibilidad (Fase 8)
 

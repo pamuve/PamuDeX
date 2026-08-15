@@ -273,6 +273,30 @@ Los **tipos no se filtran**, son la física del juego y no contenido.
 Champions **no toca el modo estándar ni las sesiones**: no reescribe datos, solo
 dice qué contenido es legal. Por eso lee el catálogo global, sin overrides.
 
+### PWA: iconos y actualizaciones (Fase 8) — leer antes de tocar el service worker
+
+**El service worker se registra a mano** en `lib/serviceWorker.ts`, llamado
+desde `main.tsx`; `injectRegister` está en `null` en `vite.config.ts` para que
+el plugin no inyecte el suyo. No uses `virtual:pwa-register/react`: importa
+`workbox-window`, que no está instalado, y **rompe `pnpm run build`**.
+
+`registerType` es **`prompt`**, no `autoUpdate`: la versión nueva se queda en
+espera y la aplica el usuario desde la franja de `components/UpdatePrompt.tsx`.
+No lo cambies a `autoUpdate` sin pensarlo — recargaría la página sin avisar, y
+en mitad de una edición del editor de ROM Hacks eso pierde trabajo.
+
+**El icono maestro es `public/icons/icon.svg`**; los PNG y el `.ico` se generan
+desde él (el comando está en el README). Si tocas el diseño, regenera los cinco
+archivos. El `maskable` es un SVG **distinto** (`icon-maskable.svg`): va a
+sangre, sin esquinas redondeadas, porque el sistema aplica su propia máscara.
+
+**Las notificaciones no piden permiso solas, nunca.** Solo desde el interruptor
+de `/ajustes`. Es preferencia del APARATO (`localStorage`) y no del perfil,
+porque el permiso lo concede el navegador al sitio entero. Con el permiso
+denegado no se guarda como activada: no llegaría ningún aviso y sería mentir.
+Hoy hay un único caso de uso —avisar de que hay versión nueva— y añadir otros
+debería pasar por el mismo listón: que ocurra con la app en segundo plano.
+
 ### Accesibilidad (Fase 8) — leer antes de tocar colores o tamaños
 
 `lib/a11y.ts` guarda dos preferencias: **alto contraste** y **escalado de texto**
@@ -534,7 +558,11 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     `hooks/useCombobox.ts`, un único `<main>` con enlace de salto en `App.tsx`,
     `readableInk` para el texto de los distintivos y región `aria-live` en el
     comparador. Ver «Accesibilidad (Fase 8)».
-  - 🔜 **8.3, la siguiente**: iconos definitivos y notificaciones opcionales.
+  - ✅ **8.3** iconos definitivos y notificaciones opcionales:
+    `public/icons/icon.svg` como maestro, manifiesto completo,
+    `lib/serviceWorker.ts`, `lib/notifications.ts` y `components/UpdatePrompt.tsx`.
+    Ver «PWA: iconos y actualizaciones (Fase 8)».
+  - 🔜 **8.4, la siguiente**: IndexedDB, medición de <100 ms y Lighthouse.
   Ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía

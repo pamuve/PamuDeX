@@ -234,6 +234,33 @@ La interfaz utiliza una paleta de colores pensada para dispositivos OLED para mi
 *   **Texto Principal:** `#F5F7FA`
 *   **Texto Secundario:** `#A9BDD2`
 
+### Iconos de la aplicación
+
+El icono es **diseño propio**: una «rueda de tipos» de seis arcos con la inicial
+en el centro. No lleva arte de Pokémon con copyright, a propósito, porque la app
+se distribuye.
+
+El maestro es `frontend/public/icons/icon.svg`; `icon-maskable.svg` es la
+variante a sangre para Android, que aplica su propia máscara y pintaría de negro
+cualquier esquina transparente. Si tocas el diseño, regenera los cinco archivos
+(hace falta `librsvg` e `ImageMagick`, solo para esto):
+
+```bash
+cd frontend/public/icons && rsvg-convert -w 192 -h 192 icon.svg -o icon-192.png && rsvg-convert -w 512 -h 512 icon.svg -o icon-512.png && rsvg-convert -w 512 -h 512 icon-maskable.svg -o icon-512-maskable.png && rsvg-convert -w 180 -h 180 icon-maskable.svg -o apple-touch-icon.png && for s in 16 32 48; do rsvg-convert -w $s -h $s icon.svg -o /tmp/pamudex-f$s.png; done && magick /tmp/pamudex-f16.png /tmp/pamudex-f32.png /tmp/pamudex-f48.png ../favicon.ico
+```
+
+### Actualizaciones y notificaciones
+
+El service worker está en modo **`prompt`**: cuando reconstruyes la imagen, la
+versión nueva no se aplica sola. La app enseña una franja «Hay una versión nueva
+de PamuDeX lista» y espera a que el usuario pulse *Actualizar*, para no recargar
+la página en mitad de una edición del editor de ROM Hacks.
+
+Las notificaciones del sistema son **opcionales y están apagadas de fábrica**.
+Solo sirven para ese mismo aviso cuando la app está en segundo plano, y el
+permiso no se pide hasta que las activas en `/ajustes`. Si las tienes bloqueadas
+en el navegador, la franja sigue funcionando igual: no se pierde nada.
+
 ## 🤝 Contribuir
 
 ¡Las contribuciones son bienvenidas! La arquitectura modular está diseñada para escalar y admitir en el futuro calculadoras de daño completas e integraciones con Pokémon Showdown.
@@ -303,9 +330,12 @@ con token. Nada de eso está implementado.
 >   La app se maneja además **entera con el teclado**: enlace para saltar al
 >   contenido, menús y autocompletados con flechas y `Escape`, nombre accesible
 >   en todos los controles y aviso hablado cuando cambian las recomendaciones
->   del comparador.
+>   del comparador. La PWA estrena **icono propio** (192, 512, *maskable*,
+>   *apple-touch* y `favicon.ico`), manifiesto completo y aviso de **versión
+>   nueva lista**, con notificaciones del sistema opcionales y apagadas de
+>   fábrica.
 >
-> Siguiente: **8.3 — iconos definitivos y notificaciones opcionales**.
+> Siguiente: **8.4 — IndexedDB, medición de <100 ms y auditoría Lighthouse**.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

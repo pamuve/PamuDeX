@@ -138,7 +138,7 @@ Notas de la fase:
 |---|-------|--------|--------|
 | 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña | ✅ `lib/a11y.ts`, `.high-contrast`, cuatro niveles de texto |
 | 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media | ✅ `useMenu`, `useCombobox`, un solo `<main>` y enlace de salto |
-| 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña | 🔜 |
+| 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña | ✅ Icono propio, manifiesto completo y aviso de versión nueva |
 | 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | 🔜 |
 
 Notas de la fase:
@@ -153,6 +153,12 @@ Notas de la fase:
 - **Al cambiar de ruta el foco vuelve al `<main>`.** En una SPA el navegador no recarga nada: sin esto el foco se queda en el enlace pulsado, el lector no anuncia la página nueva y el siguiente tabulador sigue por la barra.
 - **El color del texto de los distintivos se calcula, no se fija** (`readableInk` en `lib/theme.ts`). Con `#0A1425` fijo, siniestro (2.79:1), fantasma (3.1), dragón (3.17), lucha (3.24) y veneno (3.28) no llegaban a AA; en blanco suben a 5.6-6.6. No hay un color que sirva para los dieciocho tipos, y además el usuario puede elegir colores libres en el editor de un ROM Hack.
 - **`aria-modal` no atrapa el foco**: solo le dice al lector de pantalla que ignore el resto de la página. El diálogo del PIN necesitaba una trampa de verdad para que un tabulador no acabase escribiendo el PIN con el foco en la barra superior.
+- **El icono es diseño propio, sin arte con copyright**: una «rueda de tipos» de seis arcos con la inicial en el centro, hecha en SVG (`public/icons/icon.svg`, el maestro del que salen los PNG). No es una Poké Ball ni un sprite: la app se distribuye y ese arte no es nuestro.
+- **El `maskable` es un ARCHIVO distinto, no el mismo con otra etiqueta**: va a sangre y sin esquinas redondeadas, porque el sistema le aplica su propia forma y las esquinas transparentes saldrían en negro. La marca ocupa el 68.75 % del ancho, dentro del 80 % de zona segura.
+- **El service worker pasó de `autoUpdate` a `prompt`.** Con `autoUpdate` se reemplazaba solo y recargaba sin avisar: no había ningún momento en el que pudiera existir un aviso de versión nueva —el caso de uso que pide la tarea— y una recarga sorpresa en mitad de una edición del editor de ROM Hacks es justo lo que no debe pasar.
+- **El registro del service worker se hace a mano** (`lib/serviceWorker.ts`) en vez de con `virtual:pwa-register/react`: ese módulo importa `workbox-window`, que no está instalado, y usarlo obligaba a añadir una dependencia de tiempo de ejecución para unas comprobaciones periódicas que en una app autoalojada no aportan nada.
+- **El permiso de notificaciones no se pide nunca solo**, únicamente desde el interruptor de `/ajustes`. Pedirlo al cargar gasta la única oportunidad —en Chrome un rechazo deja `denied` para siempre— sin que el usuario sepa para qué. Con el permiso denegado el interruptor NO se guarda como activado: sería mentir, porque no llegaría ningún aviso.
+- **La franja en pantalla es el camino principal y la notificación es el extra**, para el único caso que la franja no cubre: que la pestaña esté en segundo plano. Así «con las notificaciones bloqueadas el resto funciona igual» se cumple por construcción.
 
 ---
 

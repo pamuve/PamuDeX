@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { TopBar } from "./components/TopBar";
+import { UpdatePrompt } from "./components/UpdatePrompt";
 import { Home } from "./pages/Home";
 import ProfileSelect from "./pages/ProfileSelect";
 import Favorites from "./pages/Favorites";
@@ -108,6 +109,10 @@ export default function App() {
           <Route path="/datos" element={<ImportExport />} />
         </Routes>
       </main>
+
+      {/* Fuera del `<main>`: no es contenido de la página, es un aviso de la
+          app. Se pinta solo cuando hay una versión esperando (8.3). */}
+      <UpdatePrompt />
     </div>
   );
 }

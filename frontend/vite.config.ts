@@ -6,21 +6,48 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
-      includeAssets: ["icons/icon-192.png", "icons/icon-512.png"],
+      // `prompt` y no `autoUpdate` (Tarea 8.3): el aviso de «hay una versión
+      // nueva» es el caso de uso de las notificaciones, y con `autoUpdate` el
+      // service worker se cambia solo y no hay nada que avisar. Ahora la
+      // actualización espera a que el usuario diga cuándo, que además evita
+      // recargar la página en mitad de una edición del editor de ROM Hacks.
+      registerType: "prompt",
+      // El registro lo hace `lib/serviceWorker.ts` desde `main.tsx`, porque
+      // necesita enterarse de cuándo queda una versión esperando. El script que
+      // inyecta el plugin solo registra y no avisa de nada.
+      injectRegister: null,
+      includeAssets: [
+        "favicon.ico",
+        "icons/apple-touch-icon.png",
+        "icons/icon-192.png",
+        "icons/icon-512.png",
+        "icons/icon-512-maskable.png",
+      ],
       manifest: {
-        name: "PamuDeX",
+        name: "PamuDeX — Pokédex para ROM Hacks",
         short_name: "PamuDeX",
-        description: "Consulta de tipos, combates y equipos Pokémon — offline y autoalojada.",
+        description:
+          "Consulta de tipos, combates y equipos Pokémon — offline y autoalojada.",
+        lang: "es",
         theme_color: "#0A1425",
         background_color: "#0A1425",
         display: "standalone",
         orientation: "any",
         start_url: "/",
+        scope: "/",
+        categories: ["games", "utilities", "reference"],
         icons: [
-          { src: "icons/icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "icons/icon-512.png", sizes: "512x512", type: "image/png" },
-          { src: "icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: "icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          // El `maskable` es un archivo DISTINTO, no el mismo con otra etiqueta:
+          // va a sangre y sin esquinas redondeadas, porque el sistema le aplica
+          // su propia forma y las esquinas transparentes saldrían en negro.
+          {
+            src: "icons/icon-512-maskable.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
         ],
       },
       workbox: {
