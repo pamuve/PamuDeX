@@ -23,6 +23,17 @@ body {
 ::-webkit-scrollbar-thumb { background: #1C3350; border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: #24406b; }
 
+/* Fila desplazable en horizontal (navegación de la barra superior en móvil):
+   se desplaza, pero sin barra visible — en 4" los 10px del scrollbar se comen
+   la altura útil y en escritorio no aporta nada porque la fila no existe. */
+.scroll-row {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
 /* Modo alto contraste */
 .high-contrast {
   --tw-text-opacity: 1;

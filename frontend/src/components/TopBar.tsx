@@ -1,10 +1,37 @@
 import { useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield } from "lucide-react";
+import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield, Gamepad2 } from "lucide-react";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 import { useActiveProfile, profileInitial } from "../lib/profile";
 import { useActiveChampions } from "../lib/champions";
 import { useActiveSession } from "../lib/session";
+
+/**
+ * Enlaces de navegación de la barra, en un único sitio porque se pintan dos
+ * veces: como iconos en la fila principal a partir de `lg`, y como fichas con
+ * etiqueta en la fila desplazable por debajo de ese ancho.
+ *
+ * El corte está en `lg` (1024px) y no en `md` porque medido en Chromium la fila
+ * de escritorio necesita 807px solo para los enlaces, el menú de modo y el de
+ * perfil: a 768px seguía desbordando.
+ *
+ * `desktopLabelKey` marca el único enlace que en escritorio lleva texto además
+ * del icono, tal y como estaba antes.
+ */
+const NAV_LINKS: {
+  to: string;
+  Icon: LucideIcon;
+  labelKey: string;
+  desktopLabelKey?: string;
+}[] = [
+  { to: "/favoritos", Icon: Star, labelKey: "favorites.title" },
+  { to: "/sesiones", Icon: Layers, labelKey: "sessions.nav" },
+  { to: "/editor", Icon: SlidersHorizontal, labelKey: "editor.nav" },
+  { to: "/datos", Icon: DatabaseBackup, labelKey: "data.nav" },
+  { to: "/equipo", Icon: Swords, labelKey: "team.nav", desktopLabelKey: "team.title" },
+  { to: "/ajustes", Icon: Settings, labelKey: "nav.settings" },
+];
 
 /**
  * Menú «Modo» (Tarea 6.3). Deja de ser un marcador de posición: desde aquí se
@@ -34,9 +61,14 @@ function ModeMenu({ label }: { label: string }) {
         className="flex items-center gap-1 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors"
         aria-haspopup="true"
         aria-expanded={open}
+        aria-label={label}
+        title={label}
       >
-        {label}
-        <ChevronDown size={14} />
+        {/* Por debajo de `sm` el rótulo se queda en icono: son los 40px que le
+            faltaban al distintivo de Champions para no truncarse en 360px. */}
+        <Gamepad2 size={18} className="sm:hidden" aria-hidden="true" />
+        <span className="hidden sm:inline">{label}</span>
+        <ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-60 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein">
@@ -111,10 +143,10 @@ function ChampionsBadge() {
     <Link
       to="/champions"
       title={t("mode.badgeTitle", { name: champions.name })}
-      className="flex items-center gap-1.5 rounded-lg px-2 py-1 bg-[#F08030]/20 border border-[#F08030]/50 text-ink text-xs sm:text-sm transition-colors hover:bg-[#F08030]/30"
+      className="flex items-center gap-1.5 rounded-lg px-2 py-1 bg-[#F08030]/20 border border-[#F08030]/50 text-ink text-xs sm:text-sm transition-colors hover:bg-[#F08030]/30 min-w-0 max-w-full"
     >
       <Shield size={14} className="shrink-0" aria-hidden="true" />
-      <span className="font-display tracking-wide">{t("mode.champions")}</span>
+      <span className="font-display tracking-wide truncate">{t("mode.champions")}</span>
       <span className="hidden sm:inline text-ink-soft max-w-[8rem] truncate">
         · {champions.name}
       </span>
@@ -228,11 +260,14 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-30 bg-base/95 backdrop-blur border-b border-hover">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-        <div className="relative">
+      {/* `gap-2` en móvil en vez de `gap-3`: son 16px que se llevaban cuatro
+          huecos y que aquí valen para que el distintivo de Champions quepa
+          entero en 360px en lugar de quedarse en «Cha…». */}
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2 sm:gap-3">
+        <div className="relative shrink-0">
           <button
             onClick={() => setLangOpen((o) => !o)}
-            className="text-2xl leading-none hover:scale-110 transition-transform"
+            className="text-xl sm:text-2xl leading-none hover:scale-110 transition-transform"
             aria-label="Cambiar idioma"
           >
             {current.flag}
@@ -255,61 +290,76 @@ export function TopBar() {
           )}
         </div>
 
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6890F0] to-[#F85888] flex items-center justify-center font-display font-bold text-ink">
             P
           </span>
-          <span className="font-display font-bold tracking-tight text-lg text-ink">{t("app.name")}</span>
+          {/* Por debajo de `sm` queda solo el cuadro del logo: el nombre son casi
+              100px y es lo que deja sitio al distintivo de Champions en 360px. */}
+          <span className="hidden sm:inline font-display font-bold tracking-tight text-lg text-ink">
+            {t("app.name")}
+          </span>
         </Link>
 
-        {/* Junto al logo y antes del hueco flexible: se ve siempre, también en
-            móvil, que es donde el resto de iconos empieza a apretarse. */}
-        <span className="mr-auto">
+        {/* Junto al logo y ocupando el hueco flexible: se ve siempre, también en
+            móvil. `min-w-0` es lo que le deja encogerse en vez de empujar la
+            fila hasta desbordar. */}
+        <span className="flex-1 min-w-0 flex">
           <ChampionsBadge />
         </span>
 
-        <Link to="/favoritos" title={t("favorites.title")} aria-label={t("favorites.title")}
-              className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
-          <Star size={20} aria-hidden="true" />
-        </Link>
+        {/* De `lg` en adelante los enlaces caben en la propia fila. Por debajo
+            se van a la fila desplazable de abajo. */}
+        <nav className="hidden lg:flex items-center gap-3">
+          {NAV_LINKS.map(({ to, Icon, labelKey, desktopLabelKey }) => (
+            <Link
+              key={to}
+              to={to}
+              title={t(desktopLabelKey ?? labelKey)}
+              aria-label={t(labelKey)}
+              className={
+                desktopLabelKey
+                  ? "flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors text-sm"
+                  : "rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink"
+              }
+            >
+              <Icon size={desktopLabelKey ? 16 : 20} aria-hidden="true" />
+              {desktopLabelKey && <span>{t(desktopLabelKey)}</span>}
+            </Link>
+          ))}
+        </nav>
 
-        <Link to="/sesiones" title={t("sessions.nav")} aria-label={t("sessions.nav")}
-              className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
-          <Layers size={20} aria-hidden="true" />
-        </Link>
+        <span className="shrink-0">
+          <ModeMenu label={t("nav.mode")} />
+        </span>
 
-        <Link to="/editor" title={t("editor.nav")} aria-label={t("editor.nav")}
-              className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
-          <SlidersHorizontal size={20} aria-hidden="true" />
-        </Link>
-
-        <Link to="/datos" title={t("data.nav")} aria-label={t("data.nav")}
-              className="rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink">
-          <DatabaseBackup size={20} aria-hidden="true" />
-        </Link>
-
-        <Link
-          to="/equipo"
-          className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors text-sm"
-          title={t("team.title")}
-        >
-          <Swords size={16} />
-          <span className="hidden sm:inline">{t("team.title")}</span>
-        </Link>
-
-        <ModeMenu label={t("nav.mode")} />
-
-        <Link
-          to="/ajustes"
-          className="p-2 rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
-          aria-label={t("nav.settings")}
-          title={t("nav.settings")}
-        >
-          <Settings size={20} aria-hidden="true" />
-        </Link>
-
-        <ProfileMenu />
+        <span className="shrink-0">
+          <ProfileMenu />
+        </span>
       </div>
+
+      {/* Fila de navegación de móvil.
+          El desplazamiento horizontal se queda AQUÍ (`overflow-x-auto` sobre un
+          contenedor que nunca es más ancho que la ventana), así el documento no
+          llega a desbordar y desaparece el scroll horizontal de toda la app.
+          Por eso no hay ningún desplegable dentro: `overflow-x-auto` recorta lo
+          que se salga en vertical y el menú quedaría cortado. */}
+      <nav
+        aria-label={t("nav.primary")}
+        className="lg:hidden flex items-center gap-1 overflow-x-auto overscroll-x-contain scroll-row px-4 pb-2"
+      >
+        {NAV_LINKS.map(({ to, Icon, labelKey }) => (
+          <Link
+            key={to}
+            to={to}
+            title={t(labelKey)}
+            className="shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-ink-soft hover:bg-hover hover:text-ink transition-colors"
+          >
+            <Icon size={16} aria-hidden="true" />
+            {t(labelKey)}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }
