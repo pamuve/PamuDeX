@@ -273,6 +273,29 @@ Los **tipos no se filtran**, son la física del juego y no contenido.
 Champions **no toca el modo estándar ni las sesiones**: no reescribe datos, solo
 dice qué contenido es legal. Por eso lee el catálogo global, sin overrides.
 
+### Caché local (Fase 8) — leer antes de tocar `lib/api.ts`
+
+`lib/localCache.ts` guarda el catálogo en **IndexedDB** y `lib/api.ts` lo lee
+**primero**, refrescando por detrás. La interfaz nunca espera a la red si hay
+copia local. No sustituye al Service Worker: aquél da tolerancia a fallos, esto
+da los **100 ms** del requisito (medido: 1.1 ms de media).
+
+Reglas que hay que mantener:
+
+- **La clave es la ruta con el modo dentro** (`?session=`, `?champions=`). Sin
+  eso, cambiar de ROM Hack serviría el catálogo del anterior.
+- **Al escribir overrides hay que invalidar** con `invalidarSesion(id)`. Lo hace
+  `useSessionOverride` en su único camino de escritura (`persist`).
+- **Solo van los cuatro listados y las 18 fichas de tipo.** Las demás fichas son
+  más de 2200: se quedan con el Service Worker. Si añades algo, que sea porque
+  cabe y se usa en muchas páginas.
+- **Un fallo de red NO es un 404.** `lib/api.ts` lanza `ApiError` con `status`, y
+  `esFalloDeRed()` los distingue. Una ficha nueva debe enseñar
+  `components/LoadError.tsx` sin red y `NotAllowed` solo ante un 404 real; tratar
+  todo igual hacía decir «no permitida en Champions» estando sin cobertura.
+- **Prueba en modo avión.** Es donde salen los fallos que con conexión no se ven:
+  spinners infinitos y mensajes de error equivocados.
+
 ### PWA: iconos y actualizaciones (Fase 8) — leer antes de tocar el service worker
 
 **El service worker se registra a mano** en `lib/serviceWorker.ts`, llamado
@@ -562,8 +585,12 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     `public/icons/icon.svg` como maestro, manifiesto completo,
     `lib/serviceWorker.ts`, `lib/notifications.ts` y `components/UpdatePrompt.tsx`.
     Ver «PWA: iconos y actualizaciones (Fase 8)».
-  - 🔜 **8.4, la siguiente**: IndexedDB, medición de <100 ms y Lighthouse.
-  Ver `docs/ROADMAP.md`.
+  - ✅ **8.4** caché local y rendimiento: `lib/localCache.ts` (IndexedDB),
+    `lib/perf.ts`, `components/OfflineData.tsx` y `components/LoadError.tsx`.
+    Medido: 1.1 ms de media leyendo el catálogo. Ver «Caché local (Fase 8)».
+- 🔜 **Fase 9, la siguiente**: ampliaciones (calculadora de daño, simulador,
+  recomendador de equipos). Es la fase más abierta: usa
+  `docs/AI_TASK_TEMPLATE.md` para partirla. Ver `docs/ROADMAP.md`.
 
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 

@@ -132,14 +132,14 @@ Notas de la fase:
 
 ---
 
-## 🚧 Fase 8 — Accesibilidad, rendimiento y PWA avanzada (en curso)
+## ✅ Fase 8 — Accesibilidad, rendimiento y PWA avanzada (completada)
 
 | # | Tarea | Tamaño | Estado |
 |---|-------|--------|--------|
 | 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña | ✅ `lib/a11y.ts`, `.high-contrast`, cuatro niveles de texto |
 | 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media | ✅ `useMenu`, `useCombobox`, un solo `<main>` y enlace de salto |
 | 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña | ✅ Icono propio, manifiesto completo y aviso de versión nueva |
-| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | 🔜 |
+| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | ✅ `lib/localCache.ts` (1-2 ms), `lib/perf.ts` y modo de depuración |
 
 Notas de la fase:
 
@@ -159,6 +159,12 @@ Notas de la fase:
 - **El registro del service worker se hace a mano** (`lib/serviceWorker.ts`) en vez de con `virtual:pwa-register/react`: ese módulo importa `workbox-window`, que no está instalado, y usarlo obligaba a añadir una dependencia de tiempo de ejecución para unas comprobaciones periódicas que en una app autoalojada no aportan nada.
 - **El permiso de notificaciones no se pide nunca solo**, únicamente desde el interruptor de `/ajustes`. Pedirlo al cargar gasta la única oportunidad —en Chrome un rechazo deja `denied` para siempre— sin que el usuario sepa para qué. Con el permiso denegado el interruptor NO se guarda como activado: sería mentir, porque no llegaría ningún aviso.
 - **La franja en pantalla es el camino principal y la notificación es el extra**, para el único caso que la franja no cubre: que la pestaña esté en segundo plano. Así «con las notificaciones bloqueadas el resto funciona igual» se cumple por construcción.
+- **La clave de la caché local lleva el modo dentro** (`?session=`, `?champions=`). Guardar `/pokemon` a secas serviría el catálogo de un ROM Hack como si fuera el global en cuanto alguien cambiara de modo. Al guardar overrides se tira la copia de esa sesión (`invalidarSesion`), o el editor enseñaría el valor anterior.
+- **IndexedDB no duplica al Service Worker, lo complementa.** El SW ya daba tolerancia a fallos de red; lo que no daba son los 100 ms, porque su respuesta sigue siendo un `fetch` con ida y vuelta al worker y deserialización. Medido: **1.1 ms de media, 1.8 ms el peor caso**.
+- **Solo el catálogo y las 18 fichas de tipo.** Las fichas de Pokémon, movimientos y habilidades son más de 2200: se quedan con el Service Worker, y la app lo dice claramente cuando falta una y no hay red.
+- **Probar en modo avión destapó dos fallos que no se ven con conexión**: `/pokemon/:id` decía «no permitida en el modo Champions» ante *cualquier* error, y `/tipo/:id`, `/movimiento/:id` y `/habilidad/:id` se quedaban en «Cargando…» para siempre. Ahora `ApiError.status === 0` distingue el fallo de red y hay pantalla con reintento.
+- **`requestAnimationFrame` no se ejecuta con la pestaña en segundo plano**, así que la medición «hasta pintar» se quedaba colgada ahí. Se cierra en el momento cuando el documento está oculto: sin fotogramas, «hasta pintarlo» no significa nada.
+- **Lighthouse no se pudo ejecutar** (necesita un Chrome instalado y el entorno de esta fase no lo tenía). Sus criterios de instalación están comprobados uno a uno a mano; FCP y LCP quedan pendientes de una pasada real. Está documentado en el README, con el comando para lanzarla.
 
 ---
 

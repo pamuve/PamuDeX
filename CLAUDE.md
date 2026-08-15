@@ -251,10 +251,31 @@ modo en marcha en `/champions` (**6.3**).
 middleware (**7.1**), vista «Todas las generaciones» con etiquetas de cambios
 (**7.2**) e historial por entidad con su conjunto inicial de datos (**7.3**).
 
-**Fase 8 en curso** (accesibilidad, rendimiento y PWA avanzada): alto contraste
+**Fase 8 completa** (accesibilidad, rendimiento y PWA avanzada): alto contraste
 y escalado de texto (**8.1**), teclado y lectores de pantalla (**8.2**), iconos
-definitivos y notificaciones opcionales (**8.3**). Siguiente: **8.4, IndexedDB,
-medición de <100 ms y auditoría Lighthouse**.
+definitivos y notificaciones opcionales (**8.3**) y caché en IndexedDB con
+medición de tiempos (**8.4**). Siguiente: **Fase 9, ampliaciones** — la más
+abierta del proyecto, hay que partirla con `docs/AI_TASK_TEMPLATE.md`.
+
+### Caché local (Fase 8)
+
+`lib/localCache.ts` guarda el catálogo en IndexedDB y `lib/api.ts` lo lee
+**primero**, refrescando por detrás. No sustituye al Service Worker: aquél da
+tolerancia a fallos de red, esto da los 100 ms del requisito (medido: 1.1 ms).
+
+**La clave es la ruta con `?session=` o `?champions=` dentro**, o cambiar de ROM
+Hack serviría el catálogo del anterior. Al guardar overrides hay que invalidar
+con `invalidarSesion(id)` — lo hace `useSessionOverride` en `persist`, su único
+camino de escritura.
+
+Solo van los cuatro listados y las 18 fichas de tipo; las demás fichas son más de
+2200 y se quedan con el Service Worker.
+
+**Un fallo de red no es un 404.** `ApiError.status === 0` es «no he podido
+preguntar», y `esFalloDeRed()` lo distingue: sin red va `LoadError`, y
+`NotAllowed` solo ante un 404 real. Tratarlo todo igual hacía que una ficha
+dijera «no permitida en Champions» estando simplemente sin cobertura. **Prueba
+siempre en modo avión**: ahí salen los spinners infinitos y los errores falsos.
 
 ### PWA: iconos y actualizaciones (Fase 8)
 

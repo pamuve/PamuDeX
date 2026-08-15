@@ -249,6 +249,44 @@ cualquier esquina transparente. Si tocas el diseño, regenera los cinco archivos
 cd frontend/public/icons && rsvg-convert -w 192 -h 192 icon.svg -o icon-192.png && rsvg-convert -w 512 -h 512 icon.svg -o icon-512.png && rsvg-convert -w 512 -h 512 icon-maskable.svg -o icon-512-maskable.png && rsvg-convert -w 180 -h 180 icon-maskable.svg -o apple-touch-icon.png && for s in 16 32 48; do rsvg-convert -w $s -h $s icon.svg -o /tmp/pamudex-f$s.png; done && magick /tmp/pamudex-f16.png /tmp/pamudex-f32.png /tmp/pamudex-f48.png ../favicon.ico
 ```
 
+### Datos sin conexión y rendimiento
+
+El catálogo (tipos, Pokémon, movimientos, habilidades y las 18 fichas de tipo)
+se guarda en **IndexedDB** conforme lo vas usando, y en `/ajustes` hay un botón
+**«Descargar datos para uso offline»** con barra de progreso y la fecha de la
+última descarga, para cuando sabes que vas a quedarte sin cobertura.
+
+La lectura es **local primero**: si el dato está en el aparato se pinta al
+momento y la red se consulta después, en segundo plano, solo para dejar la copia
+al día. La interfaz nunca espera a la red teniendo copia local.
+
+En `/ajustes` → **Modo de depuración** puedes ver cuánto tarda cada lectura en
+tu propio aparato. Medido aquí, sobre el build servido por el contenedor:
+
+| Medida | Resultado |
+|---|---|
+| Lecturas del catálogo desde IndexedDB | **media 1.1 ms · peor 1.8 ms** (objetivo <100 ms) |
+| Navegación → catálogo pintado (primera carga) | **~94 ms** |
+| TTFB / DOM interactivo / carga completa | 7.5 / 12.1 / 18.3 ms |
+| CLS (desplazamiento de diseño) | **0** |
+| JS / CSS del arranque | 416 KB / 28 KB sin comprimir (113 KB / 6 KB con gzip) |
+
+**Qué NO se descarga**: las fichas de Pokémon, movimientos y habilidades son más
+de 2200 y ocuparían decenas de megas, así que esas siguen dependiendo de haberlas
+visitado (el Service Worker las guarda al pasar por ellas). Si abres una ficha
+que no tienes guardada y estás sin conexión, la app lo dice claramente y te deja
+reintentar, en vez de quedarse cargando para siempre.
+
+> **Sobre la auditoría Lighthouse.** Los criterios de instalación que comprueba
+> Lighthouse están verificados uno a uno (manifiesto con nombre, nombre corto,
+> iconos de 192, 512 y *maskable*, `start_url`, `display: standalone`, service
+> worker activo y contexto seguro), igual que los básicos de `html lang`,
+> `viewport`, `theme-color` y descripción. Lo que **no** se ha podido ejecutar es
+> Lighthouse en sí, porque necesita un Chrome instalado y el entorno donde se
+> desarrolló esta fase no lo tiene; por el mismo motivo faltan FCP y LCP, que
+> exigen una ventana pintando de verdad. Si lo pasas tú, `pnpm dlx lighthouse
+> http://localhost:4000 --view` con la app en marcha.
+
 ### Actualizaciones y notificaciones
 
 El service worker está en modo **`prompt`**: cuando reconstruyes la imagen, la
@@ -333,9 +371,12 @@ con token. Nada de eso está implementado.
 >   del comparador. La PWA estrena **icono propio** (192, 512, *maskable*,
 >   *apple-touch* y `favicon.ico`), manifiesto completo y aviso de **versión
 >   nueva lista**, con notificaciones del sistema opcionales y apagadas de
->   fábrica.
+>   fábrica. Y el catálogo vive en **IndexedDB**: se lee en **1-2 ms**, con
+>   descarga explícita para uso sin conexión y un modo de depuración que enseña
+>   los tiempos.
 >
-> Siguiente: **8.4 — IndexedDB, medición de <100 ms y auditoría Lighthouse**.
+> **Fase 8 completa.** Siguiente: **Fase 9 — ampliaciones** (calculadora de daño,
+> simulador de combate, recomendador de equipos…), que está abierta a propósito.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap
