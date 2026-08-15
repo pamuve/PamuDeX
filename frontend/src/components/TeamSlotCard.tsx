@@ -18,8 +18,10 @@ export function TeamSlotCard({
   onChange: (updated: TeamSlot) => void;
   onRemove: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [moveFilter, setMoveFilter] = useState("");
+  const nombre = (o: { name_es: string; name_en: string }) =>
+    lang === "en" ? o.name_en : o.name_es;
 
   if (!pokemon) {
     return <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">Cargando...</div>;
@@ -30,7 +32,7 @@ export function TeamSlotCard({
     ...(pokemon.hidden_ability ? [pokemon.hidden_ability.name_es] : []),
   ];
 
-  const filteredMoves = allMoves.filter((m) => m.name_es.toLowerCase().includes(moveFilter.toLowerCase()));
+  const filteredMoves = allMoves.filter((m) => nombre(m).toLowerCase().includes(moveFilter.toLowerCase()));
 
   function toggleMove(moveId: number) {
     const has = slot.moveIds.includes(moveId);
@@ -45,14 +47,14 @@ export function TeamSlotCard({
     <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-display font-semibold text-ink">{pokemon.name_es}</span>
+          <span className="font-display font-semibold text-ink">{nombre(pokemon)}</span>
           <div className="flex gap-1">
             {pokemon.types.map((tp) => (
               <TypeBadge key={tp.id} type={tp} size="sm" />
             ))}
           </div>
         </div>
-        <button onClick={onRemove} className="text-ink-soft hover:text-[#C03028] transition-colors" aria-label={t("team.remove")}>
+        <button onClick={onRemove} className="text-ink-soft hover:text-[#C03028] transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
           <X size={18} />
         </button>
       </div>
@@ -100,15 +102,25 @@ export function TeamSlotCard({
         </label>
       </div>
 
-      <div>
+      {/*
+        `group` con nombre y `aria-pressed` en cada movimiento (8.2). Antes eran
+        botones sueltos: el lector de pantalla leía el nombre del movimiento sin
+        decir si estaba elegido —la marca era un «✓» de texto suelto— ni a qué
+        Pokémon pertenecía la lista, que en un equipo de seis se repite seis veces.
+      */}
+      <div role="group" aria-label={t("team.movesFor", { name: nombre(pokemon) })}>
         <div className="flex items-center justify-between text-xs text-ink-soft mb-1">
           <span>{t("team.moves")}</span>
-          <span>{t("team.moves_selected", { count: slot.moveIds.length })}</span>
+          {/* El recuento cambia al pulsar y está lejos del botón: se anuncia. */}
+          <span role="status" aria-live="polite">
+            {t("team.moves_selected", { count: slot.moveIds.length })}
+          </span>
         </div>
         <input
           value={moveFilter}
           onChange={(e) => setMoveFilter(e.target.value)}
           placeholder={t("search.placeholder")}
+          aria-label={t("team.filterMoves")}
           className="w-full bg-hover rounded-lg px-2 py-1.5 text-sm text-ink outline-none mb-2"
         />
         <div className="max-h-32 overflow-auto space-y-1 pr-1">
@@ -120,6 +132,7 @@ export function TeamSlotCard({
                 key={m.id}
                 onClick={() => toggleMove(m.id)}
                 disabled={disabled}
+                aria-pressed={selected}
                 className={`w-full flex items-center justify-between text-left px-2 py-1 rounded-lg text-sm transition-colors ${
                   selected
                     ? "bg-[#1C3350] text-ink"
@@ -129,10 +142,19 @@ export function TeamSlotCard({
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                  {m.name_es}
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: m.color }}
+                    aria-hidden="true"
+                  />
+                  {nombre(m)}
                 </span>
-                {selected && <span className="text-xs">✓</span>}
+                {/* Decorativo: `aria-pressed` ya dice si está elegido. */}
+                {selected && (
+                  <span className="text-xs" aria-hidden="true">
+                    ✓
+                  </span>
+                )}
               </button>
             );
           })}

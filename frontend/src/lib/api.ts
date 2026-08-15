@@ -5,6 +5,8 @@
 import { getActiveSessionId } from "./session";
 import { getActiveChampionsId } from "./champions";
 import { profilesApi, championsApi } from "./apiSession";
+import { leer, guardar } from "./localCache";
+import { anotar } from "./perf";
 
 /**
  * Añade el parámetro del modo activo, si hay alguno.
@@ -35,10 +37,94 @@ function withMode(path: string): string {
   return path;
 }
 
+/**
+ * Distingue «el servidor ha dicho que no» de «no he podido preguntar» (8.4).
+ *
+ * Hasta ahora `get()` lanzaba un `Error` con el código dentro del texto, y las
+ * fichas trataban CUALQUIER fallo como un 404. Sin conexión eso hacía que
+ * `/pokemon/6` dijese «esta ficha no está permitida en el modo Champions»
+ * estando fuera del modo: un mensaje falso justo cuando el usuario más
+ * necesita entender qué pasa.
+ *
+ * `status === 0` es el fallo de red (sin cobertura, servidor caído). Lo demás
+ * es una respuesta del servidor con su código.
+ */
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, path: string) {
+    super(status === 0 ? `Sin conexión al pedir ${path}` : `Error ${status} al pedir ${path}`);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+/** ¿Este fallo es de red y no una respuesta del servidor? */
+export function esFalloDeRed(err: unknown): boolean {
+  return err instanceof ApiError ? err.status === 0 : true;
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`/api${withMode(path)}`);
-  if (!res.ok) throw new Error(`Error ${res.status} al pedir ${path}`);
+  let res: Response;
+  try {
+    res = await fetch(`/api${withMode(path)}`);
+  } catch {
+    throw new ApiError(0, path);
+  }
+  if (!res.ok) throw new ApiError(res.status, path);
   return res.json();
+}
+
+/**
+ * Igual que `get()`, pero pasando por la caché local (Tarea 8.4).
+ *
+ * LA INTERFAZ NUNCA ESPERA A LA RED SI HAY COPIA LOCAL
+ * ----------------------------------------------------
+ * Si el catálogo está en IndexedDB se devuelve **al momento** y la red se
+ * consulta después, en segundo plano, solo para dejar la copia al día para la
+ * próxima vez. Esa es la diferencia con el `StaleWhileRevalidate` del Service
+ * Worker: aquél también responde de la caché, pero sigue siendo un `fetch` con
+ * su ida y vuelta al worker y su deserialización, y ahí se iban los 100 ms.
+ *
+ * SE ENCHUFA AQUÍ Y NINGUNA PÁGINA SE ENTERA
+ * ------------------------------------------
+ * Mismo criterio que los middlewares del backend: `api.types.list()` y compañía
+ * se llaman desde media docena de páginas y ninguna cambia. Si algún día hay
+ * que dejar de cachear algo, se quita de `RUTAS_CATALOGO` y ya.
+ *
+ * LA CLAVE ES LA RUTA CON EL MODO DENTRO
+ * --------------------------------------
+ * `withMode(path)` incluye `?session=` o `?champions=`, así que cada modo tiene
+ * su copia. Sin eso, cambiar de ROM Hack serviría el catálogo del anterior.
+ */
+async function getCatalogo<T>(path: string): Promise<T> {
+  const key = withMode(path);
+  const inicio = performance.now();
+
+  const guardado = await leer<T>(key);
+  if (guardado) {
+    anotar(key, "local", inicio);
+    // Refresco en segundo plano: no se espera ni se propaga su error. Si falla
+    // (sin red), la copia local se queda como estaba, que es lo que se quiere.
+    void get<T>(path)
+      .then((fresco) => guardar(key, fresco))
+      .catch(() => {});
+    return guardado.data;
+  }
+
+  const fresco = await get<T>(path);
+  anotar(key, "red", inicio);
+  void guardar(key, fresco);
+  return fresco;
+}
+
+/**
+ * Descarga una ruta del catálogo y devuelve su clave, para la sincronización
+ * explícita de `/ajustes`. Vive aquí porque `lib/localCache.ts` no sabe —ni
+ * debe saber— construir URLs con el modo activo.
+ */
+export function descargarParaCache(ruta: string): Promise<{ key: string; data: unknown }> {
+  return get<unknown>(ruta).then((data) => ({ key: withMode(ruta), data }));
 }
 
 /**
@@ -55,23 +141,32 @@ function genQuery(gen?: number | null): string {
 }
 
 export const api = {
+  // Los cuatro LISTADOS van por `getCatalogo` (8.4): son lo grande y lo que
+  // pide casi cada página. Las FICHAS siguen con `get`: son pequeñas, el
+  // Service Worker ya las cubre y cachearlas aquí sería duplicar su trabajo
+  // multiplicado por generación y por modo.
   types: {
-    list: () => get<import("../types").PokeType[]>("/types"),
+    list: () => getCatalogo<import("../types").PokeType[]>("/types"),
+    // La ficha de tipo es la ÚNICA de detalle que pasa por la caché local: son
+    // dieciocho, pesan poco y la tabla de efectividad es el núcleo de la app,
+    // así que la descarga explícita de /ajustes las trae todas y funcionan sin
+    // conexión aunque no se hayan visitado. Las demás fichas son más de 2200 y
+    // se quedan con el Service Worker.
     detail: (id: string, gen?: number | null) =>
-      get<import("../types").TypeDetail>(`/types/${id}${genQuery(gen)}`),
+      getCatalogo<import("../types").TypeDetail>(`/types/${id}${genQuery(gen)}`),
   },
   pokemon: {
-    list: () => get<import("../types").PokemonSummary[]>("/pokemon"),
+    list: () => getCatalogo<import("../types").PokemonSummary[]>("/pokemon"),
     detail: (id: string | number, gen?: number | null) =>
       get<import("../types").PokemonDetail>(`/pokemon/${id}${genQuery(gen)}`),
   },
   moves: {
-    list: () => get<import("../types").MoveSummary[]>("/moves"),
+    list: () => getCatalogo<import("../types").MoveSummary[]>("/moves"),
     detail: (id: string | number, gen?: number | null) =>
       get<import("../types").MoveDetail>(`/moves/${id}${genQuery(gen)}`),
   },
   abilities: {
-    list: () => get<import("../types").AbilitySummary[]>("/abilities"),
+    list: () => getCatalogo<import("../types").AbilitySummary[]>("/abilities"),
     detail: (id: string | number, gen?: number | null) =>
       get<import("../types").AbilityDetail>(`/abilities/${id}${genQuery(gen)}`),
   },

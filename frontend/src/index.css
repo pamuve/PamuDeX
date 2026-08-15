@@ -6,22 +6,22 @@ html, body, #root {
   height: 100%;
 }
 
-body {
-  background-color: #0A1425;
-}
+/* El color del fondo lo pone theme-vars.css con var(--color-base), que se
+   importa después: así el tema de sesión, el de perfil y el alto contraste
+   mandan sobre esta hoja sin tener que repetir ningún hex aquí. */
 
 /* Foco visible para navegación por teclado (accesibilidad) */
 :focus-visible {
-  outline: 2px solid #6890F0;
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* Scrollbar discreta, coherente con el tema OLED */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #0A1425; }
-::-webkit-scrollbar-thumb { background: #1C3350; border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: #24406b; }
+::-webkit-scrollbar-track { background: var(--color-base); }
+::-webkit-scrollbar-thumb { background: var(--color-hover); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
 
 /* Fila desplazable en horizontal (navegación de la barra superior en móvil):
    se desplaza, pero sin barra visible — en 4" los 10px del scrollbar se comen
@@ -34,15 +34,106 @@ body {
   display: none;
 }
 
-/* Modo alto contraste */
+/* ================================================================== */
+/* Modo alto contraste (Tarea 8.1)                                    */
+/* ================================================================== */
+/*
+ * La clase la pone `lib/a11y.ts` en <html>, no en <body>.
+ *
+ * `!important` EN LAS VARIABLES, Y NO ES PEREZA
+ * ---------------------------------------------
+ * `lib/theme.ts` escribe las --color-* como estilo INLINE en <html> para el
+ * tema de sesión y el de perfil. Un estilo inline gana a cualquier regla de
+ * hoja de estilos salvo que esta lleve !important. Es la única forma de que la
+ * accesibilidad pise al tema, que es lo que tiene que pasar: la identidad
+ * visual de un ROM Hack no puede dejar la app ilegible.
+ *
+ * NEGRO PURO, AQUÍ SÍ
+ * -------------------
+ * El resto del proyecto lo tiene prohibido (estelas en OLED), pero este modo se
+ * activa a mano y por accesibilidad: ahí la legibilidad va por delante. Fuera
+ * de esta clase no aparece un #000000 en toda la app.
+ *
+ * `panel` y `base` son el MISMO negro: las tarjetas dejan de distinguirse por
+ * el fondo y pasan a distinguirse por un borde blanco, como en el alto
+ * contraste de Windows. Un panel un poco menos negro daría 1.2:1 con el fondo,
+ * o sea nada.
+ *
+ * Contrastes sobre #000000 (fórmula WCAG):
+ *   #FFFFFF (ink)       21.0:1   ✓ AAA
+ *   #E8E8E8 (ink-soft)  16.4:1   ✓ AAA
+ *   #79C0FF (accent)    11.8:1   ✓ AAA
+ * Y del texto sobre el hover #3A3A3A: ink 11.4:1 y ink-soft 9.1:1, los dos AAA.
+ */
 .high-contrast {
-  --tw-text-opacity: 1;
+  --color-base: #000000 !important;
+  --color-panel: #000000 !important;
+  --color-hover: #3A3A3A !important;
+  --color-ink: #FFFFFF !important;
+  --color-ink-soft: #E8E8E8 !important;
+  --color-accent: #79C0FF !important;
+  color-scheme: dark;
 }
-.high-contrast body {
-  background-color: #000000;
+
+/*
+ * Bordes visibles en tarjetas y controles.
+ *
+ * Va con `outline` y `outline-offset: -1px` en lugar de `border`: se dibuja
+ * DENTRO de la caja, así que no cambia el tamaño de nada y ningún diseño se
+ * mueve al activar el modo. El radio de las esquinas lo respeta el navegador.
+ */
+.high-contrast .bg-panel,
+.high-contrast button,
+.high-contrast summary,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea,
+.high-contrast [role="button"],
+.high-contrast [role="switch"],
+.high-contrast [role="dialog"],
+.high-contrast [role="listbox"],
+.high-contrast [role="option"] {
+  outline: 1px solid var(--color-ink);
+  outline-offset: -1px;
 }
-.high-contrast .panel-surface {
-  border: 1px solid #F5F7FA;
+
+/* Los bordes escritos con `border-hover` (40 usos) quedarían en #3A3A3A sobre
+   negro, 1.85:1: se ven a duras penas. El selector por subcadena coge también
+   las variantes con prefijo (`hover:border-hover`, `sm:border-hover`…). */
+.high-contrast [class*="border-hover"] {
+  border-color: var(--color-ink) !important;
+}
+
+/* El foco tiene que ganar al borde permanente de la regla de arriba, que es más
+   específica que un `:focus-visible` suelto. Y se hace más grueso: en alto
+   contraste todo tiene borde, así que el del foco debe destacar sobre ellos. */
+.high-contrast :focus-visible {
+  outline: 3px solid var(--color-accent) !important;
+  outline-offset: 2px !important;
+}
+
+/* Las sombras no existen sobre negro; el borde ya hace su trabajo. */
+.high-contrast .shadow-card {
+  box-shadow: none;
+}
+
+/*
+ * Fichas de color: el color del dato pasa de fondo a marco.
+ *
+ * Es el patrón de todo lo que pinta texto encima de un color que viene del
+ * dataset o del usuario — distintivos de tipo y avatares de perfil. Ahí el
+ * texto oscuro se queda en 3-5:1 con los colores apagados (siniestro, roca,
+ * lucha) y no hay forma de llegar a AAA sin repintar el dataset entero. Así el
+ * texto es blanco sobre negro (21:1) y el dato se sigue reconociendo por el
+ * marco de 2px, que además es información redundante: al lado siempre está el
+ * nombre escrito.
+ *
+ * Quien use esta clase debe declarar también `--chip-color` en su `style`.
+ */
+.high-contrast .color-chip {
+  background-color: var(--color-base) !important;
+  color: var(--color-ink) !important;
+  box-shadow: inset 0 0 0 2px var(--chip-color, currentColor);
 }
 
 @media (prefers-reduced-motion: reduce) {

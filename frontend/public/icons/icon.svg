@@ -1,0 +1,69 @@
+<!--
+  PamuDeX — icono de la aplicación (Tarea 8.3).
+
+  DISEÑO PROPIO, SIN ARTE CON COPYRIGHT
+  ····
+  Nada de Poké Balls ni de sprites: la app se distribuye y ese arte no es
+  nuestro. La marca es la «rueda de tipos» —seis arcos de color alrededor de un
+  núcleo con la inicial— que además es lo que hace PamuDeX: relacionar tipos
+  entre sí. Deliberadamente NO es un círculo partido por la mitad con un botón
+  en el centro, que es la silueta que hay que evitar.
+
+  Los seis colores salen de `backend/data/types.json` (fuego, eléctrico, planta,
+  hielo, agua y psíquico), ordenados como un arcoíris para que el anillo se lea
+  de un vistazo.
+
+  La «P» va como trazado y no como texto: el rasterizador no tiene por qué
+  tener la fuente instalada, y con `<text>` el icono saldría distinto en cada
+  máquina.
+
+  Este archivo es el maestro; los PNG se generan desde aquí (ver README).
+  Para el icono `maskable` está `icon-maskable.svg`, con la marca reducida para
+  caber en la zona segura.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fondo: la base OLED del proyecto. Nunca negro puro. -->
+  <rect width="512" height="512" rx="112" fill="#0A1425"/>
+  <rect x="8" y="8" width="496" height="496" rx="106" fill="none" stroke="#1C3350" stroke-width="4"/>
+
+  <!--
+    Anillo de tipos. Seis arcos hechos con `stroke-dasharray` sobre un mismo
+    círculo: r=147, circunferencia 923.628, seis huecos de 153.938 con 18 de
+    separación. Rotado -86.492°, que es -90° más medio hueco: así lo que queda
+    centrado arriba es la separación y no el arranque del primer arco.
+  -->
+  <g transform="rotate(-86.492 256 256)" fill="none" stroke-width="58" stroke-linecap="butt">
+    <circle cx="256" cy="256" r="147" stroke="#F08030" stroke-dasharray="135.938 787.690" stroke-dashoffset="0"/>
+    <circle cx="256" cy="256" r="147" stroke="#F8D030" stroke-dasharray="135.938 787.690" stroke-dashoffset="-153.938"/>
+    <circle cx="256" cy="256" r="147" stroke="#78C850" stroke-dasharray="135.938 787.690" stroke-dashoffset="-307.876"/>
+    <circle cx="256" cy="256" r="147" stroke="#98D8D8" stroke-dasharray="135.938 787.690" stroke-dashoffset="-461.814"/>
+    <circle cx="256" cy="256" r="147" stroke="#6890F0" stroke-dasharray="135.938 787.690" stroke-dashoffset="-615.752"/>
+    <circle cx="256" cy="256" r="147" stroke="#F85888" stroke-dasharray="135.938 787.690" stroke-dashoffset="-769.690"/>
+  </g>
+
+  <!-- Núcleo -->
+  <circle cx="256" cy="256" r="104" fill="#132238"/>
+  <circle cx="256" cy="256" r="104" fill="none" stroke="#1C3350" stroke-width="6"/>
+
+  <!--
+    «P» centrada. Trazado con `fill-rule="evenodd"`: el segundo subtrazado es el
+    hueco del ojo de la letra. Caja de 100x140 escalada y desplazada al centro.
+  -->
+  <!-- x=189 y no 206: la tinta del trazado va de 20 a 114 (el ojo de la «P»
+       sobresale hasta 66+48), así que su centro real está en 67, no en 50. -->
+  <g transform="translate(189 186)">
+    <path fill="#F5F7FA" fill-rule="evenodd"
+          d="M 20 0
+             L 20 140
+             L 48 140
+             L 48 96
+             L 66 96
+             A 48 48 0 0 0 66 0
+             Z
+             M 48 26
+             L 48 70
+             L 64 70
+             A 22 22 0 0 0 64 26
+             Z"/>
+  </g>
+</svg>

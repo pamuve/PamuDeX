@@ -132,14 +132,39 @@ Notas de la fase:
 
 ---
 
-## 🔜 Fase 8 — Accesibilidad, rendimiento y PWA avanzada
+## ✅ Fase 8 — Accesibilidad, rendimiento y PWA avanzada (completada)
 
-| # | Tarea | Tamaño |
-|---|-------|--------|
-| 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña |
-| 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media |
-| 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña |
-| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña |
+| # | Tarea | Tamaño | Estado |
+|---|-------|--------|--------|
+| 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña | ✅ `lib/a11y.ts`, `.high-contrast`, cuatro niveles de texto |
+| 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media | ✅ `useMenu`, `useCombobox`, un solo `<main>` y enlace de salto |
+| 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña | ✅ Icono propio, manifiesto completo y aviso de versión nueva |
+| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | ✅ `lib/localCache.ts` (1-2 ms), `lib/perf.ts` y modo de depuración |
+
+Notas de la fase:
+
+- **El alto contraste pisa al tema de sesión y al del perfil.** `lib/theme.ts` escribe las `--color-*` como estilo *inline* en `<html>`, así que `.high-contrast` las redeclara con `!important`, que es lo único que gana a un inline. La identidad visual de un ROM Hack no puede dejar la app ilegible.
+- **Es el único sitio del proyecto donde se usa negro puro**, y solo porque el usuario lo activa a mano por accesibilidad. `panel` y `base` son el mismo negro: las tarjetas se distinguen por un `outline` blanco de 1px con `outline-offset: -1px`, que se dibuja dentro de la caja y no mueve ningún diseño.
+- **Las fichas de color (`.color-chip`) cambian el fondo por un marco**: distintivos de tipo y avatares de perfil. Con el color del dataset detrás, los tipos apagados (siniestro 2.8:1, fantasma 3.1:1, lucha 3.2:1) no llegan a AAA y no hay forma de arreglarlo sin repintar el dataset.
+- **La preferencia vive en `localStorage` y se copia al perfil**, como `active_session`: hay que aplicarla antes del primer render y también en `/perfiles`, donde aún no hay perfil que consultar.
+- **Bug preexistente encontrado y corregido de camino**: el color `base` en `extend.colors` generaba un segundo `.text-base { color: var(--color-base) }` que pisaba al `.text-base` de tamaño de fuente de Tailwind, así que todo lo que llevara `text-base` se pintaba del color del fondo. Ahora `base` se declara solo en `backgroundColor` y `borderColor`.
+- **Menú y combobox son dos patrones distintos, y por eso son dos hooks.** En un menú (`hooks/useMenu.ts`) el foco **viaja** a la opción; en un autocompletado (`hooks/useCombobox.ts`) el foco **se queda en el campo** —hay que poder seguir escribiendo— y la opción activa se señala con `aria-activedescendant`. Cada uno tiene dos o tres usos, así que unificarlos daría un componente que no cumple ninguno de los dos.
+- **Un solo `<main>`, en `App.tsx` y no en cada página.** Solo seis de dieciséis páginas tenían el hito, así que el enlace «saltar al contenido» no habría tenido a dónde saltar en las otras diez. Centralizarlo garantiza uno por documento y que las páginas futuras lo hereden.
+- **Al cambiar de ruta el foco vuelve al `<main>`.** En una SPA el navegador no recarga nada: sin esto el foco se queda en el enlace pulsado, el lector no anuncia la página nueva y el siguiente tabulador sigue por la barra.
+- **El color del texto de los distintivos se calcula, no se fija** (`readableInk` en `lib/theme.ts`). Con `#0A1425` fijo, siniestro (2.79:1), fantasma (3.1), dragón (3.17), lucha (3.24) y veneno (3.28) no llegaban a AA; en blanco suben a 5.6-6.6. No hay un color que sirva para los dieciocho tipos, y además el usuario puede elegir colores libres en el editor de un ROM Hack.
+- **`aria-modal` no atrapa el foco**: solo le dice al lector de pantalla que ignore el resto de la página. El diálogo del PIN necesitaba una trampa de verdad para que un tabulador no acabase escribiendo el PIN con el foco en la barra superior.
+- **El icono es diseño propio, sin arte con copyright**: una «rueda de tipos» de seis arcos con la inicial en el centro, hecha en SVG (`public/icons/icon.svg`, el maestro del que salen los PNG). No es una Poké Ball ni un sprite: la app se distribuye y ese arte no es nuestro.
+- **El `maskable` es un ARCHIVO distinto, no el mismo con otra etiqueta**: va a sangre y sin esquinas redondeadas, porque el sistema le aplica su propia forma y las esquinas transparentes saldrían en negro. La marca ocupa el 68.75 % del ancho, dentro del 80 % de zona segura.
+- **El service worker pasó de `autoUpdate` a `prompt`.** Con `autoUpdate` se reemplazaba solo y recargaba sin avisar: no había ningún momento en el que pudiera existir un aviso de versión nueva —el caso de uso que pide la tarea— y una recarga sorpresa en mitad de una edición del editor de ROM Hacks es justo lo que no debe pasar.
+- **El registro del service worker se hace a mano** (`lib/serviceWorker.ts`) en vez de con `virtual:pwa-register/react`: ese módulo importa `workbox-window`, que no está instalado, y usarlo obligaba a añadir una dependencia de tiempo de ejecución para unas comprobaciones periódicas que en una app autoalojada no aportan nada.
+- **El permiso de notificaciones no se pide nunca solo**, únicamente desde el interruptor de `/ajustes`. Pedirlo al cargar gasta la única oportunidad —en Chrome un rechazo deja `denied` para siempre— sin que el usuario sepa para qué. Con el permiso denegado el interruptor NO se guarda como activado: sería mentir, porque no llegaría ningún aviso.
+- **La franja en pantalla es el camino principal y la notificación es el extra**, para el único caso que la franja no cubre: que la pestaña esté en segundo plano. Así «con las notificaciones bloqueadas el resto funciona igual» se cumple por construcción.
+- **La clave de la caché local lleva el modo dentro** (`?session=`, `?champions=`). Guardar `/pokemon` a secas serviría el catálogo de un ROM Hack como si fuera el global en cuanto alguien cambiara de modo. Al guardar overrides se tira la copia de esa sesión (`invalidarSesion`), o el editor enseñaría el valor anterior.
+- **IndexedDB no duplica al Service Worker, lo complementa.** El SW ya daba tolerancia a fallos de red; lo que no daba son los 100 ms, porque su respuesta sigue siendo un `fetch` con ida y vuelta al worker y deserialización. Medido: **1.1 ms de media, 1.8 ms el peor caso**.
+- **Solo el catálogo y las 18 fichas de tipo.** Las fichas de Pokémon, movimientos y habilidades son más de 2200: se quedan con el Service Worker, y la app lo dice claramente cuando falta una y no hay red.
+- **Probar en modo avión destapó dos fallos que no se ven con conexión**: `/pokemon/:id` decía «no permitida en el modo Champions» ante *cualquier* error, y `/tipo/:id`, `/movimiento/:id` y `/habilidad/:id` se quedaban en «Cargando…» para siempre. Ahora `ApiError.status === 0` distingue el fallo de red y hay pantalla con reintento.
+- **`requestAnimationFrame` no se ejecuta con la pestaña en segundo plano**, así que la medición «hasta pintar» se quedaba colgada ahí. Se cierra en el momento cuando el documento está oculto: sin fotogramas, «hasta pintarlo» no significa nada.
+- **Lighthouse no se pudo ejecutar** (necesita un Chrome instalado y el entorno de esta fase no lo tenía). Sus criterios de instalación están comprobados uno a uno a mano; FCP y LCP quedan pendientes de una pasada real. Está documentado en el README, con el comando para lanzarla.
 
 ---
 

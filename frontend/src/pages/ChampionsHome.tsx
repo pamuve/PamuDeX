@@ -53,7 +53,7 @@ export default function ChampionsHome() {
 
   if (!champions) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <div className="text-center space-y-2">
           <Shield size={40} className="mx-auto text-ink-soft" aria-hidden="true" />
           <h1 className="font-display font-bold text-2xl text-ink">{t("championsHome.title")}</h1>
@@ -103,7 +103,7 @@ export default function ChampionsHome() {
             </p>
           </>
         )}
-      </main>
+      </div>
     );
   }
 

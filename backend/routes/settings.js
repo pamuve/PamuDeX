@@ -17,10 +17,21 @@
  * Guardarlos también en `settings` solo podría producir incoherencias.
  *
  * `settings` se reserva para las preferencias que no merecen una columna
- * propia. Hoy son tres, declaradas en ALLOWED_KEYS:
+ * propia. Hoy son cinco, declaradas en ALLOWED_KEYS:
  *   - `active_session`   qué sesión de ROM Hack usa este perfil ("" = ninguna)
  *   - `history_enabled`  "1" | "0", para poder desactivar el registro de visitas
  *   - `champions_rules`  qué conjunto de reglas de Champions usa ("" = ninguno)
+ *   - `high_contrast`    "1" | "0", modo de alto contraste (8.1)
+ *   - `text_scale`       "90" | "100" | "115" | "130", escalado de texto (8.1)
+ *
+ * LAS DOS DE ACCESIBILIDAD NO SON COLUMNAS DE `profiles` — DECISIÓN DE LA 8.1
+ * ---------------------------------------------------------------------------
+ * Se parecen al tema (hay que aplicarlas en el primer render y sin conexión),
+ * pero se resuelven como `active_session` y no como `profiles.theme`: la verdad
+ * inmediata es `localStorage`, que `lib/a11y.ts` lee de forma síncrona antes de
+ * montar React, y esto es la copia por perfil que se restaura al cambiar de uno
+ * a otro. Así el alto contraste sigue puesto aunque todavía no se haya elegido
+ * perfil — que es justo cuando más falta hace, en la pantalla de entrada.
  *
  * Los conjuntos de reglas en sí son del hogar (`champions_rules` no tiene
  * `profile_id`): lo que es de cada perfil es CUÁL tiene puesto.
@@ -45,13 +56,21 @@ const express = require("express");
  * Claves admitidas. Cualquier otra se rechaza con `clave_invalida`.
  * Añadir una preferencia nueva = añadirla aquí (y documentarla arriba).
  */
-const ALLOWED_KEYS = ["active_session", "history_enabled", "champions_rules"];
+const ALLOWED_KEYS = [
+  "active_session",
+  "history_enabled",
+  "champions_rules",
+  "high_contrast",
+  "text_scale",
+];
 
 /** Valores por defecto, para que el frontend no tenga que repetirlos. */
 const DEFAULTS = {
   active_session: "",
   history_enabled: "1",
   champions_rules: "",
+  high_contrast: "0",
+  text_scale: "100",
 };
 
 const MAX_VALUE = 200;

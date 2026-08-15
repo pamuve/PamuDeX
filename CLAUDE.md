@@ -250,7 +250,101 @@ modo en marcha en `/champions` (**6.3**).
 **Fase 7 completa** (multi-generación): selector condicional y `?gen=` por
 middleware (**7.1**), vista «Todas las generaciones» con etiquetas de cambios
 (**7.2**) e historial por entidad con su conjunto inicial de datos (**7.3**).
-Siguiente: **Fase 8, accesibilidad, rendimiento y PWA avanzada**.
+
+**Fase 8 completa** (accesibilidad, rendimiento y PWA avanzada): alto contraste
+y escalado de texto (**8.1**), teclado y lectores de pantalla (**8.2**), iconos
+definitivos y notificaciones opcionales (**8.3**) y caché en IndexedDB con
+medición de tiempos (**8.4**). Siguiente: **Fase 9, ampliaciones** — la más
+abierta del proyecto, hay que partirla con `docs/AI_TASK_TEMPLATE.md`.
+
+### Caché local (Fase 8)
+
+`lib/localCache.ts` guarda el catálogo en IndexedDB y `lib/api.ts` lo lee
+**primero**, refrescando por detrás. No sustituye al Service Worker: aquél da
+tolerancia a fallos de red, esto da los 100 ms del requisito (medido: 1.1 ms).
+
+**La clave es la ruta con `?session=` o `?champions=` dentro**, o cambiar de ROM
+Hack serviría el catálogo del anterior. Al guardar overrides hay que invalidar
+con `invalidarSesion(id)` — lo hace `useSessionOverride` en `persist`, su único
+camino de escritura.
+
+Solo van los cuatro listados y las 18 fichas de tipo; las demás fichas son más de
+2200 y se quedan con el Service Worker.
+
+**Un fallo de red no es un 404.** `ApiError.status === 0` es «no he podido
+preguntar», y `esFalloDeRed()` lo distingue: sin red va `LoadError`, y
+`NotAllowed` solo ante un 404 real. Tratarlo todo igual hacía que una ficha
+dijera «no permitida en Champions» estando simplemente sin cobertura. **Prueba
+siempre en modo avión**: ahí salen los spinners infinitos y los errores falsos.
+
+### PWA: iconos y actualizaciones (Fase 8)
+
+El service worker **se registra a mano** en `lib/serviceWorker.ts` desde
+`main.tsx`, con `injectRegister: null` en `vite.config.ts`. No uses
+`virtual:pwa-register/react`: importa `workbox-window`, que no está instalado,
+y **rompe `pnpm run build`**.
+
+`registerType` es **`prompt`**: la versión nueva espera y la aplica el usuario
+desde `components/UpdatePrompt.tsx`. Con `autoUpdate` recargaría sin avisar, y
+en mitad de una edición en el editor de ROM Hacks eso pierde trabajo.
+
+**El icono maestro es `public/icons/icon.svg`** y los PNG y el `.ico` salen de
+él (comando en el README). El `maskable` es un SVG distinto: a sangre y sin
+esquinas redondeadas, porque el sistema aplica su propia máscara.
+
+**Las notificaciones no piden permiso solas.** Solo desde el interruptor de
+`/ajustes`, y son preferencia del aparato (`localStorage`), no del perfil: el
+permiso lo concede el navegador al sitio entero. Denegado = no se guarda como
+activada. Hay un único caso de uso, avisar de versión nueva; añadir otros exige
+el mismo listón: que pasen con la app en segundo plano.
+
+### Accesibilidad (Fase 8)
+
+`lib/a11y.ts` guarda alto contraste y escalado de texto (90/100/115/130 %) con el
+patrón de `lib/session.ts` (estado de módulo + eventos, `localStorage` como
+verdad inmediata). `main.tsx` llama a `applyA11y()` **antes de montar React**:
+en un efecto la app parpadearía con el tamaño equivocado.
+
+No son columnas de `profiles` aunque se parezcan al tema: se resuelven como
+`active_session`, con `settings.high_contrast` y `settings.text_scale` como copia
+por perfil. **Al arrancar manda el aparato, al cambiar de perfil manda el
+perfil** — en `/perfiles` todavía no hay perfil que consultar, y es justo donde
+más falta hace.
+
+**El alto contraste pisa a los dos temas.** `lib/theme.ts` escribe las
+`--color-*` inline en `<html>`, así que `.high-contrast` las redeclara con
+`!important`, lo único que gana a un inline. Ahí `panel` y `base` son el mismo
+negro puro — la única excepción del proyecto, y la elige el usuario — y las
+tarjetas se distinguen por `outline` de 1px con `outline-offset: -1px`, que no
+mueve el diseño.
+
+El texto sobre un color del dataset usa la clase `color-chip` + `--chip-color`:
+en alto contraste el color pasa de fondo a marco. Los tipos apagados (siniestro
+2.8:1) no llegan a AAA de ninguna otra forma.
+
+**`text-base` es tamaño de letra, no color.** El color `base` va solo en
+`backgroundColor` y `borderColor` de `tailwind.config.js`; en `colors` generaba
+un `.text-base { color: var(--color-base) }` que pisaba al de Tailwind y pintaba
+el texto del color del fondo.
+
+Al tocar diseño, compruébalo a **320px con el 130 %**. Los mínimos en `rem` y los
+tamaños fijos necesitan `min(…, 100%)`, y recuerda que **las media queries no ven
+el `font-size` de la raíz**: un punto de corte en píxeles no se mueve al escalar.
+
+Para teclado y lectores hay **dos hooks que no son intercambiables**:
+`hooks/useMenu.ts` para menús (el foco viaja a la opción, con `Escape` y
+devolución del foco al disparador) y `hooks/useCombobox.ts` para autocompletados
+(el foco se queda en el campo y la opción activa va con `aria-activedescendant`).
+Usa el que toque en vez de escribir el teclado a mano.
+
+**`<main id="contenido">` vive en `App.tsx`**, no en las páginas: una página
+nueva no debe traer el suyo o habría dos hitos y el enlace «saltar al contenido»
+dejaría de ser fiable. Cada página empieza por un `<h1>` y no salta niveles.
+
+Todo control necesita nombre accesible, y el marcador de posición no cuenta.
+El texto sobre un color del dataset usa `readableInk(color)`, nunca un color
+fijo. Lo que cambia lejos del control que lo provoca se anuncia con
+`role="status" aria-live="polite"`, con la región siempre montada.
 
 ### Multi-generación (Fase 7)
 

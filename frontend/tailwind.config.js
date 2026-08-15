@@ -14,8 +14,22 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
+      /*
+       * `base` NO va aquí — DECISIÓN DE LA 8.1, y arregla un fallo que llevaba
+       * suelto desde la Fase 1.
+       *
+       * `extend.colors` genera la familia entera de utilidades, así que un
+       * color llamado `base` producía un segundo `.text-base { color:
+       * var(--color-base) }` que se emitía DESPUÉS del `.text-base` de tamaño
+       * de fuente de Tailwind y lo pisaba. Resultado: cualquier elemento con
+       * `text-base` pintaba el texto del color del FONDO y quedaba invisible
+       * (`sm:text-base` en /perfiles, entre otros).
+       *
+       * Declarándolo solo en las utilidades donde se usa de verdad, `bg-base` y
+       * `border-base` siguen funcionando igual y `text-base` vuelve a ser lo
+       * que todo el mundo espera: el tamaño de letra.
+       */
       colors: {
-        base: "var(--color-base)",
         panel: "var(--color-panel)",
         hover: "var(--color-hover)",
         ink: {
@@ -23,6 +37,12 @@ export default {
           soft: "var(--color-ink-soft)",
         },
         accent: "var(--color-accent)",
+      },
+      backgroundColor: {
+        base: "var(--color-base)",
+      },
+      borderColor: {
+        base: "var(--color-base)",
       },
       fontFamily: {
         // Pilas de fuentes de sistema (sin CDNs externos) para no romper el uso offline de la PWA.

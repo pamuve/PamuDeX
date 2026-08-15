@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, esFalloDeRed } from "../lib/api";
+import { LoadError } from "../components/LoadError";
 import { MoveDetail as MoveDetailT, PokeType } from "../types";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { GenerationSelector, useGenerationView } from "../components/GenerationSelector";
@@ -23,20 +24,29 @@ export function MoveDetail() {
   const [gen, setGen] = useGenerationView(id);
   // En modo Champions el backend responde 404 si la entidad no es legal.
   const [noPermitido, setNoPermitido] = useState(false);
+  // Un fallo de RED no es lo mismo (8.4): antes acababa también en «no
+  // permitida en Champions», que sin cobertura es un mensaje falso.
+  const [sinRed, setSinRed] = useState(false);
+  const [reintento, setReintento] = useState(0);
 
   useEffect(() => {
     if (!id) return;
     setNoPermitido(false);
+    setSinRed(false);
     // Ver PokemonDetail: descarta la respuesta de una generación ya no elegida.
     let cancelado = false;
     api.moves
       .detail(id, gen)
       .then((m) => !cancelado && setMove(m))
-      .catch(() => !cancelado && setNoPermitido(true));
+      .catch((err) => {
+        if (cancelado) return;
+        if (esFalloDeRed(err)) setSinRed(true);
+        else setNoPermitido(true);
+      });
     return () => {
       cancelado = true;
     };
-  }, [id, gen]);
+  }, [id, gen, reintento]);
 
   useEffect(() => {
     api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((tp) => [tp.id, tp]))));
@@ -45,7 +55,8 @@ export function MoveDetail() {
   useRecordVisit("move", move ? move.id : undefined);
 
   if (noPermitido) return <NotAllowed />;
-  if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
+  if (sinRed) return <LoadError offline onRetry={() => setReintento((n) => n + 1)} />;
+  if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">{t("common.loading")}</div>;
 
   // Las etiquetas solo tienen sentido en «Todas las generaciones» (ver
   // PokemonDetail).
@@ -101,9 +112,16 @@ export function MoveDetail() {
           <ChangeTag changes={cambios} field="type_id" format={nombreDeTipo} />
           <span className="ml-auto"><FavoriteButton type="move" entityRef={move.id} /></span>
         </div>
-        <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+        {/* `auto-fit` con mínimo de 7rem en vez de dos columnas fijas: al 130%
+            de escalado (8.1) ese mínimo pasa de 112 a 146px, dejan de caber dos
+            columnas en una pantalla de 4" y la rejilla baja sola a una. A
+            tamaño normal siguen siendo dos. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(7rem,100%),1fr))] gap-y-3 gap-x-6">
           {rows.map(([label, val, field, format]) => (
-            <div key={label} className="flex justify-between border-b border-hover pb-2">
+            // `flex-wrap`: en dos columnas a 4" y con el texto al 130% (8.1) la
+            // etiqueta y el valor no caben en la misma línea; así el valor baja
+            // en vez de salirse de la celda.
+            <div key={label} className="flex flex-wrap justify-between gap-x-2 border-b border-hover pb-2">
               <span className="text-ink-soft text-sm">
                 {label}
                 {field && <ChangeTag changes={cambios} field={field} format={format} />}

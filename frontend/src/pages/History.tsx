@@ -144,7 +144,7 @@ export default function History() {
   // Sin perfil no hay historial que enseñar.
   if (!profile) {
     return (
-      <main className="max-w-3xl mx-auto px-4 py-12 text-center">
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center">
         <UserCircle2 size={40} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
         <h1 className="font-display font-bold text-2xl text-ink mb-2">{t("history.title")}</h1>
         <p className="text-ink-soft mb-5">{t("history.needProfile")}</p>
@@ -154,14 +154,14 @@ export default function History() {
         >
           {t("profiles.choose")}
         </Link>
-      </main>
+      </div>
     );
   }
 
   const fmtHora = new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-[12rem]">
           <h1 className="font-display font-bold text-2xl text-ink">{t("history.title")}</h1>
@@ -268,6 +268,6 @@ export default function History() {
           </section>
         ))
       )}
-    </main>
+    </div>
   );
 }

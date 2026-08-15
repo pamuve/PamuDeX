@@ -234,6 +234,71 @@ La interfaz utiliza una paleta de colores pensada para dispositivos OLED para mi
 *   **Texto Principal:** `#F5F7FA`
 *   **Texto Secundario:** `#A9BDD2`
 
+### Iconos de la aplicación
+
+El icono es **diseño propio**: una «rueda de tipos» de seis arcos con la inicial
+en el centro. No lleva arte de Pokémon con copyright, a propósito, porque la app
+se distribuye.
+
+El maestro es `frontend/public/icons/icon.svg`; `icon-maskable.svg` es la
+variante a sangre para Android, que aplica su propia máscara y pintaría de negro
+cualquier esquina transparente. Si tocas el diseño, regenera los cinco archivos
+(hace falta `librsvg` e `ImageMagick`, solo para esto):
+
+```bash
+cd frontend/public/icons && rsvg-convert -w 192 -h 192 icon.svg -o icon-192.png && rsvg-convert -w 512 -h 512 icon.svg -o icon-512.png && rsvg-convert -w 512 -h 512 icon-maskable.svg -o icon-512-maskable.png && rsvg-convert -w 180 -h 180 icon-maskable.svg -o apple-touch-icon.png && for s in 16 32 48; do rsvg-convert -w $s -h $s icon.svg -o /tmp/pamudex-f$s.png; done && magick /tmp/pamudex-f16.png /tmp/pamudex-f32.png /tmp/pamudex-f48.png ../favicon.ico
+```
+
+### Datos sin conexión y rendimiento
+
+El catálogo (tipos, Pokémon, movimientos, habilidades y las 18 fichas de tipo)
+se guarda en **IndexedDB** conforme lo vas usando, y en `/ajustes` hay un botón
+**«Descargar datos para uso offline»** con barra de progreso y la fecha de la
+última descarga, para cuando sabes que vas a quedarte sin cobertura.
+
+La lectura es **local primero**: si el dato está en el aparato se pinta al
+momento y la red se consulta después, en segundo plano, solo para dejar la copia
+al día. La interfaz nunca espera a la red teniendo copia local.
+
+En `/ajustes` → **Modo de depuración** puedes ver cuánto tarda cada lectura en
+tu propio aparato. Medido aquí, sobre el build servido por el contenedor:
+
+| Medida | Resultado |
+|---|---|
+| Lecturas del catálogo desde IndexedDB | **media 1.1 ms · peor 1.8 ms** (objetivo <100 ms) |
+| Navegación → catálogo pintado (primera carga) | **~94 ms** |
+| TTFB / DOM interactivo / carga completa | 7.5 / 12.1 / 18.3 ms |
+| CLS (desplazamiento de diseño) | **0** |
+| JS / CSS del arranque | 416 KB / 28 KB sin comprimir (113 KB / 6 KB con gzip) |
+
+**Qué NO se descarga**: las fichas de Pokémon, movimientos y habilidades son más
+de 2200 y ocuparían decenas de megas, así que esas siguen dependiendo de haberlas
+visitado (el Service Worker las guarda al pasar por ellas). Si abres una ficha
+que no tienes guardada y estás sin conexión, la app lo dice claramente y te deja
+reintentar, en vez de quedarse cargando para siempre.
+
+> **Sobre la auditoría Lighthouse.** Los criterios de instalación que comprueba
+> Lighthouse están verificados uno a uno (manifiesto con nombre, nombre corto,
+> iconos de 192, 512 y *maskable*, `start_url`, `display: standalone`, service
+> worker activo y contexto seguro), igual que los básicos de `html lang`,
+> `viewport`, `theme-color` y descripción. Lo que **no** se ha podido ejecutar es
+> Lighthouse en sí, porque necesita un Chrome instalado y el entorno donde se
+> desarrolló esta fase no lo tiene; por el mismo motivo faltan FCP y LCP, que
+> exigen una ventana pintando de verdad. Si lo pasas tú, `pnpm dlx lighthouse
+> http://localhost:4000 --view` con la app en marcha.
+
+### Actualizaciones y notificaciones
+
+El service worker está en modo **`prompt`**: cuando reconstruyes la imagen, la
+versión nueva no se aplica sola. La app enseña una franja «Hay una versión nueva
+de PamuDeX lista» y espera a que el usuario pulse *Actualizar*, para no recargar
+la página en mitad de una edición del editor de ROM Hacks.
+
+Las notificaciones del sistema son **opcionales y están apagadas de fábrica**.
+Solo sirven para ese mismo aviso cuando la app está en segundo plano, y el
+permiso no se pide hasta que las activas en `/ajustes`. Si las tienes bloqueadas
+en el navegador, la franja sigue funcionando igual: no se pierde nada.
+
 ## 🤝 Contribuir
 
 ¡Las contribuciones son bienvenidas! La arquitectura modular está diseñada para escalar y admitir en el futuro calculadoras de daño completas e integraciones con Pokémon Showdown.
@@ -295,7 +360,23 @@ con token. Nada de eso está implementado.
 >   historial se amplía editando un JSON (ver «Historial de cambios entre
 >   generaciones»).
 >
-> Siguiente: **Fase 8 — Accesibilidad, rendimiento y PWA avanzada**.
+> - **Fase 8** (en curso) — accesibilidad, rendimiento y PWA avanzada. De momento,
+>   **modo de alto contraste** y **escalado de texto** en cuatro niveles (90, 100,
+>   115 y 130 %) desde `/ajustes`: se aplican al instante, sobreviven a recargar y
+>   se recuerdan por perfil. El alto contraste manda sobre el tema del ROM Hack y
+>   sobre el del perfil, y es el único sitio de la app donde se usa negro puro.
+>   La app se maneja además **entera con el teclado**: enlace para saltar al
+>   contenido, menús y autocompletados con flechas y `Escape`, nombre accesible
+>   en todos los controles y aviso hablado cuando cambian las recomendaciones
+>   del comparador. La PWA estrena **icono propio** (192, 512, *maskable*,
+>   *apple-touch* y `favicon.ico`), manifiesto completo y aviso de **versión
+>   nueva lista**, con notificaciones del sistema opcionales y apagadas de
+>   fábrica. Y el catálogo vive en **IndexedDB**: se lee en **1-2 ms**, con
+>   descarga explícita para uso sin conexión y un modo de depuración que enseña
+>   los tiempos.
+>
+> **Fase 8 completa.** Siguiente: **Fase 9 — ampliaciones** (calculadora de daño,
+> simulador de combate, recomendador de equipos…), que está abierta a propósito.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

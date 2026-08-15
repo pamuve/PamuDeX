@@ -352,9 +352,12 @@ export default function ChampionsRules() {
   const ocultas = filtradas.length - visibles.length;
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-start gap-3 flex-wrap">
-        <div className="flex-1 min-w-[14rem]">
+        {/* `min(14rem,100%)`: el mínimo evita que el título y el botón se
+            partan en escritorio, pero al 130% de escalado (8.1) 14rem son
+            291px y no caben en una pantalla de 320. El `min()` cede primero. */}
+        <div className="flex-1 min-w-[min(14rem,100%)]">
           <h1 className="font-display font-bold text-2xl text-ink flex items-center gap-2">
             <Shield size={22} aria-hidden="true" />
             {t("champions.title")}
@@ -733,6 +736,6 @@ export default function ChampionsRules() {
           {t("championsHome.title")}
         </Link>
       </p>
-    </main>
+    </div>
   );
 }

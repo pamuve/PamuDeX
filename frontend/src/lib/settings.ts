@@ -7,8 +7,9 @@
  * El idioma y el tema NO: son columnas de `profiles` (`language`, `theme`), que
  * viajan dentro del perfil cacheado en localStorage y por tanto están
  * disponibles en el primer render y sin conexión, sin una petición de más.
- * `settings` guarda lo que no merece columna propia: por ahora qué sesión de
- * ROM Hack usa cada perfil y si registra o no su historial.
+ * `settings` guarda lo que no merece columna propia: qué sesión de ROM Hack usa
+ * cada perfil, si registra o no su historial, qué conjunto de reglas de
+ * Champions tiene puesto y su accesibilidad (alto contraste y escalado, 8.1).
  *
  * MISMO PATRÓN QUE lib/favorites.ts: caché de módulo + eventos de `window`, no
  * un context. Así ninguna página necesita un provider nuevo en main.tsx.
@@ -33,6 +34,7 @@ import {
   exitChampions,
   ACTIVE_CHAMPIONS_EVENT,
 } from "./champions";
+import { getA11y, setA11y, normalizeScale, A11Y_EVENT } from "./a11y";
 
 export type { ProfileSettings };
 
@@ -43,6 +45,8 @@ export const DEFAULT_SETTINGS: ProfileSettings = {
   active_session: "",
   history_enabled: "1",
   champions_rules: "",
+  high_contrast: "0",
+  text_scale: "100",
 };
 
 /** Ajustes del perfil activo. null = todavía no se han cargado. */
@@ -153,6 +157,51 @@ function sincronizarChampions(settings: ProfileSettings, cambioDePerfil: boolean
     });
 }
 
+/**
+ * Sincroniza la accesibilidad con la preferencia del perfil (Tarea 8.1).
+ *
+ * NO tiene el caso «el perfil no tiene nada guardado» que sí tienen la sesión y
+ * Champions: "0" y "100" son valores legítimos, no huecos, así que el servidor
+ * siempre devuelve algo y no hay forma de distinguirlos. Por eso la regla es la
+ * otra mitad de la de la sesión:
+ *  - al ARRANCAR, manda el aparato. Lo que hubiera en localStorage ya está
+ *    aplicado desde `main.tsx`, y se copia al perfil. Sin esto, elegir perfil
+ *    apagaría el alto contraste que el usuario acabase de encender en la
+ *    pantalla de entrada, donde todavía no había perfil que consultar.
+ *  - al CAMBIAR de perfil, manda el perfil: cada uno tiene su vista.
+ */
+function sincronizarA11y(settings: ProfileSettings, cambioDePerfil: boolean) {
+  if (!cambioDePerfil) {
+    guardarA11y();
+    return;
+  }
+  // `silent`: lo decide la restauración, no el usuario; no hay que reenviarlo.
+  setA11y(
+    {
+      highContrast: settings.high_contrast === "1",
+      textScale: normalizeScale(settings.text_scale),
+    },
+    true
+  );
+}
+
+/** Copia en el perfil el alto contraste y el escalado de este aparato. */
+function guardarA11y() {
+  const profileId = getActiveProfileId();
+  if (profileId === null || cacheProfile !== profileId || cache === null) return;
+
+  const { highContrast, textScale } = getA11y();
+  const high_contrast = highContrast ? "1" : "0";
+  const text_scale = String(textScale);
+  if (cache.high_contrast === high_contrast && cache.text_scale === text_scale) return;
+
+  cache = { ...cache, high_contrast, text_scale };
+  announce();
+  // Silencioso: sin conexión la preferencia sigue viva en localStorage, solo se
+  // pierde la memoria entre perfiles.
+  settingsApi.update(profileId, { high_contrast, text_scale }).catch(() => {});
+}
+
 /** Guarda en el perfil el conjunto de Champions activo. */
 function guardarChampions() {
   const profileId = getActiveProfileId();
@@ -193,6 +242,7 @@ export function loadSettings(cambioDePerfil = false): Promise<ProfileSettings> {
       cache = { ...DEFAULT_SETTINGS, ...res.settings };
       sincronizarSesion(cache, cambioDePerfil && !inicial);
       sincronizarChampions(cache, cambioDePerfil && !inicial);
+      sincronizarA11y(cache, cambioDePerfil && !inicial);
       announce();
       return cache;
     })
@@ -298,15 +348,24 @@ export function useProfileSettings(): void {
       guardarSesionActiva();
     };
     const onChampions = () => guardarChampions();
+    // Mismo `silent` que la sesión: restaurar la accesibilidad de un perfil no
+    // se vuelve a guardar como si fuera una elección nueva.
+    const onA11y = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.silent) return;
+      guardarA11y();
+    };
 
     window.addEventListener(ACTIVE_PROFILE_EVENT, onProfile);
     window.addEventListener(ACTIVE_SESSION_EVENT, onSession);
     window.addEventListener(ACTIVE_CHAMPIONS_EVENT, onChampions);
+    window.addEventListener(A11Y_EVENT, onA11y);
     window.addEventListener("storage", onProfile);
     return () => {
       window.removeEventListener(ACTIVE_PROFILE_EVENT, onProfile);
       window.removeEventListener(ACTIVE_SESSION_EVENT, onSession);
       window.removeEventListener(ACTIVE_CHAMPIONS_EVENT, onChampions);
+      window.removeEventListener(A11Y_EVENT, onA11y);
       window.removeEventListener("storage", onProfile);
     };
   }, []);
