@@ -114,13 +114,21 @@ Cuatro decisiones que conviene no reabrir sin motivo:
 
 ---
 
-## 🔜 Fase 7 — Multi-generación avanzada
+## ✅ Fase 7 — Multi-generación avanzada (completada)
 
-| # | Tarea | Tamaño |
-|---|-------|--------|
-| 7.1 | Selector de generación condicional: solo aparece si hay diferencias reales entre generaciones para esa entidad | Media |
-| 7.2 | Vista "Todas las generaciones" con etiquetas de cambios históricos (tabla de tipos, movimientos, habilidades) | Media |
-| 7.3 | Historial de cambios por Pokémon/movimiento/habilidad (qué cambió, en qué generación) | Media |
+| # | Tarea | Tamaño | Estado |
+|---|-------|--------|--------|
+| 7.1 | Selector de generación condicional: solo aparece si hay diferencias reales entre generaciones para esa entidad | Media | ✅ `entity_changes`, middleware `?gen=`, `GenerationSelector` |
+| 7.2 | Vista "Todas las generaciones" con etiquetas de cambios históricos (tabla de tipos, movimientos, habilidades) | Media | ✅ `generational_changes` embebido, `ChangeTag` |
+| 7.3 | Historial de cambios por Pokémon/movimiento/habilidad (qué cambió, en qué generación) | Media | ✅ 49 cambios sembrados, `ChangeHistory`, `/api/changes` |
+
+Notas de la fase:
+
+- **El valor histórico se reconstruye caminando hacia atrás** desde el dato de hoy: no hay ni va a haber una copia del catálogo por generación. Cada fila de `entity_changes` dice «en la generación N este campo pasó de X a Y», y el valor en una generación G es el `old_value` del cambio más antiguo posterior a G.
+- **`?gen=` es un middleware**, como `?session=` y `?champions=`: ninguna ruta de datos conoce las generaciones. Se monta el último de los tres para transformar el primero, así los overrides de ROM Hack pisan encima. `?gen=` y `?session=` **se combinan**; Champions sigue siendo excluyente.
+- **La ruta quedó en `/api/changes`, no en `/api/history`** como pedía el encargo: ese prefijo ya es el historial de consultas por perfil de la Tarea 5.4.
+- **El conjunto de datos es inicial y corto a propósito** (49 cambios). Ampliarlo es incremental y está documentado en el README, con un validador (`pnpm run check:changes`) que comprueba que las cadenas empalman y que el último eslabón cuadra con el dataset.
+- **Limitación conocida**: los tipos que aún no existían siguen apareciendo en las vistas antiguas (Acero, Siniestro y Hada salen en la tabla de la Gen 1). Ocultarlos necesita saber en qué generación nació cada tipo, dato que el dataset no guarda todavía.
 
 ---
 

@@ -41,22 +41,39 @@ async function get<T>(path: string): Promise<T> {
   return res.json();
 }
 
+/**
+ * Generación pedida en una ficha (Fase 7). `null` o sin valor es «la actual», y
+ * entonces la URL sale idéntica a la de siempre: el middleware del backend solo
+ * añade `has_generational_differences` y no reescribe nada.
+ *
+ * Va delante de `withMode`, así que cada combinación de generación y modo
+ * genera una URL distinta y el Service Worker las cachea por separado — el modo
+ * sin conexión sigue funcionando en cada una.
+ */
+function genQuery(gen?: number | null): string {
+  return gen === null || gen === undefined ? "" : `?gen=${gen}`;
+}
+
 export const api = {
   types: {
     list: () => get<import("../types").PokeType[]>("/types"),
-    detail: (id: string) => get<import("../types").TypeDetail>(`/types/${id}`),
+    detail: (id: string, gen?: number | null) =>
+      get<import("../types").TypeDetail>(`/types/${id}${genQuery(gen)}`),
   },
   pokemon: {
     list: () => get<import("../types").PokemonSummary[]>("/pokemon"),
-    detail: (id: string | number) => get<import("../types").PokemonDetail>(`/pokemon/${id}`),
+    detail: (id: string | number, gen?: number | null) =>
+      get<import("../types").PokemonDetail>(`/pokemon/${id}${genQuery(gen)}`),
   },
   moves: {
     list: () => get<import("../types").MoveSummary[]>("/moves"),
-    detail: (id: string | number) => get<import("../types").MoveDetail>(`/moves/${id}`),
+    detail: (id: string | number, gen?: number | null) =>
+      get<import("../types").MoveDetail>(`/moves/${id}${genQuery(gen)}`),
   },
   abilities: {
     list: () => get<import("../types").AbilitySummary[]>("/abilities"),
-    detail: (id: string | number) => get<import("../types").AbilityDetail>(`/abilities/${id}`),
+    detail: (id: string | number, gen?: number | null) =>
+      get<import("../types").AbilityDetail>(`/abilities/${id}${genQuery(gen)}`),
   },
   search: (q: string) => get<import("../types").SearchResults>(`/search?q=${encodeURIComponent(q)}`),
 

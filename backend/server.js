@@ -28,23 +28,38 @@ const PORT = process.env.PORT || 4000;
 
 const sessionOverrides = require("./middleware/sessionOverrides");
 const championsMode = require("./middleware/championsMode");
+const generationMode = require("./middleware/generationMode");
 const sessionsRoutes = require("./routes/sessions");
 const chartRoutes = require("./routes/chart");
 
 app.use(express.json());
 
-// IMPORTANTE: los dos middlewares van ANTES de las rutas de datos. Interceptan
-// res.json; sin su parámetro en la query no hacen nada.
+// IMPORTANTE: los tres middlewares van ANTES de las rutas de datos. Interceptan
+// res.json, así que ninguna ruta sabe nada de modos.
 //
-// El de Champions va PRIMERO a propósito: los dos modos son excluyentes, y al
-// correr antes puede quitar `?session=` de la query para que sessionOverrides
-// ni se entere. Si llegan los dos, manda Champions.
+// EL ORDEN DE MONTAJE ES EL INVERSO DEL ORDEN DE TRANSFORMACIÓN: cada uno
+// envuelve el res.json del anterior, así que el último en montarse es el
+// primero en transformar el cuerpo. Aquí eso da: generación -> sesión ->
+// Champions.
+//
+//  - Champions va PRIMERO en el montaje a propósito: es excluyente con las
+//    sesiones de ROM Hack, y al correr antes puede quitar `?session=` de la
+//    query para que sessionOverrides ni se entere. Si llegan los dos, manda
+//    Champions.
+//  - Generación va el ÚLTIMO en el montaje para transformar el PRIMERO: se
+//    reconstruye el dato histórico y encima pisan los overrides del ROM Hack,
+//    que son una edición explícita del usuario. `?gen=` y `?session=` sí se
+//    combinan.
 app.use("/api", championsMode(db));
 app.use("/api", sessionOverrides(db));
+app.use("/api", generationMode(db));
 
 app.use("/api/profiles", require("./routes/profiles")(db));
 app.use("/api/favorites", require("./routes/favorites")(db));
+// OJO: `/api/history` es el historial de CONSULTAS por perfil (Tarea 5.4). Los
+// cambios entre generaciones (7.3) van en `/api/changes`, que es otra cosa.
 app.use("/api/history", require("./routes/history")(db));
+app.use("/api/changes", require("./routes/changes")(db));
 app.use("/api/settings", require("./routes/settings")(db));
 app.use("/api/sessions", sessionsRoutes(db));
 app.use("/api/chart", chartRoutes(db));

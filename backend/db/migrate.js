@@ -108,6 +108,55 @@ const MIGRATIONS = [
       db.transaction(() => insertItems(db, items))();
     },
   },
+  {
+    // Tarea 7.1 — cambios históricos entre generaciones. Tabla nueva, así que
+    // una base que ya estaba en marcha no la tiene. Solo el esquema: los datos
+    // los carga la 7.3.
+    name: "tabla entity_changes",
+    needed: (db) => !hasTable(db, "entity_changes"),
+    run: (db) =>
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS entity_changes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          entity_type TEXT NOT NULL,
+          entity_ref TEXT NOT NULL,
+          generation INTEGER NOT NULL,
+          field TEXT NOT NULL,
+          old_value TEXT,
+          new_value TEXT,
+          note TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_entity_changes_entidad
+          ON entity_changes (entity_type, entity_ref, generation);
+        CREATE INDEX IF NOT EXISTS idx_entity_changes_campo
+          ON entity_changes (field, generation);
+      `),
+  },
+  {
+    // Tarea 7.3 — el conjunto inicial de cambios históricos. Igual que la
+    // siembra de objetos de la 6.0: entra por migración porque `pnpm run seed`
+    // borra la base entera y una instalación en marcha perdería perfiles,
+    // sesiones, favoritos, historial y ajustes.
+    //
+    // Condicionado a que la tabla esté VACÍA, así que es idempotente y respeta
+    // al usuario que haya editado su historial: con una sola fila propia, esto
+    // no vuelve a ejecutarse nunca.
+    //
+    // OJO al orden: depende de la migración anterior, que crea la tabla. Las
+    // migraciones se aplican en el orden de este array.
+    name: "siembra de entity_changes",
+    needed: (db) => isEmpty(db, "entity_changes"),
+    run: (db) => {
+      const fs = require("fs");
+      const path = require("path");
+      const file = path.join(__dirname, "..", "data", "entity_changes.json");
+      if (!fs.existsSync(file)) return;
+
+      const { insertEntityChanges } = require("./populate");
+      const rows = JSON.parse(fs.readFileSync(file, "utf-8"));
+      db.transaction(() => insertEntityChanges(db, rows))();
+    },
+  },
 ];
 
 /**

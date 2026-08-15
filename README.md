@@ -12,6 +12,7 @@ El objetivo es ofrecer una herramienta rápida, instalable y que funcione **100%
 *   ⚔️ **Simulador Táctico:** Comparador avanzado de equipos que analiza la "Mejor Respuesta" basándose en coberturas, resistencias, inmunidades y movimientos esperados del rival.
 *   🛠️ **Sesiones Personalizadas (ROM Hacks):** Base de datos adaptable para crear entornos de juego donde puedes modificar tipos, estadísticas o habilidades a través de un editor visual.
 *   👥 **Sistema Multi-Perfil:** Soporte para múltiples usuarios locales con configuraciones, favoritos, historial y temas independientes, con PIN opcional por perfil (ver [Alcance de seguridad](#-alcance-de-seguridad)).
+*   🕰️ **Multi-generación:** Las fichas que han cambiado entre generaciones lo dicen: un selector para ver los valores de cualquiera de las nueve, etiquetas junto a cada campo modificado y una línea temporal con todo el historial. Solo aparece donde hay cambios reales, así que no ensucia las fichas que nunca se han tocado.
 *   🛡️ **Modo Pokémon Champions:** Un modo aparte con su propia base de reglas — qué Pokémon, movimientos, habilidades y objetos son legales — y multiplicadores de efectividad propios. Reutiliza toda la interfaz de consulta, con un distintivo permanente para no confundirlo con la Pokédex estándar.
 *   🐳 **Autoalojable:** Despliegue en un solo contenedor Docker con persistencia de datos mediante volúmenes, compatible con Docker Compose.
 
@@ -164,6 +165,66 @@ pnpm install
 pnpm start
 ```
 
+### Historial de cambios entre generaciones
+
+El historial vive en [`backend/data/entity_changes.json`](backend/data/entity_changes.json).
+El conjunto que trae el repo es **inicial y deliberadamente corto** (los cambios
+más conocidos: la llegada del tipo Hada, Acero perdiendo resistencias, la
+división físico/especial de la Gen 4 y algunos ajustes de potencia). Ampliarlo es
+un trabajo incremental y el formato está pensado para eso.
+
+**Cada entrada es un cambio de UN campo en UNA generación:**
+
+```json
+{ "entity_type": "move", "ref": "Lanzallamas", "generation": 6,
+  "field": "power", "old_value": 95, "new_value": 90,
+  "note": "Rebaja general de potencia de la Gen 6." }
+```
+
+*   **`generation` es la de ENTRADA EN VIGOR.** Desde ella el campo vale
+    `new_value`; antes valía `old_value`. La división físico/especial es «Gen 4»,
+    así que en la Gen 4 los movimientos ya están divididos.
+*   **`ref` es la clave natural, no el id interno**: el nº de Pokédex en Pokémon,
+    el `name_es` en movimientos y habilidades, el id (`"acero"`) en tipos. Los ids
+    internos los reparte el AUTOINCREMENT al sembrar y regenerar el dataset puede
+    moverlos.
+*   **`field` es el nombre del campo tal y como lo devuelve la API** (`power`,
+    `accuracy`, `category`, `types`, `effect_es`…). Admite un nivel de anidamiento
+    con punto: `stats.atk`.
+*   **Los cambios de la tabla de tipos se anotan en el DEFENSOR**, con
+    `field: "relation:<atacante>"`. Que Acero dejara de resistir a Fantasma es
+    `"ref": "acero", "field": "relation:fantasma", "old_value": 0.5, "new_value": 1`.
+    La ficha del atacante lo enseña sola, no hay que duplicarlo.
+
+**Las dos reglas que hay que respetar sí o sí.** El valor histórico se
+reconstruye caminando hacia atrás desde el valor de HOY, así que:
+
+1.  **Cadena**: si un campo cambió varias veces, el `new_value` de un cambio debe
+    ser exactamente el `old_value` del siguiente.
+2.  **Anclaje**: el `new_value` del cambio más reciente debe coincidir con lo que
+    ese campo vale hoy en el dataset.
+
+Si se rompe cualquiera de las dos, la ficha enseña valores que nunca existieron y
+no falla nada de forma visible. Por eso hay un validador:
+
+```bash
+cd backend && pnpm run check:changes
+```
+
+Comprueba las dos reglas contra la base de datos real y avisa de las referencias
+que no resuelven. Ejecútalo siempre después de tocar el archivo.
+
+**Para que los cambios nuevos entren en una instalación que ya está en marcha**,
+la siembra la hace `db/migrate.js` cuando la tabla está vacía. Si ya tenías
+historial y quieres el conjunto ampliado, borra la tabla (`DELETE FROM
+entity_changes`) y reinicia: **no ejecutes `pnpm run seed`**, que borra la base
+entera con tus perfiles, sesiones, favoritos e historial de consultas.
+
+> **Limitación conocida.** Los tipos que aún no existían siguen apareciendo en las
+> vistas antiguas: en la Gen 1 la tabla de efectividad sigue listando Acero,
+> Siniestro y Hada. Ocultarlos necesita saber en qué generación nació cada tipo,
+> que es un dato que el dataset todavía no guarda.
+
 ## 🎨 Guía de Diseño (UI/UX)
 
 La interfaz utiliza una paleta de colores pensada para dispositivos OLED para minimizar el consumo y el *black smearing*:
@@ -211,7 +272,7 @@ con token. Nada de eso está implementado.
 
 ## ⚙️ Estado del proyecto
 
-> Estado actual: **Fases 1 a 6 completas y verificadas.**
+> Estado actual: **Fases 1 a 7 completas y verificadas.**
 >
 > - **Fase 1** — núcleo de datos + consulta + PWA offline + Docker.
 > - **Fase 2** — comparador de equipos táctico en `/equipo` (motor de daño, «mejor respuesta», mapa de cobertura).
@@ -227,7 +288,14 @@ con token. Nada de eso está implementado.
 >   la Pokédex estándar y es excluyente con las sesiones de ROM Hack. Trajo además
 >   los **2151 objetos** al dataset.
 >
-> Siguiente: **Fase 7 — Multi-generación avanzada**.
+> - **Fase 7** — multi-generación. Las fichas de Pokémon, movimiento, habilidad y
+>   tipo aceptan `?gen=<n>` y enseñan un selector **solo si esa entidad cambió de
+>   verdad**; en la vista «Todas las generaciones» cada campo modificado lleva una
+>   etiqueta con qué cambió y cuándo, y hay una línea temporal completa. El
+>   historial se amplía editando un JSON (ver «Historial de cambios entre
+>   generaciones»).
+>
+> Siguiente: **Fase 8 — Accesibilidad, rendimiento y PWA avanzada**.
 > Ver [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Roadmap

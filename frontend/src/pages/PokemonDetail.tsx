@@ -5,6 +5,10 @@ import { PokemonDetail as PokemonDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { GenerationSelector, useGenerationView } from "../components/GenerationSelector";
+import { ChangeTag } from "../components/ChangeTag";
+import { ChangeHistory } from "../components/ChangeHistory";
+import { makeChangeLine } from "../lib/generations";
 import { NotAllowed } from "../components/NotAllowed";
 import { useRecordVisit } from "../lib/history";
 import { useI18n } from "../i18n";
@@ -17,15 +21,30 @@ export function PokemonDetail() {
   const { t } = useI18n();
   const [poke, setPoke] = useState<PokemonDetailT | null>(null);
   const [typesById, setTypesById] = useState<Record<string, PokeType>>({});
+  // Generación que se está viendo; null = la actual (Fase 7).
+  const [gen, setGen] = useGenerationView(id);
   // En modo Champions el backend responde 404 si la entidad no es legal.
   const [noPermitido, setNoPermitido] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     setNoPermitido(false);
-    api.pokemon.detail(id).then(setPoke).catch(() => setNoPermitido(true));
+    // `cancelado` descarta la respuesta de una generación que ya no es la
+    // elegida: pulsar rápido varias deja peticiones en vuelo que pueden
+    // resolverse en otro orden.
+    let cancelado = false;
+    api.pokemon
+      .detail(id, gen)
+      .then((p) => !cancelado && setPoke(p))
+      .catch(() => !cancelado && setNoPermitido(true));
+    return () => {
+      cancelado = true;
+    };
+  }, [id, gen]);
+
+  useEffect(() => {
     api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((t) => [t.id, t]))));
-  }, [id]);
+  }, []);
 
   // Se anota el id interno, no el :id de la URL: la ruta acepta también el nº de
   // Pokédex, y el historial (como los favoritos) se indexa siempre por id.
@@ -33,6 +52,31 @@ export function PokemonDetail() {
 
   if (noPermitido) return <NotAllowed />;
   if (!poke) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">Cargando...</div>;
+
+  // Las etiquetas solo tienen sentido en «Todas las generaciones»: si se está
+  // viendo una concreta, el dato de la ficha YA es el histórico.
+  const cambios = gen === null ? poke.generational_changes : undefined;
+
+  // Los tipos se guardan como ids; se traducen con el catálogo ya cargado.
+  const nombresDeTipo = (value: unknown) =>
+    Array.isArray(value)
+      ? value.map((v) => typesById[String(v)]?.name_es ?? String(v)).join(" / ")
+      : String(value);
+
+  // La línea temporal reaprovecha el mismo formateador que las etiquetas; solo
+  // añade cómo se llama cada campo. `stats.atk` sale como «Ataque», la misma
+  // etiqueta que se ve arriba en la tabla de estadísticas.
+  const linea = makeChangeLine(
+    t,
+    (field) => {
+      if (field === "types") return t("generations.field.types");
+      if (field === "abilities") return t("generations.field.abilities");
+      if (field === "hidden_ability") return t("generations.field.hidden");
+      if (field.startsWith("stats.")) return STAT_LABEL[field.slice(6)] ?? field;
+      return field;
+    },
+    (value, change) => (change.field === "types" ? nombresDeTipo(value) : String(value))
+  );
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -49,10 +93,11 @@ export function PokemonDetail() {
             <h1 className="font-display text-2xl font-bold text-ink">{poke.name_es}</h1>
             <FavoriteButton type="pokemon" entityRef={poke.id} />
           </div>
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+          <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
             {poke.types.map((tp) => (
               <TypeBadge key={tp.id} type={tp} />
             ))}
+            <ChangeTag changes={cambios} field="types" format={nombresDeTipo} />
           </div>
           <div className="flex gap-4 text-sm text-ink-soft pt-1 justify-center sm:justify-start">
             <span>{t("pokemon.height")}: {poke.height_m} m</span>
@@ -61,8 +106,18 @@ export function PokemonDetail() {
         </div>
       </div>
 
+      <GenerationSelector
+        visible={poke.has_generational_differences}
+        value={gen}
+        onChange={setGen}
+      />
+
       <div className="bg-panel rounded-xl2 p-6 shadow-card animate-fadein">
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-4">{t("pokemon.abilities")}</h2>
+        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-4">
+          {t("pokemon.abilities")}
+          <ChangeTag changes={cambios} field="abilities" />
+          <ChangeTag changes={cambios} field="hidden_ability" />
+        </h2>
         <div className="space-y-2">
           {poke.abilities.map((a) => (
             <div key={a.name_es} className="flex flex-col">
@@ -86,7 +141,17 @@ export function PokemonDetail() {
         <div className="space-y-2.5">
           {Object.entries(poke.stats).map(([key, val]) => (
             <div key={key} className="flex items-center gap-3">
-              <span className="w-20 text-sm text-ink-soft">{STAT_LABEL[key]}</span>
+              {/*
+                `w-24` y sin envolver: la etiqueta de cambios ocupa ~22px y con
+                el `w-20` de antes «Velocidad» se partía en dos líneas, que
+                desalineaba esa barra respecto a las demás. El ancho es fijo e
+                igual en todas las filas para que las barras arranquen a la
+                misma altura, lleven etiqueta o no.
+              */}
+              <span className="w-24 shrink-0 flex items-center gap-0.5 text-sm text-ink-soft">
+                {STAT_LABEL[key]}
+                <ChangeTag changes={cambios} field={`stats.${key}`} />
+              </span>
               <div className="flex-1 h-2 bg-hover rounded-full overflow-hidden">
                 <div className="h-full rounded-full bg-[#6890F0]" style={{ width: `${Math.min(100, (val / STAT_MAX) * 100)}%` }} />
               </div>
@@ -100,6 +165,8 @@ export function PokemonDetail() {
         <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-4">{t("pokemon.weaknesses")}</h2>
         <EffectivenessPanel buckets={poke.efectividad} typesById={typesById} />
       </div>
+
+      <ChangeHistory changes={poke.generational_changes} line={linea} />
     </div>
   );
 }

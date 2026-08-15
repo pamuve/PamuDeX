@@ -156,4 +156,82 @@ function insertItems(db, items) {
   return items.length;
 }
 
-module.exports = { populate, insertItems };
+/**
+ * Inserta los cambios históricos entre generaciones (Tarea 7.3).
+ * Como `insertItems`, se expone aparte porque `db/migrate.js` la reutiliza.
+ *
+ * POR QUÉ EL JSON NO TRAE IDS INTERNOS
+ * ------------------------------------
+ * `entity_changes.entity_ref` guarda el id interno, pero el archivo se escribe y
+ * se audita a mano, y un `"ref": 61` no le dice a nadie que es Mordisco. Además
+ * los ids internos de movimientos y habilidades los reparte el AUTOINCREMENT al
+ * sembrar: regenerar el dataset desde PokeAPI puede moverlos y dejaría el
+ * historial apuntando a otra cosa sin avisar.
+ *
+ * Así que el archivo referencia por clave natural y aquí se resuelve:
+ *   - Pokémon              -> `ref` es el nº de Pokédex
+ *   - movimientos, habilidades -> `ref` es el `name_es`
+ *   - tipos                -> `ref` ya es el id ('acero')
+ *
+ * Una referencia que no resuelve se SALTA con un aviso, no rompe la siembra: es
+ * lo que pasa si el dataset cambia un nombre, y perder una entrada del historial
+ * es mucho menos grave que dejar la base a medias o el contenedor sin arrancar.
+ */
+function insertEntityChanges(db, rows) {
+  if (!rows || !rows.length) return 0;
+
+  const buscar = {
+    pokemon: db.prepare("SELECT id FROM pokemon WHERE dex = ?"),
+    move: db.prepare("SELECT id FROM moves WHERE name_es = ?"),
+    ability: db.prepare("SELECT id FROM abilities WHERE name_es = ?"),
+  };
+
+  const insert = db.prepare(
+    `INSERT INTO entity_changes (entity_type, entity_ref, generation, field, old_value, new_value, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+
+  let insertados = 0;
+  const sinResolver = [];
+
+  for (const row of rows) {
+    // El archivo lleva una primera entrada con `_comentario` y sin entidad, que
+    // son las instrucciones de uso. JSON no admite comentarios de verdad.
+    if (!row || !row.entity_type || row.ref === undefined) continue;
+
+    let ref = null;
+    if (row.entity_type === "type") {
+      ref = String(row.ref);
+    } else if (buscar[row.entity_type]) {
+      const encontrado = buscar[row.entity_type].get(row.ref);
+      ref = encontrado ? String(encontrado.id) : null;
+    }
+
+    if (ref === null) {
+      sinResolver.push(`${row.entity_type} ${JSON.stringify(row.ref)}`);
+      continue;
+    }
+
+    // Los valores van en JSON para que un número vuelva número y un array vuelva
+    // array. Ver backend/lib/generations.js.
+    insert.run(
+      row.entity_type,
+      ref,
+      row.generation,
+      row.field,
+      JSON.stringify(row.old_value ?? null),
+      JSON.stringify(row.new_value ?? null),
+      row.note ?? null
+    );
+    insertados += 1;
+  }
+
+  if (sinResolver.length) {
+    console.warn(
+      `⚠ ${sinResolver.length} cambio(s) histórico(s) sin referencia en el dataset: ${sinResolver.join(", ")}`
+    );
+  }
+  return insertados;
+}
+
+module.exports = { populate, insertItems, insertEntityChanges };

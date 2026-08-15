@@ -10,7 +10,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "seed": "node db/seed.js"
+    "seed": "node db/seed.js",
+    "check:changes": "node tools/check-entity-changes.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

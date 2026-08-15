@@ -80,6 +80,8 @@ Ninguna prueba necesita servidor ni SQLite: simulan `db`, `req` y `res`.
   confundan) y multiplicadores propios.
 - `championsMode.smoke.js` — el middleware del modo: filtrado, 404 en ficha no
   permitida y exclusividad con las sesiones.
+- `generations.smoke.js` — el modo por generación: el indicador en toda ficha, el
+  valor histórico caminando hacia atrás y la tabla de tipos de otra generación.
 
 Ejecuta la que corresponda a lo que toques.
 
@@ -210,9 +212,14 @@ De 4" a escritorio, incluidas Steam Deck, ROG Ally y AYN Thor.
 
 ### Antes de inventar tablas
 
-`champions_rules` ya existe en `backend/db/schema.sql` sin lógica todavía.
-Reutilízala. `users` existe y sigue vacía a propósito: se reserva para un login
-real, y el PIN de perfil no va ahí.
+No queda ninguna tabla del esquema sin usar. `users` existe y sigue vacía a
+propósito: se reserva para un login real, y el PIN de perfil no va ahí.
+
+### Antes de inventar rutas
+
+`/api/history` es el historial de **consultas por perfil** (5.4). Los cambios
+entre generaciones (7.3) están en `/api/changes`. El encargo de la 7.3 pedía
+montarlos en `/api/history` y no se hizo por eso.
 
 ### Una entidad nueva del dataset no se incorpora resembrando
 
@@ -238,7 +245,41 @@ favoritos (`/favoritos`), historial (`/historial`) y ajustes (`/ajustes`).
 
 **Fase 6 completa** (Pokémon Champions): objetos en el dataset (**6.0**), base de
 reglas en `/champions/reglas` (**6.1**), multiplicadores propios (**6.2**) y el
-modo en marcha en `/champions` (**6.3**). Siguiente: **Fase 7, multi-generación**.
+modo en marcha en `/champions` (**6.3**).
+
+**Fase 7 completa** (multi-generación): selector condicional y `?gen=` por
+middleware (**7.1**), vista «Todas las generaciones» con etiquetas de cambios
+(**7.2**) e historial por entidad con su conjunto inicial de datos (**7.3**).
+Siguiente: **Fase 8, accesibilidad, rendimiento y PWA avanzada**.
+
+### Multi-generación (Fase 7)
+
+`?gen=<n>` lo aplica `middleware/generationMode.js` en las cuatro rutas de ficha.
+**Ninguna ruta de datos conoce las generaciones.** Se monta el **último** de los
+tres middlewares: los wrappers de `res.json` se aplican en orden inverso al de
+montaje, así que el orden real es **generación → sesión → Champions** y los
+overrides del ROM Hack pisan al dato histórico. `?gen=` y `?session=` **se
+combinan**; Champions sigue siendo excluyente.
+
+A diferencia de los otros dos, **este middleware actúa sin su parámetro**: toda
+ficha lleva `has_generational_differences` y `generational_changes`, porque el
+selector tiene que saber si pintarse antes de que el usuario elija nada.
+
+**El valor histórico se reconstruye caminando hacia atrás** desde el dato de hoy
+— no hay copia del catálogo por generación. Cada fila de `entity_changes` dice
+«en la generación N este campo pasó de X a Y», así que el valor en una generación
+G es el `old_value` del cambio más antiguo posterior a G. De ahí las dos
+invariantes del JSON: las cadenas deben empalmar y el último eslabón debe cuadrar
+con el dataset. **`cd backend && pnpm run check:changes` lo comprueba, y hay que
+ejecutarlo siempre que se toque `backend/data/entity_changes.json`.**
+
+Los cambios de la tabla de tipos se anotan en el **defensor**
+(`field = 'relation:<atacante>'`); la ficha del atacante los recibe sintetizados
+como `relation_out:<defensor>`, un prefijo que no existe en la base.
+
+`lib/buckets.js` (`rebuildGroups`) es la reconstrucción de los grupos de
+efectividad sobre una tabla de tipos modificada. Vivía dentro de
+`sessionOverrides.js` y se extrajo en la 7.1; lo usan los dos middlewares.
 
 ### El modo Champions (Fase 6)
 

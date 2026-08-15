@@ -12,10 +12,50 @@ export type PokeType = {
   color: string;
 };
 
-export type TypeDetail = PokeType & {
-  ofensivo: EffectivenessBucket[];
-  defensivo: EffectivenessBucket[];
+/**
+ * Fase 7 — lo añade `middleware/generationMode.js` a TODA ficha de Pokémon,
+ * movimiento, habilidad y tipo, haya o no `?gen=`. Es lo que decide si se pinta
+ * el `GenerationSelector`: sin cambios registrados no se enseña, para no meter
+ * un desplegable inútil en 1.025 fichas.
+ *
+ * Opcional en el tipo porque una respuesta cacheada por el Service Worker desde
+ * antes de la Fase 7 no lo trae.
+ */
+/**
+ * Un cambio histórico de un campo (Tarea 7.2).
+ *
+ * `generation` es la de ENTRADA EN VIGOR: desde ella el campo vale `new_value`
+ * y antes valía `old_value`. `field` es el nombre tal y como lo devuelve la API
+ * (`power`, `category`, `types`, `stats.atk`…), con dos formas especiales en los
+ * tipos: `relation:<atacante>` cuando el tipo de la ficha es el DEFENSOR, y
+ * `relation_out:<defensor>` cuando es el atacante.
+ *
+ * `old_value` y `new_value` son `unknown` porque no son homogéneos: un número en
+ * `power`, una cadena en `category`, un array de ids de tipo en `types`.
+ */
+export type GenerationalChange = {
+  generation: number;
+  field: string;
+  old_value: unknown;
+  new_value: unknown;
+  note: string | null;
 };
+
+export type WithGenerationalDifferences = {
+  has_generational_differences?: boolean;
+  /**
+   * Viaja EMBEBIDO en la ficha, no en un endpoint aparte: `/api/history` ya es
+   * el historial de consultas por perfil (Tarea 5.4), y así las etiquetas
+   * funcionan sin conexión con la respuesta que el Service Worker ya cacheó.
+   */
+  generational_changes?: GenerationalChange[];
+};
+
+export type TypeDetail = PokeType &
+  WithGenerationalDifferences & {
+    ofensivo: EffectivenessBucket[];
+    defensivo: EffectivenessBucket[];
+  };
 
 export type PokemonSummary = {
   id: number;
@@ -25,15 +65,16 @@ export type PokemonSummary = {
   generation: number;
 };
 
-export type PokemonDetail = PokemonSummary & {
-  types: PokeType[];
-  abilities: { name_es: string; name_en: string; effect_es: string }[];
-  hidden_ability: { name_es: string; name_en: string; effect_es: string } | null;
-  stats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
-  height_m: number;
-  weight_kg: number;
-  efectividad: EffectivenessBucket[];
-};
+export type PokemonDetail = PokemonSummary &
+  WithGenerationalDifferences & {
+    types: PokeType[];
+    abilities: { name_es: string; name_en: string; effect_es: string }[];
+    hidden_ability: { name_es: string; name_en: string; effect_es: string } | null;
+    stats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
+    height_m: number;
+    weight_kg: number;
+    efectividad: EffectivenessBucket[];
+  };
 
 export type MoveSummary = {
   id: number;
@@ -47,22 +88,24 @@ export type MoveSummary = {
   pp: number;
 };
 
-export type MoveDetail = MoveSummary & {
-  priority: number;
-  makes_contact: number | null;
-  generation: number;
-  effect_es: string;
-  type_name_es: string;
-  type_name_en: string;
-};
+export type MoveDetail = MoveSummary &
+  WithGenerationalDifferences & {
+    priority: number;
+    makes_contact: number | null;
+    generation: number;
+    effect_es: string;
+    type_name_es: string;
+    type_name_en: string;
+  };
 
 export type AbilitySummary = { id: number; name_es: string; name_en: string };
 
-export type AbilityDetail = AbilitySummary & {
-  generation: number;
-  effect_es: string;
-  pokemon: { id: number; dex: number; name_es: string; is_hidden: number }[];
-};
+export type AbilityDetail = AbilitySummary &
+  WithGenerationalDifferences & {
+    generation: number;
+    effect_es: string;
+    pokemon: { id: number; dex: number; name_es: string; is_hidden: number }[];
+  };
 
 export type SearchResults = {
   pokemon: PokemonSummary[];
