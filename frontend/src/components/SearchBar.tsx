@@ -27,6 +27,7 @@ import { Search } from "lucide-react";
 import { api } from "../lib/api";
 import { SearchResults } from "../types";
 import { useCombobox } from "../hooks/useCombobox";
+import { PokemonSprite } from "./PokemonSprite";
 import { useI18n } from "../i18n";
 
 /** Una fila de la lista, ya aplanada: el teclado la recorre entera de un tirón. */
@@ -174,6 +175,12 @@ export function SearchBar() {
               }`}
             >
               <span className="flex items-center gap-2 min-w-0">
+                {/* Solo los Pokémon traen `dex`, así que el sprite distingue de
+                    un vistazo sus filas de las de tipos, movimientos y
+                    habilidades, que siguen con su punto de color. */}
+                {o.dex !== undefined && (
+                  <PokemonSprite dex={o.dex} nombre={o.label} className="w-7 h-7 shrink-0" />
+                )}
                 {o.color && (
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"

@@ -5,6 +5,7 @@ import { PokemonDetail as PokemonDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
 import { FavoriteButton } from "../components/FavoriteButton";
+import { PokemonSprite } from "../components/PokemonSprite";
 import { GenerationSelector, useGenerationView } from "../components/GenerationSelector";
 import { ChangeTag } from "../components/ChangeTag";
 import { ChangeHistory } from "../components/ChangeHistory";
@@ -93,10 +94,10 @@ export function PokemonDetail() {
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="bg-panel rounded-xl2 p-6 shadow-card flex flex-col sm:flex-row gap-6 items-center animate-fadein">
         <div
-          className="w-32 h-32 rounded-xl2 flex items-center justify-center text-5xl font-display font-bold shrink-0"
+          className="w-32 h-32 rounded-xl2 flex items-center justify-center text-5xl font-display font-bold shrink-0 overflow-hidden"
           style={{ background: `linear-gradient(135deg, ${poke.types[0]?.color}33, ${poke.types[poke.types.length - 1]?.color}33)` }}
         >
-          {poke.name_es[0]}
+          <PokemonSprite dex={poke.dex} nombre={poke.name_es} className="w-24 h-24" />
         </div>
         <div className="flex-1 text-center sm:text-left space-y-2">
           <div className="text-ink-soft font-mono text-sm">#{String(poke.dex).padStart(3, "0")} · {t("pokemon.generation")} {poke.generation}</div>

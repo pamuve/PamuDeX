@@ -53,8 +53,27 @@ export default defineConfig({
       workbox: {
         // Cachea el shell de la app; los datos de la API se cachean aparte (ver src/lib/api.ts)
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        // Los 1025 sprites son PNG y `globPatterns` los cazaría a todos. Eso
+        // metería 1025 entradas en el manifiesto del service worker y la
+        // primera visita se bajaría 1,1 MB de sprites de golpe para enseñar
+        // uno. Se quedan fuera del precache y se cachean por uso, abajo: el
+        // mismo criterio que dejó las 2200 fichas fuera de IndexedDB en la 8.4.
+        globIgnores: ["**/sprites/**"],
         // El orden importa: gana la primera regla que encaje.
         runtimeCaching: [
+          {
+            // Un sprite es inmutable: el archivo #25 será siempre Pikachu. Con
+            // CacheFirst se pide una vez y de ahí en adelante sale de la caché
+            // sin tocar la red, así que el Pokémon que ya has mirado se ve
+            // offline. El tope de entradas evita que recorrer la Pokédex entera
+            // deje 1,1 MB en el aparato de quien no lo necesita.
+            urlPattern: /\/sprites\/.*\.png$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "pamudex-sprite-cache",
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 90 },
+            },
+          },
           {
             // Datos que el usuario MODIFICA desde la propia app: perfiles,
             // favoritos, sesiones, historial y ajustes. Con StaleWhileRevalidate

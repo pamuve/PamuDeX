@@ -14,6 +14,20 @@ RUN corepack enable
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
+# Los 1025 sprites NO están en el repo (ver .gitignore): se bajan aquí, en el
+# build, y quedan dentro de la imagen. Así el contenedor no necesita red en
+# ningún momento del arranque y la app sigue siendo offline-first de verdad.
+#
+# Va ANTES de copiar el código del frontend para que la capa quede cacheada:
+# si estuviera después, cada cambio de una línea de React volvería a bajar los
+# 1025 archivos. El COPY siguiente no los pisa porque .dockerignore excluye
+# public/sprites, así que da igual si el que construye los tiene en local.
+#
+# La ruta importa: el script resuelve el destino como ../../frontend/public/
+# sprites desde su propia carpeta, así que tiene que caer en /app/backend/tools.
+COPY backend/tools/fetch-sprites.js /app/backend/tools/fetch-sprites.js
+RUN node /app/backend/tools/fetch-sprites.js
+
 COPY frontend/ ./
 RUN pnpm run build
 

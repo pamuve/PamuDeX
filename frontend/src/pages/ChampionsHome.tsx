@@ -20,6 +20,7 @@ import { Link } from "react-router-dom";
 import { LogOut, Shield, SlidersHorizontal } from "lucide-react";
 import { SearchBar } from "../components/SearchBar";
 import { TypeBadge } from "../components/TypeBadge";
+import { PokemonSprite } from "../components/PokemonSprite";
 import { api } from "../lib/api";
 import { championsApi, type ChampionsRulesSummary } from "../lib/apiSession";
 import { useActiveChampions } from "../lib/champions";
@@ -175,6 +176,7 @@ export default function ChampionsHome() {
                 <span className="text-ink-soft font-mono text-xs">
                   #{String(p.dex).padStart(3, "0")}
                 </span>
+                <PokemonSprite dex={p.dex} nombre={nombre(p)} />
                 <span className="text-ink font-medium text-center">{nombre(p)}</span>
               </Link>
             ))}

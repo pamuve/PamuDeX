@@ -16,6 +16,12 @@ backend/db/*.sqlite-journal
 # Vite PWA generado
 frontend/dev-dist/
 
+# Sprites descargados (1025 PNG, ~1,1 MB). NO se versionan: los baja el build de
+# Docker, y en local se bajan una vez con `node backend/tools/fetch-sprites.js`.
+# A diferencia de los JSON del dataset, aquí no hay nada escrito a mano que
+# perder — son archivos de terceros idénticos a los del origen.
+frontend/public/sprites/
+
 # Info incremental de tsc -b
 *.tsbuildinfo
 

@@ -21,6 +21,7 @@ backend/
                (18 tipos, 1025 Pokémon, 901 movimientos, 312 habilidades,
                 2151 objetos)
   tools/       fetch-dataset.js  (regenera los JSON desde PokeAPI)
+               fetch-sprites.js  (baja los 1025 sprites a frontend/public/sprites/)
   db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
                (`pnpm run seed` BORRA la base y la recrea: se lleva perfiles,
                 sesiones, favoritos, historial y ajustes. Los datos nuevos
