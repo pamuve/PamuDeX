@@ -51,7 +51,19 @@ jobs:
         # Las cadenas de cambios históricos tienen que empalmar y el último
         # eslabón cuadrar con el dataset. Un JSON incoherente no da error hasta
         # que alguien abre una ficha en una generación concreta.
-        run: pnpm run check:changes
+        #
+        # HAY QUE SEMBRAR ANTES: el validador compara el JSON contra el dataset
+        # ya cargado en SQLite, así que necesita una base. En el runner no hay
+        # ninguna (y no debe haberla: el .sqlite no se versiona).
+        #
+        # PAMUDEX_DB_DIR la manda a un directorio temporal, no a backend/db.
+        # Es de usar y tirar, y así queda claro que `seed` —que BORRA la base
+        # entera— no puede tocar nada que importe.
+        env:
+          PAMUDEX_DB_DIR: ${{ runner.temp }}/pamudex-ci-db
+        run: |
+          pnpm run seed
+          pnpm run check:changes
 
   frontend:
     name: Frontend
