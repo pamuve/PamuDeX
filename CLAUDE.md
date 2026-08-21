@@ -62,6 +62,12 @@ cd backend && node tools/fetch-sprites.js
 
 # Frontend (puerto 5173, proxy de /api a localhost:4000)
 cd frontend && pnpm install && pnpm run dev
+
+# Copias de seguridad de la base (en <PAMUDEX_DB_DIR>/backups). No hace falta
+# parar el servidor: usa VACUUM INTO.
+cd backend && pnpm run backup            # crear una
+cd backend && pnpm run backup -- --list  # ver las que hay
+cd backend && pnpm run restore           # listar y explicar cómo restaurar
 ```
 
 `backend` no tiene script `dev` — es `pnpm start`.
@@ -71,11 +77,17 @@ cd frontend && pnpm install && pnpm run dev
 Siempre, sin excepciones:
 
 ```bash
-cd frontend && pnpm exec tsc --noEmit && pnpm run build
-cd backend  && node --check <cada archivo tocado> && node tests/*.smoke.js
+cd frontend && pnpm run check:i18n && pnpm exec tsc --noEmit && pnpm run build
+cd backend  && node --check <cada archivo tocado> && pnpm test
 ```
 
-Y comprobar la **paridad exacta de claves entre `es.json` y `en.json`**.
+`check:i18n` comprueba la **paridad exacta de claves entre `es.json` y
+`en.json`**, que sean planas y que no haya repetidas. Es lo único que no
+detectan ni `tsc` ni el build: una clave que falte se pinta en crudo en pantalla
+y no rompe nada.
+
+Esto mismo lo ejecuta GitHub Actions en cada push
+(`.github/workflows/verificacion.yml`), y **si falla no se publica imagen**.
 
 Ninguna prueba necesita servidor ni SQLite: simulan `db`, `req` y `res`.
 
@@ -87,6 +99,9 @@ Ninguna prueba necesita servidor ni SQLite: simulan `db`, `req` y `res`.
   permitida y exclusividad con las sesiones.
 - `generations.smoke.js` — el modo por generación: el indicador en toda ficha, el
   valor histórico caminando hacia atrás y la tabla de tipos de otra generación.
+- `migrate.smoke.js` — el sistema de actualizaciones: el registro
+  `schema_migrations`, que la copia de seguridad se haga **antes** de la primera
+  escritura y que una migración fallida aborte sin quedar anotada.
 
 Ejecuta la que corresponda a lo que toques.
 
@@ -136,6 +151,45 @@ tumba el contenedor al arrancar. Estuvo así desde la Fase 1 y se corrigió en l
 Las columnas nuevas se añaden en `db/migrate.js`, que corre en cada arranque y
 es **idempotente y solo aditivo**: `schema.sql` únicamente se ejecuta al sembrar
 desde cero, y un despliegue en marcha no puede perder sus sesiones.
+
+### El sistema de actualizaciones
+
+El despliegue es automático: `git push` a `main` → GitHub Actions verifica y
+publica `ghcr.io/pamuve/pamudex:latest` → Portainer la recoge y redespliega.
+Todo lo que llegue a `main` acaba en el homelab solo, así que las defensas están
+en el camino. La guía de operación es `docs/DESPLIEGUE.md`.
+
+**Cada migración queda anotada en `schema_migrations`.** `needed()` sigue
+existiendo y sigue mandando cuando no hay registro, pero el registro es lo que
+permite responder «qué versión de esquema tiene esta base». Una instalación
+anterior al registro se rellena sola: lo que no hace falta se anota **sin
+ejecutarse**. Corolario: **no renombres una migración ya publicada**, volvería a
+ejecutarse.
+
+**La copia de seguridad se hace antes de la primera escritura, y solo si hay
+algo que ejecutar.** Va en `<PAMUDEX_DB_DIR>/backups` (dentro del volumen: una
+copia en la imagen desaparece justo cuando hace falta) y se hace con
+`VACUUM INTO`, que es consistente aunque haya escrituras. Un arranque que no
+cambia nada no genera copias. Se conservan 5 (`PAMUDEX_BACKUP_KEEP`).
+
+**Una migración que falla aborta el arranque.** Cambió en esta rama: antes
+avisaba por consola y seguía. Cada migración corre en su transacción, `migrate()`
+lanza `MigrationError` y `server.js` cierra la conexión, **restaura la copia** y
+sale con código 1 — se deshacen también las que sí habían pasado en ese mismo
+arranque, así que la actualización es todo o nada. Una app sirviendo sobre un
+esquema a medias hace más daño que un contenedor caído, y el contenedor caído se
+ve en Portainer.
+
+**`server.js` atiende SIGTERM y cierra SQLite.** No es cosmético: node corre
+como PID 1 y en Linux el PID 1 ignora las señales sin manejador explícito. Sin
+eso, cada `docker stop` (o sea, cada actualización) acababa en SIGKILL a los 10
+segundos con la base abierta. Por lo mismo el `CMD` del Dockerfile va en forma
+exec: con la forma shell el SIGTERM se lo queda `/bin/sh`.
+
+`/api/version` cuenta lo que hay desplegado y, sobre todo, **cuántos perfiles,
+sesiones y favoritos hay**: es la comprobación de que la actualización no se
+llevó nada. `/api/health` sigue sin tocar SQLite, que es lo que quiere un
+healthcheck cada 30 segundos.
 
 ### Sesiones y overrides (Fase 3) — leer antes de tocar datos
 

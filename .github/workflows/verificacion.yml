@@ -1,0 +1,88 @@
+# PamuDeX — verificación del código.
+#
+# Es exactamente lo que manda CLAUDE.md hacer antes de dar algo por cerrado,
+# pero ejecutado por GitHub en cada push y cada pull request. Existe porque el
+# despliegue es automático: si una rama rota llega a `main`, se convierte en una
+# imagen que Portainer se descarga sola. Esto es lo que hay entre un error de
+# tipos y el homelab.
+#
+# `workflow_call` permite que el workflow de la imagen lo reutilice como
+# requisito previo en vez de duplicar los pasos.
+name: Verificación
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # corepack instala la versión de pnpm fijada en "packageManager". Va
+      # ANTES de setup-node porque su caché necesita encontrar pnpm en el PATH.
+      - run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        working-directory: backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Sintaxis de todos los archivos
+        working-directory: backend
+        # xargs sí propaga el fallo; `find -exec` devolvería 0 aunque node falle.
+        run: find . -path ./node_modules -prune -o -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Pruebas de humo
+        working-directory: backend
+        run: pnpm test
+
+      - name: Coherencia de entity_changes.json
+        working-directory: backend
+        # Las cadenas de cambios históricos tienen que empalmar y el último
+        # eslabón cuadrar con el dataset. Un JSON incoherente no da error hasta
+        # que alguien abre una ficha en una generación concreta.
+        run: pnpm run check:changes
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Paridad de claves i18n
+        working-directory: frontend
+        # Va lo primero porque es el único fallo del proyecto que ni el
+        # compilador ni el build detectan: una clave que falte en en.json se
+        # pinta en crudo en pantalla y no rompe nada.
+        run: pnpm run check:i18n
+
+      - name: Tipos
+        working-directory: frontend
+        run: pnpm exec tsc --noEmit
+
+      - name: Build
+        working-directory: frontend
+        # Los sprites no hacen falta para compilar: son archivos de public/ que
+        # el build copia si están, y en el contenedor los baja el Dockerfile.
+        run: pnpm run build

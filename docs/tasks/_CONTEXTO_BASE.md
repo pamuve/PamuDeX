@@ -595,6 +595,34 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
   recomendador de equipos). Es la fase más abierta: usa
   `docs/AI_TASK_TEMPLATE.md` para partirla. Ver `docs/ROADMAP.md`.
 
+## Actualizaciones: lo que no se puede perder
+
+El despliegue es automático (`git push` a `main` → GitHub Actions → GHCR →
+Portainer). Todo lo que llegue a `main` acaba solo en el servidor de casa, así
+que estas reglas no son opcionales. Operación: `docs/DESPLIEGUE.md`.
+
+- **Los datos del usuario viven en el volumen `/data`**, no en la imagen:
+  perfiles, sesiones de ROM Hack, favoritos, historial y ajustes. La imagen trae
+  código y dataset, y se sustituye entera en cada actualización.
+- **`pnpm run seed` borra la base entera.** Nunca es la forma de incorporar algo
+  nuevo a una instalación en marcha: eso va por `db/migrate.js`, condicionado a
+  que la tabla esté vacía (así entraron los objetos en la 6.0 y los cambios
+  históricos en la 7.3).
+- **Toda migración queda registrada en `schema_migrations`** con su nombre. El
+  nombre es la identidad: renombrar una migración ya publicada la haría
+  ejecutarse otra vez. Siguen siendo **idempotentes y solo aditivas** — nada de
+  DROP ni de renombrar columnas, porque volver a un tag anterior de la imagen
+  tiene que seguir funcionando.
+- **Antes de la primera escritura se copia la base** en `/data/backups`
+  (`db/backup.js`, con `VACUUM INTO`), y solo si hay migraciones que ejecutar.
+- **Una migración que falla aborta el arranque**: se deshace, se restaura la
+  copia y el contenedor sale con código 1. Es todo o nada, incluidas las que sí
+  habían pasado en ese mismo arranque.
+- **`/api/version`** dice qué imagen hay desplegada, qué migraciones tiene la
+  base y cuántos perfiles y sesiones sobreviven. `/api/health` no toca SQLite.
+- Al añadir una prueba de humo o una comprobación, acuérdate de
+  `.github/workflows/verificacion.yml`: si no está ahí, no protege nada.
+
 ## Tablas SQLite ya creadas pero SIN lógica todavía
 
 Ninguna. `champions_rules` la estrenó la 6.1.

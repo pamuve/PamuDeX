@@ -11,7 +11,10 @@
   "scripts": {
     "start": "node server.js",
     "seed": "node db/seed.js",
-    "check:changes": "node tools/check-entity-changes.js"
+    "check:changes": "node tools/check-entity-changes.js",
+    "backup": "node tools/backup.js",
+    "restore": "node tools/restore.js",
+    "test": "node tests/overrides.smoke.js && node tests/history.smoke.js && node tests/champions.smoke.js && node tests/championsMode.smoke.js && node tests/generations.smoke.js && node tests/migrate.smoke.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

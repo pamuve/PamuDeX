@@ -43,7 +43,9 @@ pamudex/
 │   ├── db/
 │   │   ├── schema.sql     # esquema SQLite completo (núcleo + tablas Fase 4+)
 │   │   ├── seed.js        # recrea la DB desde los JSON de /data
-│   │   ├── migrate.js     # migraciones en caliente, idempotentes y solo aditivas
+│   │   ├── migrate.js     # migraciones en caliente, idempotentes y solo aditivas,
+│   │   │                  # registradas en schema_migrations
+│   │   ├── backup.js      # copias de seguridad en /data/backups (VACUUM INTO)
 │   │   └── paths.js       # dónde vive el .sqlite (PAMUDEX_DB_DIR; /data en Docker)
 │   ├── lib/
 │   │   ├── effectiveness.js   # motor de cálculo de tipos (x4/x2/x1/x0.5/x0.25/x0)
@@ -59,12 +61,15 @@ pamudex/
 │   │   └── championsMode.js     # aplica ?champions=<id> igual (Fase 6)
 │   ├── routes/             # types, pokemon, moves, abilities, items, search,
 │   │                       # sessions, chart, export, import, profiles,
-│   │                       # favorites, history, settings, champions
+│   │                       # favorites, history, settings, champions, version
+│   ├── tools/              # fetch-dataset, fetch-sprites, check-entity-changes,
+│   │                       # backup.js y restore.js (copias de seguridad)
 │   ├── tests/              # pruebas de humo sin servidor ni SQLite
 │   │   ├── overrides.smoke.js
 │   │   ├── history.smoke.js       # historial (ventana de 5 min) y ajustes
 │   │   ├── champions.smoke.js     # reglas y multiplicadores de Champions
-│   │   └── championsMode.smoke.js # el middleware del modo
+│   │   ├── championsMode.smoke.js # el middleware del modo
+│   │   └── migrate.smoke.js       # registro, copia previa y aborto al fallar
 │   ├── server.js
 │   └── package.json
 ├── frontend/
@@ -91,18 +96,26 @@ pamudex/
 │   │   ├── types.ts
 │   │   ├── App.tsx
 │   │   └── main.tsx
+│   ├── tools/
+│   │   └── check-i18n.mjs   # paridad de claves es/en, planas y sin repetir
 │   ├── vite.config.ts       # config PWA (manifest + service worker)
 │   ├── tailwind.config.js   # paleta OLED enlazada a var(--color-*)
 │   └── package.json
+├── deploy/
+│   └── portainer-stack.yml  # stack del homelab: consume la imagen de ghcr.io
+├── .github/workflows/
+│   ├── verificacion.yml     # tipos, build, pruebas de humo y paridad i18n
+│   └── publicar-imagen.yml  # construye y publica en GHCR si la verificación pasa
 ├── docs/
 │   ├── ROADMAP.md           # todas las fases (2-9), divididas en tareas pequeñas
+│   ├── DESPLIEGUE.md        # Portainer, actualizaciones, copias y restauración
 │   ├── AI_TASK_TEMPLATE.md  # plantilla para crear nuevos encargos de IA autocontenidos
 │   ├── Fases/               # entregables originales de cada fase, tal cual se recibieron
 │   └── tasks/
 │       ├── _CONTEXTO_BASE.md   # se pega SIEMPRE antes del encargo de la tarea
 │       └── fase2/ … fase9/     # encargos redactados, listos para pegar en cualquier IA
 ├── Dockerfile
-├── docker-compose.yml
+├── docker-compose.yml       # despliegue LOCAL: construye la imagen desde el repo
 └── .gitignore
 ```
 
@@ -129,6 +142,44 @@ docker-compose up -d
 Los datos persisten en el volumen `pamudex_db`, montado en **`/data`**. La base
 de datos se siembra sola en el primer arranque y las migraciones de esquema se
 aplican en cada arranque, así que actualizar la imagen no pierde nada.
+
+### En un homelab, con Portainer
+
+Ese `docker-compose.yml` **construye** la imagen, que es lo que quieres en local
+mientras tocas el código. Para el servidor está `deploy/portainer-stack.yml`,
+que consume la imagen ya construida por GitHub Actions:
+
+**Stacks → Add stack → Repository**, apuntando a este repositorio con
+*Compose path* `deploy/portainer-stack.yml` y **Automatic updates → Polling**.
+A partir de ahí, actualizar es `git push`: Actions verifica el código, publica
+`ghcr.io/pamuve/pamudex:latest` y Portainer la recoge en la siguiente ronda.
+
+**La guía completa está en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md)**: primer
+despliegue, copias de seguridad, restauración y cómo volver a una versión
+anterior.
+
+### Actualizaciones sin perder datos
+
+El contenedor se sustituye entero en cada actualización; el volumen `/data` no.
+Antes de tocar el esquema, el arranque hace lo siguiente:
+
+1. **Copia la base de datos** en `/data/backups` (solo si de verdad hay
+   migraciones que aplicar; se conservan las 5 últimas).
+2. **Aplica las migraciones pendientes**, cada una en su transacción, y las
+   anota en la tabla `schema_migrations`.
+3. **Si alguna falla, restaura la copia y el contenedor no arranca.** La base
+   queda exactamente como estaba: todo o nada.
+
+Qué versión hay desplegada, qué migraciones tiene la base y cuántos perfiles y
+sesiones sobrevivieron, en **`/api/version`**.
+
+```bash
+# Copia de seguridad manual (no hace falta parar el contenedor)
+docker exec pamudex node tools/backup.js
+
+# Ver las copias que hay
+docker exec pamudex node tools/backup.js --list
+```
 
 > **Si desplegaste PamuDeX antes de la Fase 5.2**, tu volumen estaba montado en
 > `/app/backend/db`, que además de la base de datos contenía el código del

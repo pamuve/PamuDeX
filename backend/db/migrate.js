@@ -14,6 +14,31 @@
  *  - Solo aditiva. Nada de DROP ni de renombrar columnas: si el usuario vuelve
  *    a una versión anterior del código, la base de datos debe seguir sirviendo.
  *  - Sin valores por defecto que SQLite no admita en ALTER TABLE.
+ *  - Nombre estable: se guarda en `schema_migrations` y renombrarlo la haría
+ *    volver a ejecutarse.
+ *
+ * EL REGISTRO `schema_migrations`
+ * ------------------------------
+ * Cada migración aplicada deja una fila con su nombre y la fecha. `needed()`
+ * sigue existiendo y sigue mandando —es la única defensa cuando el registro no
+ * existe todavía—, pero ahora hay una respuesta a «qué versión de esquema tiene
+ * esta base», que es lo que hace falta para diagnosticar un despliegue.
+ *
+ * Una base anterior al registro se rellena sola: las migraciones que no hacen
+ * falta (`needed()` es falso) se anotan SIN ejecutarse. Así una instalación al
+ * día no repite trabajo ni se marca como pendiente para siempre.
+ *
+ * QUÉ PASA SI UNA FALLA
+ * ---------------------
+ * Se aborta. Cada migración corre dentro de una transacción, así que la que
+ * falla se deshace entera, y `migrate()` lanza un `MigrationError` con la ruta
+ * de la copia de seguridad previa para que `server.js` la restaure y salga con
+ * error.
+ *
+ * Antes se avisaba por consola y se seguía arrancando. Es peor: la app quedaba
+ * sirviendo contra un esquema a medias y escribiendo encima, y el aviso se
+ * perdía en el log de un contenedor que nadie mira. Un contenedor caído se ve
+ * en Portainer al instante y deja los datos intactos.
  */
 
 /** ¿Existe esa columna en la tabla? */
@@ -42,6 +67,45 @@ function hasIndex(db, index) {
     .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?`)
     .get(index);
   return Boolean(row);
+}
+
+/* ------------------------- registro de migraciones ------------------------ */
+
+const REGISTRO = "schema_migrations";
+
+/**
+ * Crea el registro si no está. No va en `schema.sql` a propósito: ese archivo
+ * también alimenta la exportación a SQLite (`routes/export.js`), y el registro
+ * es estado de ESTA instalación, no parte del dataset.
+ */
+function ensureRegistry(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ${REGISTRO} (
+      name        TEXT PRIMARY KEY,
+      applied_at  TEXT NOT NULL,
+      app_version TEXT
+    );
+  `);
+}
+
+/** Nombres ya registrados. */
+function readRegistry(db) {
+  return new Set(db.prepare(`SELECT name FROM ${REGISTRO}`).all().map((r) => r.name));
+}
+
+/** Anota una migración. `INSERT OR IGNORE` para que sea idempotente. */
+function record(db, name, appVersion) {
+  db.prepare(
+    `INSERT OR IGNORE INTO ${REGISTRO} (name, applied_at, app_version) VALUES (?, ?, ?)`
+  ).run(name, new Date().toISOString(), appVersion || null);
+}
+
+/** Lo aplicado, de lo más reciente a lo más antiguo. Lo usa /api/version. */
+function appliedMigrations(db) {
+  if (!hasTable(db, REGISTRO)) return [];
+  return db
+    .prepare(`SELECT name, applied_at, app_version FROM ${REGISTRO} ORDER BY applied_at DESC, name DESC`)
+    .all();
 }
 
 const MIGRATIONS = [
@@ -160,23 +224,70 @@ const MIGRATIONS = [
 ];
 
 /**
- * Aplica las migraciones pendientes. Devuelve los nombres de las aplicadas
- * para que server.js lo registre en el log.
+ * Aplica las migraciones pendientes.
+ *
+ * `opciones.crearCopia(etiqueta)` es la función que hace la copia de seguridad;
+ * se inyecta en vez de importar `db/backup.js` para que las pruebas puedan
+ * comprobar CUÁNDO se llama sin tocar el disco. Si no se pasa, no se copia
+ * nada: es lo que quiere una prueba, nunca un arranque real.
+ *
+ * Devuelve `{ applied, backup, backfilled }`:
+ *  - `applied`    nombres de las migraciones ejecutadas de verdad,
+ *  - `backup`     ruta de la copia previa (null si no hubo nada que hacer),
+ *  - `backfilled` las que solo se anotaron porque ya estaban aplicadas.
+ *
+ * Lanza `MigrationError` si alguna falla, con `backup` y `applied` dentro.
  */
-function migrate(db) {
-  const applied = [];
+function migrate(db, opciones = {}) {
+  const { crearCopia = null, appVersion = null } = opciones;
+
+  ensureRegistry(db);
+  const yaRegistradas = readRegistry(db);
+
+  // Primera pasada: separar lo que hay que ejecutar de lo que solo hay que
+  // anotar. La anotación va antes de tocar el esquema porque es inofensiva y
+  // deja el registro coherente aunque luego falle una migración de verdad.
+  const porEjecutar = [];
+  const backfilled = [];
   for (const migration of MIGRATIONS) {
+    if (yaRegistradas.has(migration.name)) continue;
+    if (!migration.needed(db)) {
+      record(db, migration.name, appVersion);
+      backfilled.push(migration.name);
+      continue;
+    }
+    porEjecutar.push(migration);
+  }
+
+  if (!porEjecutar.length) return { applied: [], backup: null, backfilled };
+
+  // LA COPIA VA AQUÍ: hay algo que cambiar y todavía no se ha cambiado nada.
+  // Fuera de la transacción, porque VACUUM INTO no puede correr dentro de una.
+  const backup = crearCopia ? crearCopia("pre-migracion") : null;
+
+  const applied = [];
+  for (const migration of porEjecutar) {
     try {
-      if (!migration.needed(db)) continue;
-      migration.run(db);
+      // Una transacción por migración: si falla a medias, no queda a medias.
+      // Las migraciones que abren su propia transacción (la siembra de objetos)
+      // anidan con SAVEPOINT, que better-sqlite3 gestiona solo.
+      db.transaction(() => {
+        migration.run(db);
+        record(db, migration.name, appVersion);
+      })();
       applied.push(migration.name);
     } catch (err) {
-      // Una migración que falla no debe impedir arrancar: se avisa y se sigue,
-      // porque el resto de la app puede funcionar perfectamente sin ella.
-      console.error(`✗ Migración fallida (${migration.name}):`, err.message);
+      const error = new Error(`Migración fallida (${migration.name}): ${err.message}`);
+      error.name = "MigrationError";
+      error.migration = migration.name;
+      error.backup = backup;
+      error.applied = applied;
+      error.cause = err;
+      throw error;
     }
   }
-  return applied;
+
+  return { applied, backup, backfilled };
 }
 
-module.exports = { migrate, hasColumn };
+module.exports = { migrate, hasColumn, appliedMigrations, MIGRATIONS, REGISTRO };

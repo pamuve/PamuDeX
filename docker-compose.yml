@@ -1,6 +1,20 @@
+# PamuDeX — despliegue LOCAL, construyendo la imagen desde este mismo repo.
+#
+# Para el homelab con Portainer NO uses este archivo: usa
+# `deploy/portainer-stack.yml`, que consume la imagen ya construida por GitHub
+# Actions en ghcr.io en vez de compilarla en tu servidor. Aquí se construye
+# porque en local se está tocando el código; allí eso solo sería esperar diez
+# minutos a que Vite compile lo que ya está compilado.
 services:
   pamudex:
-    build: .
+    build:
+      context: .
+      args:
+        # Sella la imagen con lo que haya en el entorno; en local no suele haber
+        # nada y se queda en "dev", que es la respuesta correcta.
+        VERSION: ${VERSION:-dev}
+        COMMIT: ${COMMIT:-}
+        BUILD_DATE: ${BUILD_DATE:-}
     image: pamudex:latest
     container_name: pamudex
     restart: unless-stopped
@@ -15,25 +29,21 @@ services:
       # congelada de ese código y las actualizaciones de la imagen no llegarían
       # jamás — un archivo nuevo tumbaría el contenedor al arrancar.
       - pamudex_db:/data
-    # /api/health responde desde el propio Express (server.js) sin tocar SQLite,
-    # así que un healthcheck cada 30s no cuesta nada. `wget` viene en el busybox
-    # de alpine: no hay que instalar curl solo para esto.
-    #
-    # start_period cubre la siembra inicial: el primer arranque con el volumen
-    # vacío crea 1025 Pokémon y 2151 objetos antes de escuchar en el puerto, y
-    # sin este margen los fallos de esos segundos contarían como reintentos.
+    # El healthcheck ya viene DENTRO de la imagen (ver el HEALTHCHECK del
+    # Dockerfile), así que no hace falta repetirlo aquí: cualquier forma de
+    # arrancarla lo hereda. /api/health responde desde el propio Express sin
+    # tocar SQLite, y start_period cubre la siembra inicial, que en el primer
+    # arranque crea 1025 Pokémon y 2151 objetos antes de escuchar en el puerto.
     #
     # OJO: `restart: unless-stopped` NO reinicia un contenedor por quedar
     # unhealthy — Docker solo reacciona a que el proceso muera. Esto deja el
     # estado a la vista en `docker ps` y lo publica para un proxy o un
     # orquestador; para reiniciar solo hace falta Swarm/Kubernetes o un
     # vigilante tipo autoheal.
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:4000/api/health"]
-      interval: 30s
-      timeout: 5s
-      start_period: 60s
-      retries: 3
+    #
+    # `docker stop` da 10 segundos antes del SIGKILL y a PamuDeX le sobran:
+    # server.js atiende SIGTERM, cierra SQLite y sale en milisegundos.
+    stop_grace_period: 30s
 
 volumes:
   pamudex_db:
