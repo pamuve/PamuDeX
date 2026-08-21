@@ -62,6 +62,47 @@ VOLUME ["/data"]
 
 EXPOSE 4000
 
+# --- Identidad de la imagen ---
+#
+# Va AQUÍ ABAJO, después de todos los COPY y RUN, porque cada commit cambia
+# estos valores: más arriba invalidaría la caché de las capas de instalación y
+# cada build se volvería a bajar los sprites y a reinstalar dependencias.
+#
+# Los rellena el workflow de GitHub Actions con el tag y el SHA del commit. Sin
+# ellos (build a mano en local) la app se identifica con la versión de
+# package.json y sin commit, que es la verdad: no hay despliegue del que hablar.
+ARG VERSION=dev
+ARG COMMIT=
+ARG BUILD_DATE=
+ENV PAMUDEX_VERSION=$VERSION
+ENV PAMUDEX_COMMIT=$COMMIT
+ENV PAMUDEX_BUILD_DATE=$BUILD_DATE
+
+# Etiquetas OCI estándar: son las que enseña Portainer en la ficha de la imagen
+# y las que hacen que GitHub enlace el paquete con el repositorio.
+LABEL org.opencontainers.image.title="PamuDeX"
+LABEL org.opencontainers.image.description="Pokédex PWA offline-first para ROM Hacks de Pokémon"
+LABEL org.opencontainers.image.source="https://github.com/pamuve/PamuDeX"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.version=$VERSION
+LABEL org.opencontainers.image.revision=$COMMIT
+LABEL org.opencontainers.image.created=$BUILD_DATE
+
+# El healthcheck se declara AQUÍ, no solo en docker-compose.yml: así lo hereda
+# cualquier forma de arrancar la imagen (incluido un `docker run` a pelo o un
+# contenedor creado a mano desde Portainer), y el estado sale en `docker ps`.
+# `wget` viene en el busybox de alpine, no hace falta instalar curl.
+#
+# start_period cubre la siembra inicial: el primer arranque con el volumen vacío
+# crea 1025 Pokémon y 2151 objetos antes de escuchar en el puerto.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget --quiet --spider http://localhost:4000/api/health || exit 1
+
 # La siembra se ejecuta automáticamente en el primer arranque si /data/pamudex.sqlite
 # no existe, y las migraciones de esquema en cada arranque (ver server.js).
+#
+# CMD en forma exec (sin shell) A PROPÓSITO: así node es el PID 1 y recibe el
+# SIGTERM de `docker stop` tal cual. Con la forma shell, el SIGTERM se lo queda
+# /bin/sh, node nunca se entera y SQLite se cierra a la brava en cada
+# actualización. El manejador está en server.js.
 CMD ["node", "server.js"]

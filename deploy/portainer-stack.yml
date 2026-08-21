@@ -1,0 +1,71 @@
+# PamuDeX — stack para Portainer (homelab).
+#
+# CÓMO SE USA
+# -----------
+# En Portainer: Stacks -> Add stack -> Repository
+#   Repository URL   https://github.com/pamuve/PamuDeX
+#   Reference        refs/heads/main
+#   Compose path     deploy/portainer-stack.yml
+#   Automatic updates -> Polling, cada 30 minutos (o lo que prefieras)
+#
+# Con eso, cada vez que subas código a `main` Portainer se entera en la
+# siguiente ronda y redespliega con la imagen nueva que ha construido GitHub
+# Actions. No hay que exponer Portainer a internet ni guardar ningún secreto.
+#
+# NO SE CONSTRUYE NADA AQUÍ, a diferencia del docker-compose.yml de la raíz: la
+# imagen viene hecha de ghcr.io. Compilar el frontend y bajar 1025 sprites en el
+# servidor de casa son diez minutos por actualización, y encima el contenedor
+# viejo sigue en pie mientras tanto.
+#
+# LOS DATOS
+# ---------
+# Viven en el volumen `pamudex_db`, montado en /data, y NO se tocan al
+# actualizar: la imagen trae el código y el dataset, el volumen trae tus
+# perfiles, sesiones, favoritos, historial y ajustes. Antes de cada migración de
+# esquema el arranque deja una copia en /data/backups.
+#
+# Portainer le pone al volumen el nombre del stack por delante: si el stack se
+# llama `pamudex`, el volumen real es `pamudex_pamudex_db`. Es el nombre que hay
+# que usar en los comandos de copia y restauración.
+
+services:
+  pamudex:
+    # `latest` sigue a la rama main. Para fijar una versión concreta y actualizar
+    # solo cuando tú quieras, cambia a un tag: ghcr.io/pamuve/pamudex:v1.2.3
+    image: ghcr.io/pamuve/pamudex:latest
+
+    # Sin esto, un redespliegue reutilizaría la imagen que ya está descargada y
+    # `latest` se quedaría congelada en la de la primera vez. Es la línea que
+    # hace que actualizar signifique algo.
+    pull_policy: always
+
+    container_name: pamudex
+    restart: unless-stopped
+
+    ports:
+      - "4000:4000"
+
+    volumes:
+      # SOLO datos. Nunca montes nada en /app/backend/db: ahí vive el código del
+      # esquema, y un volumen sobre él congela ese código en la versión del
+      # primer despliegue — las actualizaciones dejarían de llegar y un archivo
+      # nuevo tumbaría el contenedor al arrancar.
+      - pamudex_db:/data
+
+    environment:
+      # Copias de seguridad que se conservan en /data/backups. Cada una ocupa
+      # aproximadamente lo que la base (menos de 1 MB), así que 5 es barato.
+      # Con 0 no se borra ninguna nunca.
+      PAMUDEX_BACKUP_KEEP: "5"
+      # Para que las fechas del log y del historial cuadren con tu reloj.
+      TZ: Europe/Madrid
+
+    # server.js atiende SIGTERM: cierra SQLite y sale. El margen es de sobra, y
+    # es lo que evita que cada actualización mate la base de datos a la brava.
+    stop_grace_period: 30s
+
+    # El healthcheck viene dentro de la imagen (HEALTHCHECK del Dockerfile), así
+    # que Portainer enseña el estado sin que haya que declararlo aquí.
+
+volumes:
+  pamudex_db:
