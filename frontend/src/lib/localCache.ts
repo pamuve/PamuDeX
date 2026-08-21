@@ -10,12 +10,19 @@
  * al hilo del worker, su deserialización y su cola. Aquí el catálogo se lee de
  * IndexedDB, ya parseado, y se entrega sin tocar la red.
  *
- * SOLO EL CATÁLOGO (los cuatro listados)
- * ......................................
- * Tipos, Pokémon, movimientos y habilidades. Son lo grande y lo que se pide en
- * casi todas las páginas; las fichas sueltas son pequeñas y con el SW van
- * sobradas. Meter aquí todo lo demás sería duplicar el trabajo del SW sin
+ * SOLO EL CATÁLOGO (los cinco listados)
+ * .....................................
+ * Tipos, Pokémon, movimientos, habilidades y objetos. Son lo grande y lo que se
+ * pide en casi todas las páginas; las fichas sueltas son pequeñas y con el SW
+ * van sobradas. Meter aquí todo lo demás sería duplicar el trabajo del SW sin
  * ganar nada.
+ *
+ * Los objetos entraron con el autocompletado del comparador de equipos: 2151
+ * filas que se filtran en local a cada pulsación, exactamente el caso para el
+ * que existe esta caché. Solo el listado COMPLETO; `/items?category=` y
+ * `/items?q=` —los del editor de reglas de Champions— siguen con el SW, porque
+ * cachear cada combinación de filtro llenaría la base de recortes del mismo
+ * dato.
  *
  * LA CLAVE LLEVA EL MODO DENTRO, Y ESO NO ES UN DETALLE
  * .....................................................
@@ -42,7 +49,7 @@ export const STORE_CATALOGO = "catalogo";
 export const STORE_META = "meta";
 
 /** Rutas que se guardan aquí. El resto sigue yendo por el Service Worker. */
-export const RUTAS_CATALOGO = ["/types", "/pokemon", "/moves", "/abilities"] as const;
+export const RUTAS_CATALOGO = ["/types", "/pokemon", "/moves", "/abilities", "/items"] as const;
 
 export const CACHE_EVENT = "pamudex:cache";
 
@@ -209,7 +216,7 @@ export interface ProgresoSync {
 
 /**
  * Descarga el catálogo del modo activo y lo guarda. Secuencial a propósito:
- * son cuatro peticiones grandes y en paralelo compiten entre ellas en una
+ * son cinco peticiones grandes y en paralelo compiten entre ellas en una
  * conexión mala, que es justo el escenario para el que existe este botón.
  *
  * `descargar` lo inyecta `lib/api.ts` para no crear una dependencia circular:
@@ -223,7 +230,7 @@ export async function sincronizar(
   let ok = 0;
   let hechos = 0;
 
-  // Las cuatro listas primero. La de tipos hay que mirarla después, así que se
+  // Las cinco listas primero. La de tipos hay que mirarla después, así que se
   // guarda lo que devuelva.
   let tipos: unknown = null;
   // Total provisional: se corrige en cuanto se sepan cuántos tipos hay.
