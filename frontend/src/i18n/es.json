@@ -54,6 +54,8 @@
   "team.full": "Equipo completo (6/6)",
   "team.item": "Objeto",
   "team.item_placeholder": "Sin objeto",
+  "team.itemFor": "Objeto de {{name}}",
+  "team.item_custom": "No está en el catálogo",
   "team.ability": "Habilidad",
   "team.nature": "Naturaleza",
   "team.moves": "Movimientos",

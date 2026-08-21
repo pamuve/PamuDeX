@@ -1,5 +1,5 @@
 import { Check, X } from "lucide-react";
-import { Recommendation, PokemonDetail, Reason } from "../types";
+import { Recommendation, PokemonDetail, MoveSummary, Reason } from "../types";
 import { useI18n } from "../i18n";
 
 const REASON_KEY: Partial<Record<Reason["type"], string>> = {
@@ -17,12 +17,23 @@ export function RecommendationCard({
   recommendation,
   rivalPokemon,
   pokemonById,
+  movesById,
 }: {
   recommendation: Recommendation;
   rivalPokemon: PokemonDetail;
   pokemonById: Record<number, PokemonDetail>;
+  /** Para traducir el nombre del movimiento: `Reason` solo guarda su id. */
+  movesById: Record<number, MoveSummary>;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const nombre = (o: { name_es: string; name_en: string }) =>
+    lang === "en" ? o.name_en : o.name_es;
+  /** El movimiento puede no estar en el catálogo si la sesión de ROM Hack lo
+   *  quitó después de guardarlo en el equipo: mejor un hueco que reventar. */
+  const nombreMovimiento = (id?: number) => {
+    const m = id === undefined ? undefined : movesById[id];
+    return m ? nombre(m) : "";
+  };
   const top = recommendation.ranked[0];
 
   if (!top) {
@@ -34,10 +45,12 @@ export function RecommendationCard({
 
   return (
     <div className="bg-panel rounded-xl2 p-5 shadow-card animate-fadein space-y-3">
-      <div className="text-ink-soft text-sm">{t("recommendation.against", { name: rivalPokemon.name_es })}</div>
+      <div className="text-ink-soft text-sm">{t("recommendation.against", { name: nombre(rivalPokemon) })}</div>
       <div className="flex items-baseline gap-2">
         <span className="text-xs uppercase tracking-widest text-ink-soft">{t("recommendation.recommended")}</span>
-        <span className="font-display text-lg font-bold text-ink">{recommended?.name_es ?? "—"}</span>
+        <span className="font-display text-lg font-bold text-ink">
+          {recommended ? nombre(recommended) : "—"}
+        </span>
       </div>
 
       {top.reasons.length > 0 && (
@@ -47,7 +60,7 @@ export function RecommendationCard({
             {top.reasons.map((r, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-ink">
                 <Check size={14} className="text-[#78C850] shrink-0" />
-                {t(REASON_KEY[r.type] ?? r.type, { move: r.moveName ?? "", value: r.value ?? "" })}
+                {t(REASON_KEY[r.type] ?? r.type, { move: nombreMovimiento(r.moveId), value: r.value ?? "" })}
               </li>
             ))}
           </ul>
@@ -61,7 +74,7 @@ export function RecommendationCard({
             {top.dangers.map((r, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-ink">
                 <X size={14} className="text-[#C03028] shrink-0" />
-                {t(DANGER_KEY[r.type] ?? r.type, { move: r.moveName ?? "", value: r.value ?? "" })}
+                {t(DANGER_KEY[r.type] ?? r.type, { move: nombreMovimiento(r.moveId), value: r.value ?? "" })}
               </li>
             ))}
           </ul>

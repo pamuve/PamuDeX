@@ -181,7 +181,13 @@ export type ReasonType = "resists" | "immune" | "can_hit_hard" | "danger_move" |
 export type Reason = {
   type: ReasonType;
   typeName?: string;
-  moveName?: string;
+  /**
+   * Id del movimiento, NO su nombre. Guardar aquí el `name_es` —como se hacía
+   * antes— dejaba las recomendaciones en español para siempre: `lib/recommendation.ts`
+   * es una función pura sin acceso a `useI18n`, así que el nombre lo resuelve
+   * quien pinta (`RecommendationCard`), que sí conoce el idioma.
+   */
+  moveId?: number;
   value?: number; // ej. % de PS
 };
 

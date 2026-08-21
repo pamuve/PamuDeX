@@ -35,19 +35,19 @@ export function bestResponseAgainst(
       incoming.forEach(({ move, estimate }) => {
         const dedupeKey = `${move.type_id}-${estimate.effectivenessMultiplier}`;
         if (estimate.effectivenessMultiplier === 0 && !alreadyNoted.has(dedupeKey)) {
-          reasons.push({ type: "immune", moveName: move.name_es, typeName: move.type_id });
+          reasons.push({ type: "immune", moveId: move.id, typeName: move.type_id });
           alreadyNoted.add(dedupeKey);
         } else if (estimate.effectivenessMultiplier <= 0.5 && !alreadyNoted.has(dedupeKey)) {
-          reasons.push({ type: "resists", moveName: move.name_es, typeName: move.type_id });
+          reasons.push({ type: "resists", moveId: move.id, typeName: move.type_id });
           alreadyNoted.add(dedupeKey);
         }
         if (estimate.percentOfHp >= DANGER_THRESHOLD) {
-          dangers.push({ type: "danger_move", moveName: move.name_es, value: estimate.percentOfHp });
+          dangers.push({ type: "danger_move", moveId: move.id, value: estimate.percentOfHp });
         }
       });
 
       if (bestOutgoing && bestOutgoing.percentOfHp >= HIT_HARD_THRESHOLD) {
-        reasons.push({ type: "can_hit_hard", moveName: bestOutgoing.move.name_es, value: bestOutgoing.percentOfHp });
+        reasons.push({ type: "can_hit_hard", moveId: bestOutgoing.move.id, value: bestOutgoing.percentOfHp });
       }
 
       const isFaster = ownPokemon.stats.spe > rivalPokemon.stats.spe;

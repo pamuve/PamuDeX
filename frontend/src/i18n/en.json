@@ -54,6 +54,8 @@
   "team.full": "Team full (6/6)",
   "team.item": "Item",
   "team.item_placeholder": "No item",
+  "team.itemFor": "{{name}}'s item",
+  "team.item_custom": "Not in the catalogue",
   "team.ability": "Ability",
   "team.nature": "Nature",
   "team.moves": "Moves",

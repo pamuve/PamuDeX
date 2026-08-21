@@ -287,9 +287,11 @@ Reglas que hay que mantener:
   eso, cambiar de ROM Hack serviría el catálogo del anterior.
 - **Al escribir overrides hay que invalidar** con `invalidarSesion(id)`. Lo hace
   `useSessionOverride` en su único camino de escritura (`persist`).
-- **Solo van los cuatro listados y las 18 fichas de tipo.** Las demás fichas son
-  más de 2200: se quedan con el Service Worker. Si añades algo, que sea porque
-  cabe y se usa en muchas páginas.
+- **Solo van los cinco listados y las 18 fichas de tipo.** Tipos, Pokémon,
+  movimientos, habilidades y objetos. Las demás fichas son más de 2200: se quedan
+  con el Service Worker. Si añades algo, que sea porque cabe y se usa en muchas
+  páginas. De los objetos, **solo el listado completo**: `?category=` y `?q=` son
+  recortes del mismo dato y guardar uno por combinación llenaría la base.
 - **Un fallo de red NO es un 404.** `lib/api.ts` lanza `ApiError` con `status`, y
   `esFalloDeRed()` los distingue. Una ficha nueva debe enseñar
   `components/LoadError.tsx` sin red y `NotAllowed` solo ante un 404 real; tratar
