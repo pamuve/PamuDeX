@@ -55,6 +55,11 @@ cd backend && pnpm run seed          # recrear la DB desde backend/data/*.json
 # build: los JSON van versionados para que la PWA siga siendo offline-first).
 cd backend && node tools/fetch-dataset.js
 
+# Descargar los sprites a frontend/public/sprites/ (1025 PNG, ~1,1 MB). Hace
+# falta una vez para trabajar en local: NO están en el repo y el frontend los
+# pide a /sprites. Solo baja los que faltan; --force los rebaja todos.
+cd backend && node tools/fetch-sprites.js
+
 # Frontend (puerto 5173, proxy de /api a localhost:4000)
 cd frontend && pnpm install && pnpm run dev
 ```
@@ -291,6 +296,22 @@ en mitad de una edición en el editor de ROM Hacks eso pierde trabajo.
 **El icono maestro es `public/icons/icon.svg`** y los PNG y el `.ico` salen de
 él (comando en el README). El `maskable` es un SVG distinto: a sangre y sin
 esquinas redondeadas, porque el sistema aplica su propia máscara.
+
+**Los sprites no están en el repo ni en el precache.** Los 1025 PNG de
+`frontend/public/sprites/` están en `.gitignore`: los baja el **build de
+Docker** (`RUN node .../fetch-sprites.js`, antes de copiar el código para que la
+capa se cachee) y en local se bajan a mano una vez. Es la excepción a la regla
+de versionar el dataset: no hay nada escrito a mano que perder. El contenedor
+sigue sin necesitar red al arrancar, porque los sprites viajan en la imagen.
+
+En el precache tampoco van. `frontend/public/sprites/` son 1025 PNG y
+`globPatterns` los cazaría a todos por la extensión, así que la primera visita
+se bajaría 1,1 MB para enseñar uno. Los excluye `globIgnores: ["**/sprites/**"]`
+y los cachea por uso una regla `CacheFirst` (`pamudex-sprite-cache`), el mismo
+criterio que dejó las 2200 fichas fuera de IndexedDB. Si añades más imágenes
+masivas al `public/`, van por ahí. La ficha los pide **por número de Pokédex**,
+no por nombre, porque un ROM Hack puede renombrar al Pokémon; si el archivo
+falta, la caja vuelve a la inicial.
 
 **Las notificaciones no piden permiso solas.** Solo desde el interruptor de
 `/ajustes`, y son preferencia del aparato (`localStorage`), no del perfil: el

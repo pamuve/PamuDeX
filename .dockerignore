@@ -8,6 +8,11 @@ dist/
 **/dist/
 frontend/dev-dist/
 
+# Los sprites se bajan DENTRO del build (ver Dockerfile), no se copian del host:
+# así la imagen sale igual la construya quien la construya, y el contexto no
+# carga con 1025 archivos que no hacen falta.
+frontend/public/sprites/
+
 # Base de datos generada: el contenedor la siembra en el primer arranque
 backend/db/*.sqlite
 backend/db/*.sqlite-journal
