@@ -141,10 +141,11 @@ function genQuery(gen?: number | null): string {
 }
 
 export const api = {
-  // Los cuatro LISTADOS van por `getCatalogo` (8.4): son lo grande y lo que
-  // pide casi cada página. Las FICHAS siguen con `get`: son pequeñas, el
-  // Service Worker ya las cubre y cachearlas aquí sería duplicar su trabajo
-  // multiplicado por generación y por modo.
+  // Los LISTADOS van por `getCatalogo` (8.4): son lo grande y lo que pide casi
+  // cada página. Los cuatro de aquí abajo y el de objetos, más abajo. Las
+  // FICHAS siguen con `get`: son pequeñas, el Service Worker ya las cubre y
+  // cachearlas aquí sería duplicar su trabajo multiplicado por generación y por
+  // modo.
   types: {
     list: () => getCatalogo<import("../types").PokeType[]>("/types"),
     // La ficha de tipo es la ÚNICA de detalle que pasa por la caché local: son
@@ -177,9 +178,14 @@ export const api = {
    * filtros: son 2151 entradas y el editor de reglas de Champions (6.1) los
    * necesita por categoría para que marcarlos sea manejable.
    *
-   * Pasan por `get()` como todo lo demás, así que llevan `?session=` cuando hay
-   * sesión activa. Hoy da igual —el middleware de overrides no toca los
-   * objetos—, pero mantiene la URL coherente para cuando lo haga.
+   * Llevan `?session=` cuando hay sesión activa. Hoy da igual —el middleware de
+   * overrides no toca los objetos—, pero mantiene la URL coherente para cuando
+   * lo haga, y es también lo que decide la clave de la caché local.
+   *
+   * SOLO EL LISTADO COMPLETO PASA POR `getCatalogo`. Con filtro la respuesta es
+   * un recorte del mismo dato, y guardar una entrada por combinación de
+   * `category` y `q` llenaría IndexedDB de trozos que ya están dentro de la
+   * lista entera. Los filtrados se quedan con el Service Worker, como las fichas.
    */
   items: {
     list: (opts?: { category?: string; q?: string }) => {
@@ -187,7 +193,8 @@ export const api = {
       if (opts?.category) params.set("category", opts.category);
       if (opts?.q) params.set("q", opts.q);
       const query = params.toString();
-      return get<import("../types").ItemSummary[]>(`/items${query ? `?${query}` : ""}`);
+      if (!query) return getCatalogo<import("../types").ItemSummary[]>("/items");
+      return get<import("../types").ItemSummary[]>(`/items?${query}`);
     },
     detail: (id: string | number) => get<import("../types").ItemDetail>(`/items/${id}`),
     categories: () => get<import("../types").ItemCategory[]>("/items/categories"),

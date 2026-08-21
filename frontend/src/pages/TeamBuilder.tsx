@@ -18,7 +18,7 @@ import { RecommendationCard } from "../components/RecommendationCard";
 import { CoverageMap } from "../components/CoverageMap";
 import { useCombobox } from "../hooks/useCombobox";
 import { useI18n } from "../i18n";
-import { Team, RivalTeam, PokemonSummary, PokemonDetail, MoveSummary, TypeDetail } from "../types";
+import { Team, RivalTeam, PokemonSummary, PokemonDetail, MoveSummary, TypeDetail, ItemSummary } from "../types";
 
 /**
  * Autocompletado para añadir un Pokémon al equipo.
@@ -137,15 +137,46 @@ export function TeamBuilder() {
   const [rivalTeam, setRivalTeam] = useState<RivalTeam>({ slots: [] });
   const [allPokemon, setAllPokemon] = useState<PokemonSummary[]>([]);
   const [allMoves, setAllMoves] = useState<MoveSummary[]>([]);
+  const [allItems, setAllItems] = useState<ItemSummary[]>([]);
   const [typesById, setTypesById] = useState<Record<string, TypeDetail>>({});
   const [pokemonCache, setPokemonCache] = useState<Record<number, PokemonDetail>>({});
+
+  /*
+    POR QUÉ HACE FALTA ESTA BANDERA: sin ella se perdía el equipo al recargar.
+
+    En el montaje, los efectos corren en orden de declaración: el de carga
+    llamaba a `loadTeam()` y el de persistencia guardaba acto seguido el estado
+    inicial —`{ slots: [] }`, el de ESTE render, porque el `setState` de arriba
+    aún no ha repintado—, dejando `localStorage` vacío. Con `StrictMode` React
+    vuelve a lanzar los efectos, y en esa segunda vuelta `loadTeam()` ya leía el
+    hueco que acababa de dejar el primero: equipo borrado en cada recarga.
+
+    Es una bandera de estado y no un `useRef`: el `ref` se pondría a `true`
+    dentro del efecto de carga, que corre ANTES que el de guardado en la misma
+    vuelta, y el guardado en vacío pasaría igual. Como estado, el efecto de
+    guardar no se vuelve a lanzar hasta el render siguiente, cuando el equipo
+    cargado ya está en su sitio.
+  */
+  const [cargado, setCargado] = useState(false);
 
   // Carga inicial: equipo guardado + catálogos
   useEffect(() => {
     setOwnTeam(loadTeam());
     setRivalTeam(loadRivalTeam());
+    setCargado(true);
     api.pokemon.list().then(setAllPokemon);
     api.moves.list().then(setAllMoves);
+    /*
+      El catálogo entero de objetos, una vez, y el filtrado en local: es lo mismo
+      que ya se hace con los 1025 Pokémon y los 901 movimientos. Son 2151 filas
+      ligeras (~157 KB sin comprimir, sin `effect_es`) y así el autocompletado
+      responde sin ir a la red en cada tecla. Pedirlos con `?q=` por pulsación
+      sería una petición por letra y dejaría el campo inútil sin conexión.
+
+      Sin argumentos, `api.items.list()` pasa por la caché de IndexedDB
+      (`RUTAS_CATALOGO`), así que en la segunda visita responde sin red.
+    */
+    api.items.list().then(setAllItems);
     api.types.list().then((list) => {
       Promise.all(list.map((tp) => api.types.detail(tp.id))).then((details) => {
         setTypesById(Object.fromEntries(details.map((d) => [d.id, d])));
@@ -153,9 +184,13 @@ export function TeamBuilder() {
     });
   }, []);
 
-  // Persistencia automática
-  useEffect(() => saveTeam(ownTeam), [ownTeam]);
-  useEffect(() => saveRivalTeam(rivalTeam), [rivalTeam]);
+  // Persistencia automática, nunca antes de haber leído lo que ya había.
+  useEffect(() => {
+    if (cargado) saveTeam(ownTeam);
+  }, [cargado, ownTeam]);
+  useEffect(() => {
+    if (cargado) saveRivalTeam(rivalTeam);
+  }, [cargado, rivalTeam]);
 
   // Carga perezosa de fichas de Pokémon que aún no estén en caché
   useEffect(() => {
@@ -261,6 +296,7 @@ export function TeamBuilder() {
                 slot={slot}
                 pokemon={pokemonCache[slot.pokemonId] ?? null}
                 allMoves={allMoves}
+                allItems={allItems}
                 onChange={(updated) =>
                   setOwnTeam({ slots: ownTeam.slots.map((s, i) => (i === idx ? updated : s)) })
                 }
@@ -297,6 +333,7 @@ export function TeamBuilder() {
                 slot={slot}
                 pokemon={pokemonCache[slot.pokemonId] ?? null}
                 allMoves={allMoves}
+                allItems={allItems}
                 onChange={(updated) =>
                   setRivalTeam({ slots: rivalTeam.slots.map((s, i) => (i === idx ? updated : s)) })
                 }
@@ -333,6 +370,7 @@ export function TeamBuilder() {
                 recommendation={recommendation}
                 rivalPokemon={rivalPokemon}
                 pokemonById={pokemonCache}
+                movesById={movesById}
               />
             ))}
           </div>

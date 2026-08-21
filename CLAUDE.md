@@ -273,8 +273,11 @@ Hack serviría el catálogo del anterior. Al guardar overrides hay que invalidar
 con `invalidarSesion(id)` — lo hace `useSessionOverride` en `persist`, su único
 camino de escritura.
 
-Solo van los cuatro listados y las 18 fichas de tipo; las demás fichas son más de
-2200 y se quedan con el Service Worker.
+Solo van los cinco listados (tipos, Pokémon, movimientos, habilidades y objetos)
+y las 18 fichas de tipo; las demás fichas son más de 2200 y se quedan con el
+Service Worker. **De los objetos solo el listado completo**: `/items?category=` y
+`/items?q=` son recortes del mismo dato y una entrada por combinación de filtro
+llenaría la base de trozos.
 
 **Un fallo de red no es un 404.** `ApiError.status === 0` es «no he podido
 preguntar», y `esFalloDeRed()` lo distingue: sin red va `LoadError`, y

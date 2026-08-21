@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { PokemonDetail, TeamSlot, MoveSummary } from "../types";
+import { PokemonDetail, TeamSlot, MoveSummary, ItemSummary } from "../types";
 import { NATURES, MAX_MOVES_PER_SLOT } from "../lib/team";
 import { TypeBadge } from "./TypeBadge";
+import { ItemCombobox } from "./ItemCombobox";
 import { useI18n } from "../i18n";
 
 export function TeamSlotCard({
   slot,
   pokemon,
   allMoves,
+  allItems,
   onChange,
   onRemove,
 }: {
   slot: TeamSlot;
   pokemon: PokemonDetail | null;
   allMoves: MoveSummary[];
+  allItems: ItemSummary[];
   onChange: (updated: TeamSlot) => void;
   onRemove: () => void;
 }) {
@@ -24,12 +27,29 @@ export function TeamSlotCard({
     lang === "en" ? o.name_en : o.name_es;
 
   if (!pokemon) {
-    return <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">Cargando...</div>;
+    return (
+      <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">
+        {t("common.loading")}
+      </div>
+    );
   }
 
+  /*
+    El valor guardado es SIEMPRE `name_es` (así lo documenta `TeamSlot`) y solo
+    se traduce el rótulo. Traducir también el valor rompería los equipos ya
+    guardados: al cambiar de idioma el `<select>` no encontraría su opción y se
+    quedaría en blanco, borrando la habilidad elegida.
+  */
   const abilityOptions = [
-    ...pokemon.abilities.map((a) => a.name_es),
-    ...(pokemon.hidden_ability ? [pokemon.hidden_ability.name_es] : []),
+    ...pokemon.abilities.map((a) => ({ value: a.name_es, label: nombre(a) })),
+    ...(pokemon.hidden_ability
+      ? [
+          {
+            value: pokemon.hidden_ability.name_es,
+            label: `${nombre(pokemon.hidden_ability)} (${t("pokemon.hidden_ability")})`,
+          },
+        ]
+      : []),
   ];
 
   const filteredMoves = allMoves.filter((m) => nombre(m).toLowerCase().includes(moveFilter.toLowerCase()));
@@ -60,15 +80,18 @@ export function TeamSlotCard({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1 text-xs text-ink-soft">
-          {t("team.item")}
-          <input
+        {/* El objeto no es un `<label>` envolvente: el `combobox` trae su propio
+            `aria-label` con el nombre del Pokémon, y dos nombres accesibles en
+            el mismo campo se leen a la vez. */}
+        <div className="flex flex-col gap-1 text-xs text-ink-soft">
+          <span>{t("team.item")}</span>
+          <ItemCombobox
             value={slot.item}
-            onChange={(e) => onChange({ ...slot, item: e.target.value })}
-            placeholder={t("team.item_placeholder")}
-            className="bg-hover rounded-lg px-2 py-1.5 text-sm text-ink outline-none"
+            items={allItems}
+            label={t("team.itemFor", { name: nombre(pokemon) })}
+            onChange={(item) => onChange({ ...slot, item })}
           />
-        </label>
+        </div>
 
         <label className="flex flex-col gap-1 text-xs text-ink-soft">
           {t("team.ability")}
@@ -79,8 +102,8 @@ export function TeamSlotCard({
           >
             <option value="">—</option>
             {abilityOptions.map((a) => (
-              <option key={a} value={a}>
-                {a}
+              <option key={a.value} value={a.value}>
+                {a.label}
               </option>
             ))}
           </select>
@@ -93,9 +116,11 @@ export function TeamSlotCard({
             onChange={(e) => onChange({ ...slot, nature: e.target.value })}
             className="bg-hover rounded-lg px-2 py-1.5 text-sm text-ink outline-none"
           >
+            {/* `value` en español, rótulo traducido: `NATURES` ya trae los dos
+                nombres y solo se estaba usando uno. */}
             {NATURES.map((n) => (
               <option key={n.name_es} value={n.name_es}>
-                {n.name_es}
+                {nombre(n)}
               </option>
             ))}
           </select>

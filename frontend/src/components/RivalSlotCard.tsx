@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { PokemonDetail, RivalSlot, MoveSummary } from "../types";
+import { PokemonDetail, RivalSlot, MoveSummary, ItemSummary } from "../types";
 import { TypeBadge } from "./TypeBadge";
+import { ItemCombobox } from "./ItemCombobox";
 import { useI18n } from "../i18n";
 
 /**
@@ -83,12 +84,14 @@ export function RivalSlotCard({
   slot,
   pokemon,
   allMoves,
+  allItems,
   onChange,
   onRemove,
 }: {
   slot: RivalSlot;
   pokemon: PokemonDetail | null;
   allMoves: MoveSummary[];
+  allItems: ItemSummary[];
   onChange: (updated: RivalSlot) => void;
   onRemove: () => void;
 }) {
@@ -97,12 +100,24 @@ export function RivalSlotCard({
     lang === "en" ? o.name_en : o.name_es;
 
   if (!pokemon) {
-    return <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">Cargando...</div>;
+    return (
+      <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">
+        {t("common.loading")}
+      </div>
+    );
   }
 
+  /* Rótulo traducido, valor en `name_es`: ver la nota de `TeamSlotCard`. */
   const abilityOptions = [
-    ...pokemon.abilities.map((a) => a.name_es),
-    ...(pokemon.hidden_ability ? [pokemon.hidden_ability.name_es] : []),
+    ...pokemon.abilities.map((a) => ({ value: a.name_es, label: nombre(a) })),
+    ...(pokemon.hidden_ability
+      ? [
+          {
+            value: pokemon.hidden_ability.name_es,
+            label: `${nombre(pokemon.hidden_ability)} (${t("pokemon.hidden_ability")})`,
+          },
+        ]
+      : []),
   ];
 
   function toggleKnown(id: number) {
@@ -131,15 +146,15 @@ export function RivalSlotCard({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1 text-xs text-ink-soft">
-          {t("team.item")}
-          <input
+        <div className="flex flex-col gap-1 text-xs text-ink-soft">
+          <span>{t("team.item")}</span>
+          <ItemCombobox
             value={slot.item}
-            onChange={(e) => onChange({ ...slot, item: e.target.value })}
-            placeholder={t("team.item_placeholder")}
-            className="bg-hover rounded-lg px-2 py-1.5 text-sm text-ink outline-none"
+            items={allItems}
+            label={t("team.itemFor", { name: nombre(pokemon) })}
+            onChange={(item) => onChange({ ...slot, item })}
           />
-        </label>
+        </div>
         <label className="flex flex-col gap-1 text-xs text-ink-soft">
           {t("team.ability")}
           <select
@@ -149,8 +164,8 @@ export function RivalSlotCard({
           >
             <option value="">—</option>
             {abilityOptions.map((a) => (
-              <option key={a} value={a}>
-                {a}
+              <option key={a.value} value={a.value}>
+                {a.label}
               </option>
             ))}
           </select>
