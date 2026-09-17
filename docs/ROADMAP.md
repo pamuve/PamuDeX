@@ -177,6 +177,17 @@ Notas de la fase:
 | 9.3 | IA que recomienda equipos según cobertura | Media-Grande |
 | 9.4 | Sincronización opcional con Pokémon Showdown + import/export formato Showdown | Media |
 | 9.5 | Editor de ROM Hacks avanzado + gestión de sprites personalizados (subida de imágenes propias) | Media |
+| 9.6 | Combates dobles en el comparador de equipos: formato individual/doble y selección de los Pokémon en el campo ese turno | Media |
+| 9.7 | Formas regionales (Alola, Galar, Hisui, Paldea) como fichas propias del dataset | Media-Grande |
+
+> Las tareas 9.6 y 9.7 se apuntaron después de cerrar la Fase 8, a petición del
+> usuario. Las dos rompen una suposición que hoy está metida en varios sitios: la
+> 9.6, que el comparador es siempre 1 contra 1 (y necesita el `target` de los
+> movimientos, que el dataset no importa todavía); la 9.7, que un Pokémon es un
+> número de Pokédex (el sprite, el `ref` de `entity_changes` y los ids guardados
+> en favoritos, historial y reglas de Champions dependen de ello). Los encargos
+> están en `docs/tasks/fase9/09-06-combates-dobles.md` y
+> `docs/tasks/fase9/09-07-formas-regionales.md`.
 
 > La Fase 9 es intencionadamente la más abierta: cuando llegues aquí, usa `docs/AI_TASK_TEMPLATE.md` para partir cada punto en tareas del tamaño de una sola conversación, igual que se hizo con las fases 2-8.
 

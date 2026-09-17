@@ -23,7 +23,7 @@ Con esos dos archivos, la IA no necesita saber nada más del proyecto.
 | 6 — Pokémon Champions | `fase6/` (4 + preparación) | ✅ Implementada — se añadió la 6.0 (objetos) al preparar la fase |
 | 7 — Multi-generación | `fase7/` (3) | ✅ Implementada — la 7.3 movió su ruta a `/api/changes`: `/api/history` ya era el historial por perfil |
 | 8 — Accesibilidad y rendimiento | `fase8/` (4) | ✅ Implementada |
-| 9 — Ampliaciones | `fase9/` (5) | 🔜 **la siguiente** |
+| 9 — Ampliaciones | `fase9/` (7) | 🔜 **la siguiente** — la 9.6 (combates dobles en el comparador) y la 9.7 (formas regionales) se añadieron después de cerrar la Fase 8 |
 
 Las tareas de una fase están ordenadas por dependencia: haz la `-01` antes que la `-02`. Entre fases distintas hay más libertad, salvo que la propia tarea diga de qué depende.
 

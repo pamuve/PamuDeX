@@ -576,7 +576,7 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     siembra por `db/migrate.js`, `GET /api/changes/:tipo/:ref`,
     `components/ChangeHistory.tsx` (colapsable, cerrada por defecto) y el
     validador `pnpm run check:changes`.
-- 🚧 **Fase 8, en curso**: accesibilidad, rendimiento y PWA avanzada.
+- ✅ **Fase 8**: accesibilidad, rendimiento y PWA avanzada.
   - ✅ **8.1** alto contraste real y escalado de texto: `lib/a11y.ts`, la clase
     `.high-contrast` de `index.css`, cuatro niveles (90/100/115/130 %) y la
     sección «Accesibilidad» de `/ajustes`. Ver «Accesibilidad (Fase 8)».
@@ -592,8 +592,20 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     `lib/perf.ts`, `components/OfflineData.tsx` y `components/LoadError.tsx`.
     Medido: 1.1 ms de media leyendo el catálogo. Ver «Caché local (Fase 8)».
 - 🔜 **Fase 9, la siguiente**: ampliaciones (calculadora de daño, simulador,
-  recomendador de equipos). Es la fase más abierta: usa
-  `docs/AI_TASK_TEMPLATE.md` para partirla. Ver `docs/ROADMAP.md`.
+  recomendador de equipos, Showdown, editor avanzado) más dos encargos apuntados
+  al cerrar la Fase 8:
+  - 🔜 **9.6** combates dobles en el comparador de equipos, con selección de los
+    Pokémon que están en el campo ese turno. Necesita el `target` de los
+    movimientos, que `moves.json` **no** tiene todavía, y generalizar
+    `lib/recommendation.ts`, que hoy puntúa contra un solo rival.
+  - 🔜 **9.7** formas regionales (Alola, Galar, Hisui, Paldea). Rompen que un
+    Pokémon sea un número de Pokédex: el sprite va por `dex`, el `ref` de
+    `entity_changes` es el `dex`, y favoritos, historial y reglas de Champions
+    guardan `pokemon.id`, así que las formas se **añaden** por `db/migrate.js`
+    sin renumerar nada.
+
+  Es la fase más abierta: usa `docs/AI_TASK_TEMPLATE.md` para partirla.
+  Ver `docs/ROADMAP.md`.
 
 ## Actualizaciones: lo que no se puede perder
 
