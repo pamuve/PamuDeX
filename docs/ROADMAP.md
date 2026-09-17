@@ -175,7 +175,7 @@ Notas de la fase:
 | 9.1 | Calculadora de daño completa (con rangos, naturaleza, EVs/IVs, clima, terreno) | Grande → dividir en sub-tareas al llegar |
 | 9.2 | Simulador de combate turno a turno | Grande → dividir en sub-tareas al llegar |
 | 9.3 | IA que recomienda equipos según cobertura | Media-Grande |
-| 9.4 | Sincronización opcional con Pokémon Showdown + import/export formato Showdown | Media |
+| 9.4 | Importar y exportar equipos en formato Pokémon Showdown (pegar texto / copiar al portapapeles en `/equipo`). La sincronización en vivo con sus servidores queda fuera | Media |
 | 9.5 | Editor de ROM Hacks avanzado + gestión de sprites personalizados (subida de imágenes propias) | Media |
 | 9.6 | Combates dobles en el comparador de equipos: formato individual/doble y selección de los Pokémon en el campo ese turno | Media |
 | 9.7 | Formas regionales (Alola, Galar, Hisui, Paldea) como fichas propias del dataset | Media-Grande |
