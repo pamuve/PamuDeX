@@ -11,7 +11,7 @@ module.exports = (db) => {
     if (!a) return res.status(404).json({ error: "Habilidad no encontrada" });
     const pokemonConEsta = db
       .prepare(
-        `SELECT p.id, p.dex, p.name_es, pa.is_hidden FROM pokemon_abilities pa
+        `SELECT p.id, p.dex, p.name_es, p.name_en, pa.is_hidden FROM pokemon_abilities pa
          JOIN pokemon p ON p.id = pa.pokemon_id WHERE pa.ability_id = ? ORDER BY p.dex`
       )
       .all(a.id);

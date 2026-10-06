@@ -240,7 +240,88 @@ que el tema por sesión pueda pisarlos — **no metas hex fijos en
 `tailwind.config.js`**. El negro puro está prohibido: provoca estelas al hacer
 scroll en pantallas OLED.
 
-Tarjetas: `rounded-xl2 shadow-card bg-panel` + `animate-fadein`.
+### Sistema de componentes: clases, no librería
+
+En `src/index.css` (`@layer components`), y se usan en vez de repetir utilidades:
+
+- `.card` — la tarjeta (`bg-panel rounded-xl2` + relleno + `shadow-card`). Añade
+  `animate-fadein` al lado si entra con la página.
+- `.page-title` para el `<h1>` de cada página y `.section-title` para los `<h2>`
+  (en frase, sin mayúsculas ni `tracking-widest`; el margen va aparte).
+- `.btn-primary` (acción principal, fondo `accent`), `.btn-secondary`,
+  `.btn-ghost` y `.btn-danger`. Todos miden **44px de alto mínimo**, también los
+  botones de icono (`h-10 w-10` como mínimo donde no cabe más).
+- `shadow-card` es para tarjetas; **`shadow-float` para lo que flota** (menús,
+  listas desplegables, diálogos, avisos).
+- `.card-link` para una tarjeta que es en sí un enlace o botón, `.notice` para
+  avisos dentro de la página y `.popover` para menús y listas desplegables (con
+  `origin-*` apuntando al botón que los abre: se «materializan» desde ahí).
+- `.pressable`: se encoge al pulsar (en el `pointerdown`) y vuelve con el
+  muelle. Ya lo llevan `.btn*` y `.card-link`.
+- Interruptores: `components/SwitchTrack.tsx` dentro de un botón con
+  `role="switch"`. Fichas: `components/BackLink.tsx` arriba (en la PWA
+  instalada no hay botón atrás del navegador).
+
+**Movimiento (principios de Apple, WWDC 2018).** Muelles, no duraciones:
+`--ease-spring` (sin rebote, el de por defecto) y `--ease-bounce` (solo para lo
+que sale de un gesto, como un menú desde su botón), muestreados con `linear()`
+en `index.css`. Para estados usa **transiciones**, que se interrumpen desde el
+valor en pantalla; las animaciones `@keyframes` solo para entradas, y **sin
+`fill-mode: both`**: un `transform` que se queda puesto abre un contexto de
+apilado y los desplegables de dentro quedan bajo la tarjeta siguiente. Con
+movimiento reducido todo pasa a fundidos cortos, no a «sin respuesta».
+
+**Liquid glass.** Variables `--glass-*` en `index.css` (tinte, desenfoque
+saturado, lámina, canto especular, elevación). Dos formas:
+- `.glass`: el vidrio en el propio elemento. Para superficies sin menús dentro
+  (desplegables, diálogos, el aviso de versión nueva, la cápsula de escritorio).
+- `.glass-host`: el vidrio en un `::before` (el elemento debe estar
+  posicionado). **Obligatorio si lleva menús dentro**: en Chromium (Brave,
+  Chrome) un elemento con `backdrop-filter` es «raíz de fondo» y un menú de
+  vidrio dentro solo desenfocaría la barra, no la página. Safari no lo hace, así
+  que con esto se ven igual. Lo usan la cápsula de controles de arriba y la
+  barra inferior.
+
+No hay refracción SVG (`feDisplacementMap`): solo funciona en Chromium y en
+Safari se vería distinto. Sin `backdrop-filter`, con transparencia reducida o en
+alto contraste, el vidrio pasa a opaco tocando solo las variables.
+
+La barra superior no tiene franja: sus controles son cápsulas y detrás hay un
+velo (`.scroll-edge`) que aparece al desplazar (animación ligada al scroll; en
+Safari y Firefox está siempre puesto). La inferior es una cápsula flotante
+separada de los bordes. `hover:` solo existe con puntero fino
+(`hoverOnlyWhenSupported`): en táctil no se queda pegado.
+
+**Menús con salida animada.** `useMenu` devuelve `mounted` y `state`: se pinta
+con `{menu.mounted && …}` y `data-state={menu.state}` en el panel, y el CSS de
+`.popover` anima la salida con una transición (180 ms; `SALIDA_MS` en el hook
+tiene que cubrirla). Reabrir a mitad de la salida da la vuelta desde donde está.
+
+**Node 24 en local** tumba el servidor de forma intermitente (fallo nativo de
+`better-sqlite3` 11 al liberar sentencias). Es otra razón para usar Node 22.
+
+**Colores de estado**: `success`, `danger`, `warning` y `favorite`
+(`--color-*-rgb` en `theme-vars.css`, aclarados en alto contraste). Nunca hex
+fijos en `className`; los colores de tipo son datos, no semántica.
+
+**Opacidad sobre colores del tema** (`bg-base/90`, `ring-ink-soft/40`): funciona
+porque `tailwind.config.js` define esos colores con `color-mix`. Tailwind 3 no
+sabe aplicar opacidad a un `var()` a secas y, en vez de avisar, **no genera la
+clase**; así estuvieron sin efecto una treintena de usos hasta la revisión de
+diseño. Si añades un color del tema, usa el mismo `tema("nombre")`.
+
+**Navegación**: los destinos se definen una vez en `components/BottomNav.tsx`
+(`NAV_PRIMARY`, `NAV_WORK`, `NAV_PROFILE`). Por debajo de `lg` van en la barra
+inferior fija (Pokédex · Equipo · Favoritos · Más); de `lg` en adelante, en la
+superior con texto. El activo lleva `aria-current="page"`. `<main>` reserva el
+alto de la barra inferior; lo que sea `fixed` abajo debe ir por encima de ella.
+
+**Nombres del dataset**: `useI18n().name(entidad)` da el nombre en el idioma
+activo. No escribas `lang === "en" ? x.name_en : x.name_es` a mano. Los efectos
+(`effect_es`) no tienen versión inglesa en el dataset.
+
+**Páginas pesadas con `React.lazy`** en `App.tsx` (comparador, sesiones, editor,
+datos, ajustes, Champions). Siguen offline: van en el precache.
 
 ### i18n — los JSON son PLANOS
 
@@ -334,8 +415,9 @@ Service Worker. **De los objetos solo el listado completo**: `/items?category=` 
 llenaría la base de trozos.
 
 **Un fallo de red no es un 404.** `ApiError.status === 0` es «no he podido
-preguntar», y `esFalloDeRed()` lo distingue: sin red va `LoadError`, y
-`NotAllowed` solo ante un 404 real. Tratarlo todo igual hacía que una ficha
+preguntar», y `esFalloDeRed()` lo distingue. Las fichas cargan con
+`hooks/useDetail.ts` y pintan `DetailError` (`components/PageState.tsx`): sin red
+`LoadError`, 404 en Champions `NotAllowed` y 404 fuera del modo `NotFound`. Tratarlo todo igual hacía que una ficha
 dijera «no permitida en Champions» estando simplemente sin cobertura. **Prueba
 siempre en modo avión**: ahí salen los spinners infinitos y los errores falsos.
 

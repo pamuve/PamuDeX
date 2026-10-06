@@ -34,8 +34,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Elementos que cuentan como opción del menú. */
 const OPCIONES = 'a[href],button:not(:disabled),[role="menuitem"]';
 
+/**
+ * Cuánto sigue montado el menú después de cerrarse, para que se vea salir.
+ * Debe cubrir la transición de salida de `.popover` (180 ms en `index.css`).
+ */
+const SALIDA_MS = 220;
+
 export interface MenuControl {
   open: boolean;
+  /**
+   * Si el menú tiene que estar en el DOM: abierto, o cerrándose todavía. Los
+   * componentes pintan con `mounted` (no con `open`) y ponen `data-state={state}`
+   * en el panel; la salida la anima el CSS con ese atributo.
+   */
+  mounted: boolean;
+  state: "open" | "closed";
   /** Referencia para el botón que abre el menú. */
   triggerRef: React.RefObject<HTMLButtonElement>;
   /** Referencia para el contenedor de las opciones. */
@@ -56,6 +69,24 @@ export function useMenu(): MenuControl {
   const menuRef = useRef<HTMLDivElement>(null);
   /** Dónde poner el foco en cuanto el menú aparezca. null = no tocarlo. */
   const focoPendiente = useRef<"primera" | "ultima" | null>(null);
+
+  // Tras cerrar, el panel se queda montado lo justo para su transición de
+  // salida. Si se reabre antes, el temporizador se cancela y la transición
+  // vuelve atrás desde donde esté: no hay que esperar a que termine de irse.
+  //
+  // `montado` se enciende MIENTRAS está abierto, no al cerrar: el render en el
+  // que `open` pasa a false tiene que encontrarlo ya a true. Si se encendiera
+  // en el efecto del cierre, ese render desmontaría el panel y el efecto lo
+  // volvería a montar ya cerrado, sin nada que animar.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setMontado(true);
+      return;
+    }
+    const id = window.setTimeout(() => setMontado(false), SALIDA_MS);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
   const opciones = useCallback((): HTMLElement[] => {
     if (!menuRef.current) return [];
@@ -118,10 +149,22 @@ export function useMenu(): MenuControl {
       e.preventDefault();
       focoPendiente.current = e.key === "ArrowDown" ? "primera" : "ultima";
       setOpen(true);
+    } else if ((e.key === "Enter" || e.key === " ") && !e.repeat) {
+      // Con teclado, Enter y Espacio abren y llevan el foco a la primera opción
+      // (patrón «menu button» de WAI-ARIA). Sin esto disparaban el `click` y el
+      // menú se abría con el foco aún en el botón: la flecha era la única forma
+      // de entrar. `preventDefault` evita ese `click` y que alterne dos veces.
+      e.preventDefault();
+      if (open) {
+        close();
+      } else {
+        focoPendiente.current = "primera";
+        setOpen(true);
+      }
     } else if (e.key === "Escape") {
       setOpen(false);
     }
-  }, []);
+  }, [open, close]);
 
   const onMenuKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -149,5 +192,15 @@ export function useMenu(): MenuControl {
     [close, opciones]
   );
 
-  return { open, triggerRef, menuRef, toggle, close, onTriggerKeyDown, onMenuKeyDown };
+  return {
+    open,
+    mounted: open || montado,
+    state: open ? "open" : "closed",
+    triggerRef,
+    menuRef,
+    toggle,
+    close,
+    onTriggerKeyDown,
+    onMenuKeyDown,
+  };
 }

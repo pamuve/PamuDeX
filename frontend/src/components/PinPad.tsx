@@ -66,7 +66,7 @@ export function PinPad({ value, onChange, length, onComplete, disabled, error }:
             key={i}
             className={`w-3.5 h-3.5 rounded-full transition-colors ${
               error
-                ? "bg-[#F85888]"
+                ? "bg-danger"
                 : i < value.length
                   ? "bg-ink"
                   : "bg-hover"

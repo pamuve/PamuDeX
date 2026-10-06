@@ -139,7 +139,7 @@ Notas de la fase:
 | 8.1 | Modo alto contraste real + escalado de texto configurable | Pequeña | ✅ `lib/a11y.ts`, `.high-contrast`, cuatro niveles de texto |
 | 8.2 | Navegación completa por teclado + auditoría de lector de pantalla (roles ARIA) | Media | ✅ `useMenu`, `useCombobox`, un solo `<main>` y enlace de salto |
 | 8.3 | Notificaciones push opcionales + icono personalizado final (sustituir placeholder) | Pequeña | ✅ Icono propio, manifiesto completo y aviso de versión nueva |
-| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | ✅ `lib/localCache.ts` (1-2 ms), `lib/perf.ts` y modo de depuración |
+| 8.4 | Medición y optimización: carga de datos locales <100ms, auditoría Lighthouse PWA | Pequeña | ✅ `lib/localCache.ts` (1-2 ms); `lib/perf.ts` y su modo de depuración se retiraron tras medir |
 
 Notas de la fase:
 

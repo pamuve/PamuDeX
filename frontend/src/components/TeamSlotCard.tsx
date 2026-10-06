@@ -21,14 +21,13 @@ export function TeamSlotCard({
   onChange: (updated: TeamSlot) => void;
   onRemove: () => void;
 }) {
-  const { t, lang } = useI18n();
+  const { t, name } = useI18n();
   const [moveFilter, setMoveFilter] = useState("");
-  const nombre = (o: { name_es: string; name_en: string }) =>
-    lang === "en" ? o.name_en : o.name_es;
+  const nombre = name;
 
   if (!pokemon) {
     return (
-      <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">
+      <div className="card animate-fadein text-ink-soft text-sm">
         {t("common.loading")}
       </div>
     );
@@ -64,7 +63,7 @@ export function TeamSlotCard({
   }
 
   return (
-    <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein space-y-3">
+    <div className="card animate-fadein space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-display font-semibold text-ink">{nombre(pokemon)}</span>
@@ -74,7 +73,7 @@ export function TeamSlotCard({
             ))}
           </div>
         </div>
-        <button onClick={onRemove} className="text-ink-soft hover:text-[#C03028] transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
+        <button onClick={onRemove} className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:text-danger hover:bg-danger/10 transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
           <X size={18} />
         </button>
       </div>
@@ -160,7 +159,7 @@ export function TeamSlotCard({
                 aria-pressed={selected}
                 className={`w-full flex items-center justify-between text-left px-2 py-1 rounded-lg text-sm transition-colors ${
                   selected
-                    ? "bg-[#1C3350] text-ink"
+                    ? "bg-hover text-ink"
                     : disabled
                     ? "text-ink-soft/40 cursor-not-allowed"
                     : "text-ink-soft hover:bg-hover"

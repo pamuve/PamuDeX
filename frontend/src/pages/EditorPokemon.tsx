@@ -47,7 +47,7 @@ export function PokemonEditorPane({ overrides }: { overrides: SessionOverrides }
         setTypes(typeList);
         if (pokemon.length && selectedId === null) setSelectedId(pokemon[0].id);
       })
-      .catch(() => !cancelled && setError(t("editor.loadError")))
+      .catch(() => !cancelled && setError(t("common.loadErrorInline")))
       .finally(() => !cancelled && setLoadingList(false));
     return () => {
       cancelled = true;
@@ -63,7 +63,7 @@ export function PokemonEditorPane({ overrides }: { overrides: SessionOverrides }
     catalogApi
       .pokemon(selectedId)
       .then((data) => !cancelled && setDetail(data))
-      .catch(() => !cancelled && setError(t("editor.loadError")))
+      .catch(() => !cancelled && setError(t("common.loadErrorInline")))
       .finally(() => !cancelled && setLoadingDetail(false));
     return () => {
       cancelled = true;
@@ -90,7 +90,7 @@ export function PokemonEditorPane({ overrides }: { overrides: SessionOverrides }
 
       <div>
         {error && (
-          <p role="alert" className="mb-3 rounded-xl2 bg-panel px-4 py-3 text-sm text-ink shadow-card">
+          <p role="alert" className="card mb-3 px-4 py-3 text-sm text-ink">
             {error}
           </p>
         )}
@@ -126,7 +126,7 @@ export default function EditorPokemon() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 animate-fadein">
       <header className="mb-5">
-        <h1 className="text-xl font-semibold text-ink sm:text-2xl">{t("editor.pokemonTitle")}</h1>
+        <h1 className="page-title">{t("editor.pokemonTitle")}</h1>
         <p className="mt-1 text-sm text-ink-soft">
           {overrides.session
             ? t("editor.editingIn", { name: overrides.session.name })

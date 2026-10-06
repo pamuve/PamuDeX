@@ -29,13 +29,18 @@ const LABEL_KEY: Record<string, string> = {
   sin_efecto: "effectiveness.sin_efecto",
 };
 
+/**
+ * Color del indicador de cada grupo, por intensidad: cuanto más pega, más
+ * caliente. Antes x4 iba en naranja y x2 en rojo, al revés de lo que se lee.
+ * Son tokens de estado (`theme-vars.css`), así que el alto contraste los aclara.
+ */
 const ACCENT: Record<string, string> = {
-  hiper_eficaz: "border-l-4 border-l-[#F08030]",
-  super_eficaz: "border-l-4 border-l-[#C03028]",
-  normal: "border-l-4 border-l-[#1C3350]",
-  poco_eficaz: "border-l-4 border-l-[#A9BDD2]",
-  muy_poco_eficaz: "border-l-4 border-l-[#6890F0]",
-  sin_efecto: "border-l-4 border-l-[#705848]",
+  hiper_eficaz: "bg-danger",
+  super_eficaz: "bg-warning",
+  normal: "bg-hover",
+  poco_eficaz: "bg-success/60",
+  muy_poco_eficaz: "bg-success",
+  sin_efecto: "bg-ink-soft opacity-40",
 };
 
 export function EffectivenessPanel({
@@ -46,31 +51,32 @@ export function EffectivenessPanel({
   typesById: Record<string, PokeType>;
 }) {
   const { t } = useI18n();
+  // El grupo neutro no se pinta. Se filtra por la CLAVE y no por
+  // `multiplier !== 1`: en un modo con multiplicadores propios, «normal» puede
+  // no valer 1.
+  const visibles = buckets.filter((b) => b.key !== "normal");
+  if (visibles.length === 0) return null;
+
+  // Una sola tarjeta con filas en vez de una tarjeta por grupo: son datos de
+  // la misma tabla, y cinco cajas apiladas ocupaban el doble sin decir más.
   return (
-    <div className="space-y-3">
-      {buckets
-        // El grupo neutro no se pinta. Se filtra por la CLAVE y no por
-        // `multiplier !== 1`: en un modo con multiplicadores propios, «normal»
-        // puede no valer 1.
-        .filter((b) => b.key !== "normal")
-        .map((b) => (
-          <div
-            key={b.key}
-            className={`panel-surface bg-panel rounded-xl2 p-4 ${ACCENT[b.key] ?? ""} animate-fadein`}
-          >
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="font-mono text-lg font-bold text-ink">x{b.multiplier}</span>
-              <span className="text-xs font-display tracking-widest text-ink-soft">
-                {/* Si algún día llega una clave desconocida, se enseña la
-                    etiqueta que manda el backend en vez de un hueco. */}
-                {LABEL_KEY[b.key] ? t(LABEL_KEY[b.key]) : b.label}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {b.types.map((tid) => typesById[tid] && <TypeBadge key={tid} type={typesById[tid]} size="sm" />)}
-            </div>
+    <ul className="card divide-y divide-hover !py-1 animate-fadein">
+      {visibles.map((b) => (
+        <li key={b.key} className="flex flex-col gap-2 py-3">
+          <div className="flex items-center gap-2.5">
+            <span className={`h-5 w-1 shrink-0 rounded-full ${ACCENT[b.key] ?? "bg-hover"}`} aria-hidden="true" />
+            <span className="font-mono text-base font-bold text-ink tabular-nums">x{b.multiplier}</span>
+            <span className="text-xs text-ink-soft">
+              {/* Si algún día llega una clave desconocida, se enseña la
+                  etiqueta que manda el backend en vez de un hueco. */}
+              {LABEL_KEY[b.key] ? t(LABEL_KEY[b.key]) : b.label}
+            </span>
           </div>
-        ))}
-    </div>
+          <div className="flex flex-wrap gap-1.5">
+            {b.types.map((tid) => typesById[tid] && <TypeBadge key={tid} type={typesById[tid]} size="sm" />)}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -147,7 +147,7 @@ export function ItemCombobox({
           id={combo.listId}
           role="listbox"
           aria-label={label}
-          className="absolute mt-1 w-full bg-panel border border-hover rounded-xl2 shadow-card max-h-48 overflow-auto z-20 animate-fadein"
+          className="popover absolute mt-1 w-full origin-top max-h-48 overflow-auto z-20"
         >
           {sugerencias.map((item, i) => (
             <li

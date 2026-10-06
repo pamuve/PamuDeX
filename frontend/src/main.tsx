@@ -6,7 +6,7 @@ import { I18nProvider } from "./i18n";
 import { applyA11y } from "./lib/a11y";
 import { registrarServiceWorker } from "./lib/serviceWorker";
 import "./index.css";
-import "./theme-vars.css";   // <- añadir, después de index.css
+import "./theme-vars.css"; // después de index.css: sus variables mandan
 
 // Alto contraste y escalado de texto ANTES de montar React (Tarea 8.1): son
 // preferencias de accesibilidad y no pueden entrar con un parpadeo, así que se

@@ -1,47 +1,50 @@
 import type { CSSProperties } from "react";
-import type { LucideIcon } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { Settings, UserCircle2, ChevronDown, Swords, Layers, SlidersHorizontal, DatabaseBackup, Users, LogOut, Star, History, Shield, Gamepad2, Check } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Settings,
+  UserCircle2,
+  ChevronDown,
+  Users,
+  LogOut,
+  History,
+  Shield,
+  Gamepad2,
+  Check,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useMenu } from "../hooks/useMenu";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 import { useActiveProfile, profileInitial } from "../lib/profile";
 import { readableInk } from "../lib/theme";
 import { useActiveChampions } from "../lib/champions";
 import { useActiveSession } from "../lib/session";
+import { NAV_PRIMARY, NAV_WORK, isActive } from "./BottomNav";
 
 /**
- * Enlaces de navegación de la barra, en un único sitio porque se pintan dos
- * veces: como iconos en la fila principal a partir de `lg`, y como fichas con
- * etiqueta en la fila desplazable por debajo de ese ancho.
- *
- * El corte está en `lg` (1024px) y no en `md` porque medido en Chromium la fila
- * de escritorio necesita 807px solo para los enlaces, el menú de modo y el de
- * perfil: a 768px seguía desbordando.
- *
- * `desktopLabelKey` marca el único enlace que en escritorio lleva texto además
- * del icono, tal y como estaba antes.
+ * Destinos de la barra de escritorio (`lg` en adelante). Por debajo van en
+ * `BottomNav`, que es donde se definen. Historial y ajustes no están aquí: son
+ * del perfil y viven en su menú.
  */
-const NAV_LINKS: {
-  to: string;
-  Icon: LucideIcon;
-  labelKey: string;
-  desktopLabelKey?: string;
-}[] = [
-  { to: "/favoritos", Icon: Star, labelKey: "favorites.title" },
-  { to: "/sesiones", Icon: Layers, labelKey: "sessions.nav" },
-  { to: "/editor", Icon: SlidersHorizontal, labelKey: "editor.nav" },
-  { to: "/datos", Icon: DatabaseBackup, labelKey: "data.nav" },
-  { to: "/equipo", Icon: Swords, labelKey: "team.nav", desktopLabelKey: "team.title" },
-  { to: "/ajustes", Icon: Settings, labelKey: "nav.settings" },
-];
+const NAV_DESKTOP = [...NAV_PRIMARY, ...NAV_WORK];
+
+/** Opciones de los menús desplegables de la barra: 44px de alto mínimo. */
+const MENU_ITEM = "glass-item";
+
+/** Botones de la barra que abren un menú. */
+const BAR_BUTTON =
+  "pressable flex items-center gap-1.5 min-h-[2.5rem] rounded-full px-2.5 text-ink-soft hover:text-ink hover:bg-ink/10";
+
+/** Panel de un menú desplegable, anclado a la esquina de su botón. */
+const MENU_PANEL =
+  "popover absolute right-0 mt-3 origin-top-right p-1.5 z-20";
 
 /**
- * Menú «Modo» (Tarea 6.3). Deja de ser un marcador de posición: desde aquí se
- * entra en Pokémon Champions y se vuelve a la Pokédex estándar.
+ * Menú «Modo» (Tarea 6.3): desde aquí se entra en Pokémon Champions y se vuelve
+ * a la Pokédex estándar.
  *
  * La sesión de ROM Hack aparece aquí solo como información: se elige en
- * `/sesiones`, y entrar en Champions la pausa porque los dos modos son
- * excluyentes.
+ * `/sesiones`, que está en la navegación principal y por eso aquí no se repite.
+ * Entrar en Champions la pausa porque los dos modos son excluyentes.
  */
 function ModeMenu({ label }: { label: string }) {
   const { t } = useI18n();
@@ -69,7 +72,7 @@ function ModeMenu({ label }: { label: string }) {
         ref={menu.triggerRef}
         onClick={menu.toggle}
         onKeyDown={menu.onTriggerKeyDown}
-        className="flex items-center gap-1 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors"
+        className={BAR_BUTTON}
         aria-haspopup="menu"
         aria-expanded={menu.open}
         aria-label={label}
@@ -78,18 +81,20 @@ function ModeMenu({ label }: { label: string }) {
         {/* Por debajo de `sm` el rótulo se queda en icono: son los 40px que le
             faltaban al distintivo de Champions para no truncarse en 360px. */}
         <Gamepad2 size={18} className="sm:hidden" aria-hidden="true" />
-        <span className="hidden sm:inline">{label}</span>
+        <span className="hidden sm:inline text-sm">{label}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
-      {menu.open && (
+      {menu.mounted && (
         <div
           ref={menu.menuRef}
+          data-state={menu.state}
+          aria-hidden={menu.open ? undefined : true}
           onKeyDown={menu.onMenuKeyDown}
           role="menu"
           aria-label={label}
-          className="absolute right-0 mt-2 w-60 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein"
+          className={`${MENU_PANEL} w-64`}
         >
-          <p className="px-3 py-1.5 text-[11px] text-ink-soft/70 border-b border-hover mb-1">
+          <p className="px-3 pt-1.5 pb-2 mb-1.5 text-xs text-ink-soft border-b border-ink/10">
             {t("mode.current", { name: modoActual })}
           </p>
 
@@ -100,38 +105,25 @@ function ModeMenu({ label }: { label: string }) {
                 exit();
                 ir("/");
               }}
-              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
+              className={MENU_ITEM}
             >
-              <LogOut size={16} aria-hidden="true" />
+              <LogOut size={16} className="text-ink-soft" aria-hidden="true" />
               {t("mode.exitChampions")}
             </button>
           ) : (
-            <button
-              role="menuitem"
-              onClick={() => ir("/champions")}
-              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
-            >
-              <Shield size={16} aria-hidden="true" />
+            <button role="menuitem" onClick={() => ir("/champions")} className={MENU_ITEM}>
+              <Shield size={16} className="text-ink-soft" aria-hidden="true" />
               {t("mode.enterChampions")}
             </button>
           )}
-
-          <button
-            role="menuitem"
-            onClick={() => ir("/sesiones")}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
-          >
-            <Layers size={16} aria-hidden="true" />
-            {t("sessions.nav")}
-          </button>
 
           <Link
             to="/champions/reglas"
             role="menuitem"
             onClick={() => menu.close(false)}
-            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink-soft hover:bg-hover hover:text-ink border-t border-hover mt-1"
+            className={MENU_ITEM}
           >
-            <SlidersHorizontal size={16} aria-hidden="true" />
+            <SlidersHorizontal size={16} className="text-ink-soft" aria-hidden="true" />
             {t("champions.title")}
           </Link>
         </div>
@@ -157,13 +149,12 @@ function ChampionsBadge() {
     <Link
       to="/champions"
       title={t("mode.badgeTitle", { name: champions.name })}
-      className="flex items-center gap-1.5 rounded-lg px-2 py-1 bg-[#F08030]/20 border border-[#F08030]/50 text-ink text-xs sm:text-sm transition-colors hover:bg-[#F08030]/30 min-w-0 max-w-full"
+      className="pressable glass flex items-center gap-1.5 min-h-[2.5rem] rounded-full px-3 border border-warning/40
+                 text-ink text-xs sm:text-sm transition-colors hover:bg-warning/25 min-w-0 max-w-full"
     >
-      <Shield size={14} className="shrink-0" aria-hidden="true" />
-      <span className="font-display tracking-wide truncate">{t("mode.champions")}</span>
-      <span className="hidden sm:inline text-ink-soft max-w-[8rem] truncate">
-        · {champions.name}
-      </span>
+      <Shield size={14} className="shrink-0 text-warning" aria-hidden="true" />
+      <span className="font-display font-semibold truncate">{t("mode.champions")}</span>
+      <span className="hidden sm:inline text-ink-soft max-w-[8rem] truncate">· {champions.name}</span>
     </Link>
   );
 }
@@ -185,11 +176,7 @@ function ProfileMenu() {
 
   if (!profile) {
     return (
-      <Link
-        to="/perfiles"
-        className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors text-sm"
-        title={t("profiles.title")}
-      >
+      <Link to="/perfiles" className={`${BAR_BUTTON} text-sm`} title={t("profiles.title")}>
         <UserCircle2 size={22} aria-hidden="true" />
         <span className="hidden sm:inline">{t("profiles.choose")}</span>
       </Link>
@@ -204,7 +191,7 @@ function ProfileMenu() {
         ref={menu.triggerRef}
         onClick={menu.toggle}
         onKeyDown={menu.onTriggerKeyDown}
-        className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-ink-soft hover:text-ink hover:bg-hover transition-colors"
+        className={`${BAR_BUTTON} px-1.5`}
         aria-haspopup="menu"
         aria-expanded={menu.open}
         aria-label={t("profiles.activeProfile", { name: profile.name })}
@@ -219,45 +206,37 @@ function ProfileMenu() {
         >
           {profile.avatar || profileInitial(profile.name)}
         </span>
-        <span className="hidden sm:inline text-sm max-w-[8rem] truncate">{profile.name}</span>
+        {/* El nombre solo cuando sobra sitio: en `lg` la barra ya lleva los
+            seis destinos con texto, y el avatar identifica el perfil igual. */}
+        <span className="hidden xl:inline text-sm max-w-[8rem] truncate">{profile.name}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
 
-      {menu.open && (
+      {menu.mounted && (
         <div
           ref={menu.menuRef}
+          data-state={menu.state}
+          aria-hidden={menu.open ? undefined : true}
           onKeyDown={menu.onMenuKeyDown}
           role="menu"
           aria-label={t("profiles.activeProfile", { name: profile.name })}
-          className="absolute right-0 mt-2 w-52 bg-panel border border-hover rounded-xl2 shadow-card p-2 z-20 animate-fadein"
+          className={`${MENU_PANEL} w-56`}
         >
-          <p className="px-3 py-1.5 text-[11px] text-ink-soft/70 border-b border-hover mb-1">
+          <p className="px-3 pt-1.5 pb-2 mb-1.5 text-xs text-ink-soft border-b border-ink/10 truncate">
             {t("profiles.activeProfile", { name: profile.name })}
           </p>
-          {/* Historial y ajustes viven aquí y no en la barra: son del perfil,
-              y la barra ya va justa de sitio en móvil. */}
-          <button
-            role="menuitem"
-            onClick={() => ir("/historial")}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
-          >
-            <History size={16} aria-hidden="true" />
+          {/* Historial y ajustes viven aquí y no en la barra: son del perfil. */}
+          <button role="menuitem" onClick={() => ir("/historial")} className={MENU_ITEM}>
+            <History size={16} className="text-ink-soft" aria-hidden="true" />
             {t("history.title")}
           </button>
-          <button
-            role="menuitem"
-            onClick={() => ir("/ajustes")}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
-          >
-            <Settings size={16} aria-hidden="true" />
+          <button role="menuitem" onClick={() => ir("/ajustes")} className={MENU_ITEM}>
+            <Settings size={16} className="text-ink-soft" aria-hidden="true" />
             {t("nav.settings")}
           </button>
-          <button
-            role="menuitem"
-            onClick={() => ir("/perfiles")}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
-          >
-            <Users size={16} aria-hidden="true" />
+          <div role="separator" className="mx-2 my-1.5 border-t border-ink/10" />
+          <button role="menuitem" onClick={() => ir("/perfiles")} className={MENU_ITEM}>
+            <Users size={16} className="text-ink-soft" aria-hidden="true" />
             {t("profiles.switch")}
           </button>
           <button
@@ -266,9 +245,9 @@ function ProfileMenu() {
               setProfile(null);
               ir("/perfiles");
             }}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-ink hover:bg-hover text-left"
+            className={MENU_ITEM}
           >
-            <LogOut size={16} aria-hidden="true" />
+            <LogOut size={16} className="text-ink-soft" aria-hidden="true" />
             {t("profiles.exit")}
           </button>
         </div>
@@ -277,140 +256,134 @@ function ProfileMenu() {
   );
 }
 
-export function TopBar() {
+/** Selector de idioma. El mismo ajuste está en /ajustes; esto es el atajo. */
+function LangMenu() {
   const { lang, setLang, t } = useI18n();
-  const langMenu = useMenu();
+  const menu = useMenu();
   const current = AVAILABLE_LANGS.find((l) => l.code === lang) ?? AVAILABLE_LANGS[0];
 
   return (
-    <header className="sticky top-0 z-30 bg-base/95 backdrop-blur border-b border-hover">
-      {/* `gap-2` en móvil en vez de `gap-3`: son 16px que se llevaban cuatro
-          huecos y que aquí valen para que el distintivo de Champions quepa
-          entero en 360px en lugar de quedarse en «Cha…». */}
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2 sm:gap-3">
-        <div className="relative shrink-0">
-          <button
-            ref={langMenu.triggerRef}
-            onClick={langMenu.toggle}
-            onKeyDown={langMenu.onTriggerKeyDown}
-            className="text-xl sm:text-2xl leading-none hover:scale-110 transition-transform"
-            aria-haspopup="menu"
-            aria-expanded={langMenu.open}
-            // La bandera es un emoji decorativo: el nombre accesible dice qué
-            // idioma hay puesto, no solo que esto cambia el idioma.
-            aria-label={t("a11y.changeLanguage", { name: current.label })}
-            title={t("a11y.changeLanguage", { name: current.label })}
-          >
-            <span aria-hidden="true">{current.flag}</span>
-          </button>
-          {langMenu.open && (
-            <div
-              ref={langMenu.menuRef}
-              onKeyDown={langMenu.onMenuKeyDown}
-              role="menu"
-              aria-label={t("settings.language")}
-              className="absolute left-0 mt-2 w-40 bg-panel border border-hover rounded-xl2 shadow-card p-1 z-20 animate-fadein"
+    <div className="relative">
+      <button
+        ref={menu.triggerRef}
+        onClick={menu.toggle}
+        onKeyDown={menu.onTriggerKeyDown}
+        className={`${BAR_BUTTON} min-w-[2.5rem] justify-center text-lg leading-none`}
+        aria-haspopup="menu"
+        aria-expanded={menu.open}
+        // La bandera es un emoji decorativo: el nombre accesible dice qué
+        // idioma hay puesto, no solo que esto cambia el idioma.
+        aria-label={t("a11y.changeLanguage", { name: current.label })}
+        title={t("a11y.changeLanguage", { name: current.label })}
+      >
+        <span aria-hidden="true">{current.flag}</span>
+      </button>
+      {menu.mounted && (
+        <div
+          ref={menu.menuRef}
+          data-state={menu.state}
+          aria-hidden={menu.open ? undefined : true}
+          onKeyDown={menu.onMenuKeyDown}
+          role="menu"
+          aria-label={t("settings.language")}
+          className={`${MENU_PANEL} w-44`}
+        >
+          {AVAILABLE_LANGS.map((l) => (
+            <button
+              key={l.code}
+              role="menuitemradio"
+              aria-checked={l.code === lang}
+              onClick={() => {
+                setLang(l.code);
+                menu.close();
+              }}
+              className={MENU_ITEM}
             >
-              {AVAILABLE_LANGS.map((l) => (
-                <button
-                  key={l.code}
-                  role="menuitemradio"
-                  aria-checked={l.code === lang}
-                  onClick={() => {
-                    setLang(l.code);
-                    langMenu.close();
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-ink hover:bg-hover"
-                >
-                  <span className="text-lg" aria-hidden="true">
-                    {l.flag}
-                  </span>{" "}
-                  {l.label}
-                  {l.code === lang && <Check size={14} className="ml-auto" aria-hidden="true" />}
-                </button>
-              ))}
-            </div>
-          )}
+              <span className="text-lg" aria-hidden="true">
+                {l.flag}
+              </span>
+              {l.label}
+              {l.code === lang && <Check size={14} className="ml-auto text-accent" aria-hidden="true" />}
+            </button>
+          ))}
         </div>
+      )}
+    </div>
+  );
+}
 
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6890F0] to-[#F85888] flex items-center justify-center font-display font-bold text-ink">
-            P
-          </span>
-          {/* Por debajo de `sm` queda solo el cuadro del logo: el nombre son casi
-              100px y es lo que deja sitio al distintivo de Champions en 360px. */}
+export function TopBar() {
+  const { t } = useI18n();
+  const { pathname } = useLocation();
+
+  return (
+    // Sin franja opaca: los controles son cápsulas de vidrio que flotan, y
+    // detrás solo hay un velo (`scroll-edge`) que funde el contenido al pasar
+    // por debajo. Ver «Borde de desplazamiento» en `index.css`.
+    <header className="sticky top-0 z-30 scroll-edge pt-[env(safe-area-inset-top)]">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center gap-2 sm:gap-3">
+        <Link to="/" className="flex items-center gap-2 shrink-0 rounded-lg" aria-label={t("app.name")}>
+          {/* El icono de la app: el mismo del escritorio y de la pantalla de
+              inicio. Antes era una «P» sobre un degradado que no era la marca. */}
+          <img src="/icons/icon.svg" alt="" width={32} height={32} className="h-8 w-8" />
+          {/* Por debajo de `sm` queda solo el icono: el nombre son casi 100px y
+              es lo que deja sitio al distintivo de Champions en 360px. */}
           <span className="hidden sm:inline font-display font-bold tracking-tight text-lg text-ink">
             {t("app.name")}
           </span>
         </Link>
 
-        {/* Junto al logo y ocupando el hueco flexible: se ve siempre, también en
-            móvil. `min-w-0` es lo que le deja encogerse en vez de empujar la
-            fila hasta desbordar. */}
-        <span className="flex-1 min-w-0 flex">
+        {/*
+          Destinos de escritorio, con texto: solo con iconos había que pasar el
+          ratón por encima para saber a dónde llevaba cada uno.
+
+          `min-w-0` + `scroll-row` por el escalado de texto (8.1): las media
+          queries no ven el `font-size` de la raíz, así que al 130% esta fila
+          puede pedir más ancho del que hay. Se desplaza ella en vez de sacar
+          scroll horizontal a todo el documento. Por eso no lleva desplegables:
+          `overflow-x` los recortaría.
+        */}
+        {/* `glass` y no `glass-host`: aquí no hay desplegables, y como la
+            fila puede desplazarse en horizontal, un vidrio en pseudoelemento
+            se desplazaría con ella. */}
+        <nav
+          aria-label={t("nav.primary")}
+          className="glass hidden lg:flex items-center gap-0.5 min-w-0 overflow-x-auto scroll-row ml-2 rounded-full p-1"
+        >
+          {NAV_DESKTOP.map((item) => {
+            const active = isActive(item, pathname);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                aria-current={active ? "page" : undefined}
+                className={`pressable shrink-0 flex items-center gap-1.5 min-h-[2.5rem] rounded-full px-3 text-sm ${
+                  active
+                    ? "bg-ink/10 text-ink font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]"
+                    : "text-ink-soft hover:text-ink hover:bg-ink/10"
+                }`}
+              >
+                <item.Icon size={16} aria-hidden="true" />
+                {t(item.labelKey)}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Ocupa el hueco flexible: se ve siempre, también en móvil. `min-w-0`
+            es lo que le deja encogerse en vez de empujar la fila. */}
+        <span className="flex-1 min-w-0 flex justify-end lg:justify-start">
           <ChampionsBadge />
         </span>
 
-        {/* De `lg` en adelante los enlaces caben en la propia fila. Por debajo
-            se van a la fila desplazable de abajo.
-
-            `min-w-0` + `scroll-row` por el escalado de texto (8.1): el punto de
-            corte está en píxeles y las media queries NO ven el `font-size` de
-            la raíz, así que a 1024px con el texto al 130% esta fila pedía
-            1033px y sacaba scroll horizontal a todo el documento. Ahora se
-            desplaza ella, igual que la fila de móvil. Cuando cabe —el caso
-            normal— no se nota nada. Aquí tampoco puede haber desplegables:
-            `overflow-x` los recortaría. */}
-        <nav className="hidden lg:flex items-center gap-3 min-w-0 overflow-x-auto scroll-row">
-          {NAV_LINKS.map(({ to, Icon, labelKey, desktopLabelKey }) => (
-            <Link
-              key={to}
-              to={to}
-              title={t(desktopLabelKey ?? labelKey)}
-              aria-label={t(labelKey)}
-              className={
-                desktopLabelKey
-                  ? "flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-2 py-1.5 transition-colors text-sm"
-                  : "rounded-lg p-2 text-ink-soft hover:bg-hover hover:text-ink"
-              }
-            >
-              <Icon size={desktopLabelKey ? 16 : 20} aria-hidden="true" />
-              {desktopLabelKey && <span>{t(desktopLabelKey)}</span>}
-            </Link>
-          ))}
-        </nav>
-
-        <span className="shrink-0">
+        {/* `glass-host`: lleva tres menús dentro y su vidrio tiene que dejar
+            que el de ellos desenfoque la página (ver `index.css`). */}
+        <span className="glass-host relative shrink-0 flex items-center gap-0.5 rounded-full p-1">
           <ModeMenu label={t("nav.mode")} />
-        </span>
-
-        <span className="shrink-0">
+          <LangMenu />
           <ProfileMenu />
         </span>
       </div>
-
-      {/* Fila de navegación de móvil.
-          El desplazamiento horizontal se queda AQUÍ (`overflow-x-auto` sobre un
-          contenedor que nunca es más ancho que la ventana), así el documento no
-          llega a desbordar y desaparece el scroll horizontal de toda la app.
-          Por eso no hay ningún desplegable dentro: `overflow-x-auto` recorta lo
-          que se salga en vertical y el menú quedaría cortado. */}
-      <nav
-        aria-label={t("nav.primary")}
-        className="lg:hidden flex items-center gap-1 overflow-x-auto overscroll-x-contain scroll-row px-4 pb-2"
-      >
-        {NAV_LINKS.map(({ to, Icon, labelKey }) => (
-          <Link
-            key={to}
-            to={to}
-            title={t(labelKey)}
-            className="shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-ink-soft hover:bg-hover hover:text-ink transition-colors"
-          >
-            <Icon size={16} aria-hidden="true" />
-            {t(labelKey)}
-          </Link>
-        ))}
-      </nav>
     </header>
   );
 }

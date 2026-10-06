@@ -17,6 +17,14 @@
   --color-ink: #F5F7FA;
   --color-ink-soft: #A9BDD2;
   --color-accent: #7FB4E8;
+
+  /* Colores de estado, en canales RGB para que Tailwind admita opacidad
+     (`bg-danger/15`). No forman parte del tema de sesión: «peligro» tiene que
+     verse igual en todos los ROM Hacks. Todos superan 4.5:1 sobre el panel. */
+  --color-success-rgb: 108 199 139;
+  --color-danger-rgb: 240 122 122;
+  --color-warning-rgb: 240 160 80;
+  --color-favorite-rgb: 248 208 48;
 }
 
 /* El fondo de la página sigue al tema aunque el <body> no lleve clases Tailwind. */

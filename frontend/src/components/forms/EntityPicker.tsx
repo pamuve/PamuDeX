@@ -45,7 +45,7 @@ export default function EntityPicker({
   }, [items, query]);
 
   return (
-    <div className="rounded-xl2 bg-panel p-3 shadow-card">
+    <div className="card p-3">
       <div className="relative">
         <Search
           size={16}
@@ -74,7 +74,6 @@ export default function EntityPicker({
                 aria-current={isSelected ? "true" : undefined}
                 className={
                   "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors " +
-                  "focus:outline-none focus:ring-2 focus:ring-ink-soft/40 " +
                   (isSelected ? "bg-hover text-ink" : "text-ink-soft hover:bg-hover hover:text-ink")
                 }
               >

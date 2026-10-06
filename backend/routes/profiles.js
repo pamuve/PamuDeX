@@ -40,6 +40,15 @@ const express = require("express");
 const { isValidPin, hashPin, verifyPin } = require("../lib/pin");
 const createThrottle = require("../lib/pinThrottle");
 
+/*
+ * Hash de un PIN que nadie tiene, para comprobar contra él cuando el perfil no
+ * existe. Con un hash vacío `verifyPin` salía antes de calcular scrypt y la
+ * respuesta llegaba en microsegundos, que delataba qué ids existen frente a
+ * los ~50 ms de un PIN incorrecto de verdad.
+ */
+let hashFicticio = "";
+hashPin("0000").then((h) => (hashFicticio = h));
+
 const MAX_NAME = 40;
 const MAX_AVATAR = 8; // un emoji puede ocupar varios code units (👨‍👩‍👧 y similares)
 
@@ -288,9 +297,10 @@ module.exports = (db) => {
     const row = q.pinOf.get(id);
 
     // Perfil inexistente: se responde como un PIN fallido, y además cuenta para
-    // el límite de intentos para que tampoco se distinga por el tiempo.
+    // el límite de intentos. Se compara contra un hash real (que no casa con
+    // nada) para que tarde lo mismo y tampoco se distinga por el tiempo.
     if (!row) {
-      const fail = await checkPinOrError(id, " ", "");
+      const fail = await checkPinOrError(id, "\0", hashFicticio);
       return res.status(fail.status).json(fail.body);
     }
 

@@ -39,7 +39,7 @@ const ROUTE: Record<FavoriteType, string> = {
 };
 
 export default function Favorites() {
-  const { t, lang } = useI18n();
+  const { t, lang, name } = useI18n();
   const [profile] = useActiveProfile();
   const favorites = useAllFavorites();
 
@@ -62,8 +62,7 @@ export default function Favorites() {
     if (!favorites.ready) return;
 
     let cancelled = false;
-    const nombre = (o: { name_es: string; name_en: string }) =>
-      lang === "en" ? o.name_en : o.name_es;
+    const nombre = name;
 
     async function resolve() {
       setResolving(true);
@@ -165,11 +164,11 @@ export default function Favorites() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center">
         <UserCircle2 size={40} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
-        <h1 className="font-display font-bold text-2xl text-ink mb-2">{t("favorites.title")}</h1>
+        <h1 className="page-title mb-2">{t("favorites.title")}</h1>
         <p className="text-ink-soft mb-5">{t("favorites.needProfile")}</p>
         <Link
           to="/perfiles"
-          className="inline-block bg-panel hover:bg-hover text-ink rounded-lg px-5 py-2.5 text-sm transition-colors"
+          className="btn-primary"
         >
           {t("profiles.choose")}
         </Link>
@@ -187,7 +186,7 @@ export default function Favorites() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("favorites.title")}</h1>
+        <h1 className="page-title">{t("favorites.title")}</h1>
         <p className="text-ink-soft text-sm mt-1">
           {t("favorites.subtitle", { name: profile.name })}
         </p>
@@ -199,7 +198,7 @@ export default function Favorites() {
           {t("favorites.loading")}
         </div>
       ) : favorites.total === 0 ? (
-        <div className="bg-panel rounded-xl2 shadow-card p-8 text-center animate-fadein">
+        <div className="card p-8 text-center animate-fadein">
           <Star size={36} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
           <p className="text-ink font-medium mb-1">{t("favorites.empty")}</p>
           <p className="text-ink-soft text-sm">{t("favorites.emptyHint")}</p>
@@ -210,7 +209,7 @@ export default function Favorites() {
           if (!items.length) return null;
           return (
             <section key={group.type} className="animate-fadein">
-              <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-3">
+              <h2 className="section-title mb-3">
                 {group.label} ({items.length})
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -218,7 +217,7 @@ export default function Favorites() {
                   <Link
                     key={item.ref}
                     to={item.to}
-                    className="flex items-center gap-2 bg-panel hover:bg-hover rounded-xl2 shadow-card px-4 py-3 text-ink text-sm transition-colors"
+                    className="card-link flex items-center gap-2 px-4 py-3 text-ink text-sm"
                   >
                     {item.color && (
                       <span

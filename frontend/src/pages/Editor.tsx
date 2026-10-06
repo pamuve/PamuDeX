@@ -4,7 +4,6 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 import {
   catalogApi,
   chartApi,
@@ -28,6 +27,7 @@ import AbilityForm from "../components/forms/AbilityForm";
 import RelationsMatrix from "../components/forms/RelationsMatrix";
 import ThemeForm from "../components/forms/ThemeForm";
 import SessionRequired from "../components/SessionRequired";
+import { Loading } from "../components/PageState";
 
 type Tab = "pokemon" | "types" | "moves" | "abilities" | "relations" | "theme";
 const TABS: Tab[] = ["pokemon", "types", "moves", "abilities", "relations", "theme"];
@@ -37,11 +37,14 @@ interface I18nShape {
   lang?: string;
 }
 
-function Spinner({ label }: { label: string }) {
+/**
+ * Aviso de que un catálogo o una ficha no ha cargado. Antes las promesas se
+ * rechazaban sin capturar y el panel se quedaba vacío sin explicación.
+ */
+function LoadFailed({ t }: { t: I18nShape["t"] }) {
   return (
-    <p className="flex items-center gap-2 py-8 text-sm text-ink-soft">
-      <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-      {label}
+    <p role="alert" className="rounded-xl2 bg-danger/10 px-4 py-3 text-sm text-ink">
+      {t("common.loadErrorInline")}
     </p>
   );
 }
@@ -53,6 +56,7 @@ function TypesPane({ overrides }: { overrides: SessionOverrides }) {
   const [types, setTypes] = useState<TypeMeta[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fallo, setFallo] = useState(false);
 
   const { override, save, reset } = useSessionOverride(overrides, "types", selectedId);
   const bucket = overrides.doc.types || {};
@@ -66,6 +70,7 @@ function TypesPane({ overrides }: { overrides: SessionOverrides }) {
         setTypes(list);
         if (list.length) setSelectedId((current) => current ?? list[0].id);
       })
+      .catch(() => !cancelled && setFallo(true))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -89,7 +94,8 @@ function TypesPane({ overrides }: { overrides: SessionOverrides }) {
         onSelect={(id) => setSelectedId(String(id))}
       />
       <div>
-        {loading && <Spinner label={t("editor.loading")} />}
+        {loading && <Loading label={t("editor.loading")} />}
+        {fallo && <LoadFailed t={t} />}
         {selected && (
           <TypeForm base={selected} override={override} saving={overrides.saving} t={t}
             onSave={(patch) => save(patch)} onReset={() => reset()} />
@@ -108,6 +114,7 @@ function MovesPane({ overrides }: { overrides: SessionOverrides }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<MoveDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fallo, setFallo] = useState(false);
 
   const { override, save, reset } = useSessionOverride(overrides, "moves", selectedId);
   const bucket = overrides.doc.moves || {};
@@ -121,6 +128,7 @@ function MovesPane({ overrides }: { overrides: SessionOverrides }) {
         setTypes(typeList);
         if (moves.length) setSelectedId((current) => current ?? moves[0].id);
       })
+      .catch(() => !cancelled && setFallo(true))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -130,7 +138,10 @@ function MovesPane({ overrides }: { overrides: SessionOverrides }) {
   useEffect(() => {
     if (selectedId === null) return;
     let cancelled = false;
-    catalogApi.move(selectedId).then((data) => !cancelled && setDetail(data));
+    catalogApi
+      .move(selectedId)
+      .then((data) => !cancelled && setDetail(data))
+      .catch(() => !cancelled && setFallo(true));
     return () => {
       cancelled = true;
     };
@@ -151,7 +162,8 @@ function MovesPane({ overrides }: { overrides: SessionOverrides }) {
         onSelect={(id) => setSelectedId(Number(id))}
       />
       <div>
-        {loading && <Spinner label={t("editor.loading")} />}
+        {loading && <Loading label={t("editor.loading")} />}
+        {fallo && <LoadFailed t={t} />}
         {detail && (
           <MoveForm base={detail} override={override} types={types} lang={lang}
             saving={overrides.saving} t={t} onSave={(patch) => save(patch)} onReset={() => reset()} />
@@ -169,6 +181,7 @@ function AbilitiesPane({ overrides }: { overrides: SessionOverrides }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<AbilityDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fallo, setFallo] = useState(false);
 
   const { override, save, reset } = useSessionOverride(overrides, "abilities", selectedId);
   const bucket = overrides.doc.abilities || {};
@@ -182,6 +195,7 @@ function AbilitiesPane({ overrides }: { overrides: SessionOverrides }) {
         setList(abilities);
         if (abilities.length) setSelectedId((current) => current ?? abilities[0].id);
       })
+      .catch(() => !cancelled && setFallo(true))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -191,7 +205,10 @@ function AbilitiesPane({ overrides }: { overrides: SessionOverrides }) {
   useEffect(() => {
     if (selectedId === null) return;
     let cancelled = false;
-    catalogApi.ability(selectedId).then((data) => !cancelled && setDetail(data));
+    catalogApi
+      .ability(selectedId)
+      .then((data) => !cancelled && setDetail(data))
+      .catch(() => !cancelled && setFallo(true));
     return () => {
       cancelled = true;
     };
@@ -211,7 +228,8 @@ function AbilitiesPane({ overrides }: { overrides: SessionOverrides }) {
         onSelect={(id) => setSelectedId(Number(id))}
       />
       <div>
-        {loading && <Spinner label={t("editor.loading")} />}
+        {loading && <Loading label={t("editor.loading")} />}
+        {fallo && <LoadFailed t={t} />}
         {detail && (
           <AbilityForm base={detail} override={override} saving={overrides.saving} t={t}
             onSave={(patch) => save(patch)} onReset={() => reset()} />
@@ -228,6 +246,7 @@ function RelationsPane({ overrides }: { overrides: SessionOverrides }) {
   const [types, setTypes] = useState<TypeMeta[]>([]);
   const [baseChart, setBaseChart] = useState<Record<string, Record<string, number>>>({});
   const [loading, setLoading] = useState(true);
+  const [fallo, setFallo] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -240,6 +259,7 @@ function RelationsPane({ overrides }: { overrides: SessionOverrides }) {
         setTypes(data.types);
         setBaseChart(data.chart);
       })
+      .catch(() => !cancelled && setFallo(true))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -256,7 +276,8 @@ function RelationsPane({ overrides }: { overrides: SessionOverrides }) {
     return merged;
   }, [baseChart, relationOverrides]);
 
-  if (loading) return <Spinner label={t("editor.loading")} />;
+  if (loading) return <Loading label={t("editor.loading")} />;
+  if (fallo) return <LoadFailed t={t} />;
 
   return (
     <RelationsMatrix
@@ -284,7 +305,7 @@ export default function Editor() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 animate-fadein">
       <header className="mb-4">
-        <h1 className="text-xl font-semibold text-ink sm:text-2xl">{t("editor.title")}</h1>
+        <h1 className="page-title">{t("editor.title")}</h1>
         <p className="mt-1 text-sm text-ink-soft">
           {overrides.session
             ? t("editor.editingIn", { name: overrides.session.name })
@@ -297,7 +318,7 @@ export default function Editor() {
       ) : (
         <>
           <div role="tablist" aria-label={t("editor.title")}
-            className="mb-4 flex gap-1 overflow-x-auto rounded-xl2 bg-panel p-1 shadow-card">
+            className="card mb-4 flex gap-1 overflow-x-auto p-1">
             {TABS.map((item) => (
               <button
                 key={item}
@@ -307,7 +328,6 @@ export default function Editor() {
                 onClick={() => setTab(item)}
                 className={
                   "shrink-0 rounded-lg px-3 py-2 text-sm transition-colors " +
-                  "focus:outline-none focus:ring-2 focus:ring-ink-soft/40 " +
                   (tab === item ? "bg-hover text-ink" : "text-ink-soft hover:text-ink")
                 }
               >
@@ -317,7 +337,7 @@ export default function Editor() {
           </div>
 
           {overrides.error === "save" && (
-            <p role="alert" className="mb-3 rounded-xl2 bg-panel px-4 py-3 text-sm text-ink shadow-card">
+            <p role="alert" className="card mb-3 px-4 py-3 text-sm text-ink">
               {t("editor.saveError")}
             </p>
           )}

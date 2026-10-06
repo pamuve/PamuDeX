@@ -21,6 +21,7 @@ import {
 import { sessionsApi, type Session } from "../lib/apiSession";
 import { useActiveSession } from "../lib/session";
 import { useI18n } from "../i18n";
+import { inputClass, btnGhost, btnPrimary } from "../components/forms/FormField";
 
 type CardMode = "view" | "edit" | "confirm-delete";
 
@@ -126,25 +127,11 @@ export default function Sessions() {
     }
   }
 
-  const inputClass =
-    "w-full rounded-lg bg-base px-3 py-2 text-ink placeholder:text-ink-soft/60 " +
-    "border border-hover outline-none focus:border-ink-soft focus:ring-2 focus:ring-ink-soft/30";
-
-  const btnGhost =
-    "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-ink-soft " +
-    "hover:bg-hover hover:text-ink focus:outline-none focus:ring-2 focus:ring-ink-soft/40 " +
-    "disabled:opacity-40 transition-colors";
-
-  const btnPrimary =
-    "inline-flex items-center justify-center gap-2 rounded-lg bg-hover px-4 py-2 text-sm " +
-    "font-medium text-ink hover:brightness-125 focus:outline-none focus:ring-2 " +
-    "focus:ring-ink-soft/40 disabled:opacity-40 transition";
-
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 animate-fadein">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold text-ink sm:text-2xl">
+          <h1 className="page-title flex items-center gap-2">
             <Layers size={22} aria-hidden="true" />
             {t("sessions.title")}
           </h1>
@@ -172,7 +159,7 @@ export default function Sessions() {
       )}
 
       {creating && (
-        <div className="mb-5 rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
+        <div className="card mb-5 animate-fadein">
           <label className="mb-1 block text-xs uppercase tracking-wide text-ink-soft" htmlFor="new-session-name">
             {t("sessions.nameLabel")}
           </label>
@@ -226,9 +213,8 @@ export default function Sessions() {
         onClick={() => setActiveId(null)}
         aria-pressed={activeId === null}
         className={
-          "mb-4 flex w-full items-start gap-3 rounded-xl2 bg-panel p-4 text-left shadow-card " +
-          "transition-colors hover:bg-hover focus:outline-none focus:ring-2 focus:ring-ink-soft/40 " +
-          (activeId === null ? "ring-2 ring-ink-soft/60" : "")
+          "card-link mb-4 flex w-full items-start gap-3 text-left " +
+          (activeId === null ? "ring-2 ring-accent/70" : "")
         }
       >
         <Database size={20} className="mt-0.5 shrink-0 text-ink-soft" aria-hidden="true" />
@@ -254,7 +240,7 @@ export default function Sessions() {
       )}
 
       {!loading && list.length === 0 && (
-        <div className="rounded-xl2 bg-panel p-8 text-center shadow-card">
+        <div className="card p-8 text-center">
           <p className="text-ink">{t("sessions.empty")}</p>
           <p className="mt-1 text-sm text-ink-soft">{t("sessions.emptyHint")}</p>
         </div>
@@ -270,8 +256,8 @@ export default function Sessions() {
             <li
               key={session.id}
               className={
-                "rounded-xl2 bg-panel p-4 shadow-card animate-fadein transition " +
-                (isActive ? "ring-2 ring-ink-soft/60" : "")
+                "card animate-fadein transition-shadow " +
+                (isActive ? "ring-2 ring-accent/70" : "")
               }
             >
               {mode === "edit" ? (

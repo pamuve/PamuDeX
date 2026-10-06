@@ -62,22 +62,25 @@ export function UpdatePrompt() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-md flex-wrap items-center gap-3
-                 rounded-xl2 border border-hover bg-panel p-4 shadow-card animate-fadein sm:inset-x-auto sm:right-4"
+      // Por encima de la cápsula de navegación de móvil; en `lg` ya no existe.
+      // `z-20`: por debajo de las barras (z-30), para que un menú abierto desde
+      // ellas no quede tapado por el aviso.
+      className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-4 z-20 mx-auto
+                 glass flex max-w-sm items-start gap-3 rounded-xl2 p-4 animate-fadein
+                 sm:inset-x-auto sm:right-4"
     >
-      <RefreshCw size={18} className="shrink-0 text-ink-soft" aria-hidden="true" />
-      <p className="min-w-[10rem] flex-1 text-sm text-ink">{t("update.ready")}</p>
-      <button
-        onClick={aplicarActualizacion}
-        className="rounded-lg bg-hover px-4 py-2 text-sm text-ink transition-colors hover:bg-base"
-      >
-        {t("update.apply")}
-      </button>
+      <RefreshCw size={18} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-ink">{t("update.ready")}</p>
+        <button onClick={aplicarActualizacion} className="btn-primary mt-3 min-h-[2.25rem] px-3">
+          {t("update.apply")}
+        </button>
+      </div>
       <button
         onClick={descartarActualizacion}
         aria-label={t("update.dismiss")}
         title={t("update.dismiss")}
-        className="rounded-lg p-2 text-ink-soft transition-colors hover:bg-hover hover:text-ink"
+        className="-m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-hover hover:text-ink"
       >
         <X size={16} aria-hidden="true" />
       </button>

@@ -104,7 +104,7 @@ export type AbilityDetail = AbilitySummary &
   WithGenerationalDifferences & {
     generation: number;
     effect_es: string;
-    pokemon: { id: number; dex: number; name_es: string; is_hidden: number }[];
+    pokemon: { id: number; dex: number; name_es: string; name_en: string; is_hidden: number }[];
   };
 
 export type SearchResults = {

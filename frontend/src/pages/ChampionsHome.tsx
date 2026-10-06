@@ -28,15 +28,14 @@ import { PokeType, PokemonSummary } from "../types";
 import { useI18n } from "../i18n";
 
 export default function ChampionsHome() {
-  const { t, lang } = useI18n();
+  const { t, name } = useI18n();
   const { champions, enter, exit } = useActiveChampions();
 
   const [list, setList] = useState<ChampionsRulesSummary[]>([]);
   const [types, setTypes] = useState<PokeType[]>([]);
   const [pokemon, setPokemon] = useState<PokemonSummary[]>([]);
 
-  const nombre = (o: { name_es: string; name_en: string }) =>
-    lang === "en" ? o.name_en : o.name_es;
+  const nombre = name;
 
   useEffect(() => {
     championsApi.list().then(setList).catch(() => setList([]));
@@ -57,17 +56,17 @@ export default function ChampionsHome() {
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <div className="text-center space-y-2">
           <Shield size={40} className="mx-auto text-ink-soft" aria-hidden="true" />
-          <h1 className="font-display font-bold text-2xl text-ink">{t("championsHome.title")}</h1>
+          <h1 className="page-title">{t("championsHome.title")}</h1>
           <p className="text-ink-soft text-sm max-w-md mx-auto">{t("championsHome.subtitle")}</p>
         </div>
 
         {list.length === 0 ? (
-          <div className="bg-panel rounded-xl2 shadow-card p-8 text-center animate-fadein">
+          <div className="card p-8 text-center animate-fadein">
             <p className="text-ink font-medium mb-1">{t("champions.empty")}</p>
             <p className="text-ink-soft text-sm mb-4">{t("champions.emptyHint")}</p>
             <Link
               to="/champions/reglas"
-              className="inline-flex items-center gap-1.5 bg-hover text-ink rounded-lg px-4 py-2.5 text-sm hover:brightness-125 transition"
+              className="btn-primary"
             >
               <SlidersHorizontal size={16} aria-hidden="true" />
               {t("champions.title")}
@@ -75,7 +74,7 @@ export default function ChampionsHome() {
           </div>
         ) : (
           <>
-            <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase">
+            <h2 className="section-title">
               {t("championsHome.pick")}
             </h2>
             <ul className="space-y-2">
@@ -83,7 +82,7 @@ export default function ChampionsHome() {
                 <li key={reglas.id}>
                   <button
                     onClick={() => enter({ id: reglas.id, name: reglas.name })}
-                    className="w-full flex items-center gap-3 bg-panel hover:bg-hover rounded-xl2 shadow-card px-4 py-3 text-left transition-colors"
+                    className="card-link w-full flex items-center gap-3 px-4 py-3 text-left"
                   >
                     <Shield size={18} className="text-ink-soft shrink-0" aria-hidden="true" />
                     <span className="flex-1 min-w-0">
@@ -112,27 +111,27 @@ export default function ChampionsHome() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
+      <section className="card animate-fadein">
         <div className="flex items-start gap-3 flex-wrap">
           <div className="flex-1 min-w-[12rem]">
             <p className="flex items-center gap-2 text-ink-soft text-xs uppercase tracking-widest font-display">
               <Shield size={14} aria-hidden="true" />
               {t("championsHome.title")}
             </p>
-            <h1 className="font-display font-bold text-2xl text-ink mt-1">{champions.name}</h1>
+            <h1 className="page-title mt-1">{champions.name}</h1>
             <p className="text-ink-soft text-sm mt-1">{t("championsHome.active")}</p>
           </div>
           <div className="flex gap-2">
             <Link
               to="/champions/reglas"
-              className="flex items-center gap-1.5 bg-base hover:bg-hover text-ink rounded-lg px-3 py-2.5 text-sm transition-colors"
+              className="btn-secondary"
             >
               <SlidersHorizontal size={16} aria-hidden="true" />
               {t("championsHome.editRules")}
             </Link>
             <button
               onClick={exit}
-              className="flex items-center gap-1.5 bg-base hover:bg-hover text-ink rounded-lg px-3 py-2.5 text-sm transition-colors"
+              className="btn-secondary"
             >
               <LogOut size={16} aria-hidden="true" />
               {t("championsHome.exit")}
@@ -145,7 +144,7 @@ export default function ChampionsHome() {
       </section>
 
       <section>
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-3">
+        <h2 className="section-title mb-3">
           {t("championsHome.types")}
         </h2>
         {/* Los tipos NO se filtran: son la física del juego, no contenido que un
@@ -160,7 +159,7 @@ export default function ChampionsHome() {
       </section>
 
       <section>
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-3">
+        <h2 className="section-title mb-3">
           {t("championsHome.pokedex", { n: pokemon.length })}
         </h2>
         {pokemon.length === 0 ? (
@@ -171,7 +170,7 @@ export default function ChampionsHome() {
               <Link
                 key={p.id}
                 to={`/pokemon/${p.id}`}
-                className="bg-panel hover:bg-hover rounded-xl2 p-4 shadow-card transition-colors flex flex-col items-center gap-1 animate-fadein"
+                className="card-link p-4 flex flex-col items-center gap-1 animate-fadein"
               >
                 <span className="text-ink-soft font-mono text-xs">
                   #{String(p.dex).padStart(3, "0")}

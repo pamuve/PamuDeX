@@ -6,6 +6,275 @@ html, body, #root {
   height: 100%;
 }
 
+/* ================================================================== */
+/* Movimiento                                                         */
+/* ================================================================== */
+/*
+ * Muelles, no duraciones. Las curvas son la respuesta de un muelle real
+ * muestreada con `linear()`, con los parámetros que usa Apple (WWDC 2018,
+ * «Designing Fluid Interfaces»):
+ *
+ *   --ease-spring   amortiguación 1.0, respuesta 0.35 s: llega sin rebotar.
+ *                   El estilo por defecto de toda la interfaz.
+ *   --ease-bounce   amortiguación 0.8: un 1,5 % de sobrepaso. Solo para lo que
+ *                   aparece como consecuencia directa de un gesto (un menú que
+ *                   sale del botón pulsado), nunca para lo que entra solo.
+ *
+ * Las transiciones CSS se pueden interrumpir y arrancan del valor que hay en
+ * pantalla, así que un hover o una pulsación a medias se invierten sin saltos.
+ * Un navegador sin `linear()` cae en `ease`, que también sirve.
+ */
+/* ================================================================== */
+/* Liquid glass                                                       */
+/* ================================================================== */
+/*
+ * El material de Apple (iOS 26 / macOS 26) hecho solo con CSS que funciona
+ * igual en Safari, Chrome/Brave y Firefox. Cinco capas:
+ *
+ *   tinte     el color del panel al 55 %: el vidrio tiene cuerpo, no es aire.
+ *   desenfoque  saturado al 190 %: lo de debajo se intuye con su color, no
+ *               lavado a gris (los sprites y los tipos siguen reconociéndose).
+ *   lámina    un degradado diagonal muy tenue: la luz resbalando por la cara.
+ *   canto     filo especular arriba, reflejo débil abajo y un contorno de 1px:
+ *             es lo que hace que se lea como un objeto con grosor.
+ *   elevación sombra amplia y difusa: flota sobre el contenido.
+ *
+ * Fuera a propósito: la refracción con `feDisplacementMap` dentro de
+ * `backdrop-filter`. Solo existe en Chromium; en Safari (Mac e iPhone) no
+ * hace nada y el vidrio se vería distinto en cada aparato.
+ *
+ * Todo sale de variables para que «transparencia reducida» y el alto
+ * contraste lo vuelvan opaco tocando solo esto.
+ */
+:root {
+  --glass-tint: color-mix(in srgb, var(--color-panel) 55%, transparent);
+  /* Los menús llevan texto en varias líneas y pasan por encima de sprites y
+     distintivos de color: más cuerpo para que se lean sin esfuerzo. Las
+     cápsulas de navegación, con iconos y una palabra, pueden ser más ligeras. */
+  --glass-tint-dense: color-mix(in srgb, var(--color-panel) 74%, transparent);
+  --glass-filter: blur(22px) saturate(190%) brightness(1.06);
+  --glass-filter-off: blur(0px) saturate(100%) brightness(1);
+  --glass-sheen: linear-gradient(
+    140deg,
+    rgb(255 255 255 / 0.1),
+    rgb(255 255 255 / 0) 38%,
+    rgb(255 255 255 / 0) 68%,
+    rgb(255 255 255 / 0.04)
+  );
+  --glass-edge: inset 0 1px 0 rgb(255 255 255 / 0.22), inset 0 -1px 0 rgb(255 255 255 / 0.05),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  --glass-lift: 0 18px 44px -14px rgb(2 6 16 / 0.75), 0 2px 8px -2px rgb(2 6 16 / 0.3);
+}
+
+:root {
+  --ease-spring: linear(0, 0.055, 0.173, 0.309, 0.441, 0.558, 0.656, 0.736, 0.8, 0.849, 0.887,
+    0.916, 0.938, 0.955, 0.967, 0.976, 0.982, 0.987, 0.991, 0.993, 0.995, 0.997, 0.998, 0.998, 1);
+  --ease-bounce: linear(0, 0.045, 0.152, 0.286, 0.424, 0.554, 0.668, 0.763, 0.839, 0.897, 0.94,
+    0.971, 0.991, 1.004, 1.011, 1.014, 1.015, 1.014, 1.013, 1.011, 1.009, 1.007, 1.005, 1.003,
+    1.002, 1.001, 1.001, 1, 1, 1, 1);
+  --dur-spring: 500ms;
+}
+
+/* ================================================================== */
+/* Sistema de componentes                                             */
+/* ================================================================== */
+/*
+ * Piezas que se repetían a mano en cada página con pequeñas diferencias. No es
+ * una librería de componentes: son clases, y cualquier utilidad de Tailwind
+ * sigue pudiendo añadirse al lado (y gana, porque va en una capa posterior).
+ *
+ * Botones: alto mínimo de 2.75rem (44px), el objetivo táctil mínimo, y en
+ * `rem` para que crezca con el escalado de texto de la 8.1.
+ */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Sin el destello gris de WebKit al tocar: la respuesta la da cada
+       control con su propio estado pulsado. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* `manipulation` quita la espera de ~300 ms con la que el navegador
+     comprueba si el toque era el primero de un doble toque para ampliar. */
+  a, button, input, select, textarea, label, summary, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* El seguimiento depende del tamaño: los títulos grandes se aprietan
+     (a ese tamaño las letras se leen separadas) y el texto pequeño se abre un
+     poco. Interlineado inverso al tamaño. */
+  h1 {
+    letter-spacing: -0.022em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  /* --- Respuesta al pulsar -------------------------------------------- */
+  /* Se encoge EN EL MOMENTO de pulsar (80 ms) y vuelve con el muelle al
+     soltar: la respuesta está en el `pointerdown`, no en el `click`. */
+  .pressable {
+    transition-property: transform, background-color, color, filter, box-shadow;
+    transition-duration: var(--dur-spring);
+    transition-timing-function: var(--ease-spring);
+  }
+  .pressable:active {
+    transform: scale(0.97);
+    transition-duration: 80ms;
+    transition-timing-function: ease-out;
+  }
+
+  /* --- Superficies ------------------------------------------------------ */
+  .card {
+    @apply bg-panel rounded-xl2 p-4 shadow-card sm:p-5;
+  }
+  /* Tarjeta que es en sí misma un enlace o un botón. Escala menos que un
+     botón: es más grande y el mismo porcentaje se nota mucho más. */
+  .card-link {
+    @apply card pressable hover:bg-hover;
+  }
+  .card-link:active {
+    transform: scale(0.985);
+  }
+
+  /* Aviso informativo dentro de la página (no flota). */
+  .notice {
+    @apply flex items-start gap-2 rounded-xl2 border border-hover bg-panel p-3 text-sm text-ink;
+  }
+
+  /* --- Vidrio ---------------------------------------------------------- */
+  /* Superficie de vidrio sobre el propio elemento. Para lo que no lleva menús
+     dentro: desplegables, diálogos, avisos flotantes. */
+  .glass {
+    background: var(--glass-sheen), var(--glass-tint);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    box-shadow: var(--glass-edge), var(--glass-lift);
+  }
+
+  /*
+   * El mismo vidrio, pintado en un `::before` detrás del contenido. Para los
+   * contenedores que tienen menús dentro (la cápsula de la barra superior, la
+   * barra inferior).
+   *
+   * No es manía: en Chromium (Brave, Chrome, Edge) un elemento con
+   * `backdrop-filter` es «raíz de fondo» para lo que lleva dentro, y un menú de
+   * vidrio dentro de él solo podría desenfocar la barra, no la página. Con el
+   * filtro en un pseudoelemento el contenedor deja de serlo. Safari no tiene
+   * esa limitación, así que así se ve igual en los dos. Necesita que el
+   * elemento esté posicionado (relative, sticky, fixed…).
+   */
+  .glass-host {
+    isolation: isolate;
+    box-shadow: var(--glass-lift);
+  }
+  .glass-host::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: var(--glass-sheen), var(--glass-tint);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    box-shadow: var(--glass-edge);
+  }
+
+  /*
+   * Lo que flota y se abre desde un botón: menús y listas desplegables.
+   *
+   * Entra y sale con TRANSICIONES, no con `@keyframes`: una transición arranca
+   * del valor que hay en pantalla, así que si se reabre un menú que se está
+   * cerrando da la vuelta desde donde esté en vez de saltar (WWDC 2018,
+   * interrumpibilidad). La entrada sale de `@starting-style`.
+   *
+   * Se «materializa»: escala, opacidad y radio del desenfoque juntos, desde el
+   * botón que lo abre (quien lo use fija `origin-*`). Sale por el mismo camino,
+   * más deprisa y acelerando, como todo lo que se descarta.
+   */
+  .popover {
+    @apply glass rounded-xl2;
+    background: var(--glass-sheen), var(--glass-tint-dense);
+    transition-property: opacity, transform, backdrop-filter, -webkit-backdrop-filter;
+    transition-duration: 300ms, 380ms, 300ms, 300ms;
+    transition-timing-function: var(--ease-spring), var(--ease-bounce), var(--ease-spring),
+      var(--ease-spring);
+  }
+  .popover[data-state="closed"] {
+    opacity: 0;
+    transform: scale(0.96);
+    -webkit-backdrop-filter: var(--glass-filter-off);
+    backdrop-filter: var(--glass-filter-off);
+    pointer-events: none;
+    transition-duration: 180ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  /* Opciones sobre vidrio: el resaltado es luz, no un panel opaco encima. */
+  .glass-item {
+    @apply pressable flex w-full min-h-[2.75rem] items-center gap-2.5 rounded-lg px-3 text-left text-sm
+           text-ink hover:bg-ink/10;
+  }
+
+  /* --- Tipografía ------------------------------------------------------- */
+  .page-title {
+    @apply font-display font-bold text-ink;
+    font-size: clamp(1.625rem, 1.3rem + 1.2vw, 2rem);
+  }
+
+  .section-title {
+    @apply font-display text-sm font-semibold text-ink-soft;
+    letter-spacing: 0.005em;
+  }
+
+  /* --- Botones ---------------------------------------------------------- */
+  .btn {
+    @apply pressable inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-lg px-4
+           text-sm font-medium disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-accent hover:brightness-110;
+    color: var(--color-base);
+  }
+  .btn-secondary {
+    @apply btn bg-hover text-ink hover:brightness-125;
+  }
+  .btn-ghost {
+    @apply btn text-ink-soft hover:bg-hover hover:text-ink;
+  }
+  .btn-danger {
+    @apply btn text-danger hover:bg-danger/15;
+  }
+}
+
+@keyframes estrella {
+  from {
+    transform: scale(0.7);
+  }
+}
+
+@keyframes materializar {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
 /* El color del fondo lo pone theme-vars.css con var(--color-base), que se
    importa después: así el tema de sesión, el de perfil y el alto contraste
    mandan sobre esta hoja sin tener que repetir ningún hex aquí. */
@@ -72,6 +341,10 @@ html, body, #root {
   --color-ink: #FFFFFF !important;
   --color-ink-soft: #E8E8E8 !important;
   --color-accent: #79C0FF !important;
+  --color-success-rgb: 120 230 150 !important;
+  --color-danger-rgb: 255 150 150 !important;
+  --color-warning-rgb: 255 190 110 !important;
+  --color-favorite-rgb: 255 220 80 !important;
   color-scheme: dark;
 }
 
@@ -83,6 +356,12 @@ html, body, #root {
  * mueve al activar el modo. El radio de las esquinas lo respeta el navegador.
  */
 .high-contrast .bg-panel,
+.high-contrast .card,
+.high-contrast .card-link,
+.high-contrast .notice,
+.high-contrast .popover,
+.high-contrast .glass,
+.high-contrast .glass-host,
 .high-contrast button,
 .high-contrast summary,
 .high-contrast input,
@@ -95,6 +374,14 @@ html, body, #root {
 .high-contrast [role="option"] {
   outline: 1px solid var(--color-ink);
   outline-offset: -1px;
+}
+
+/* En las barras de navegación los botones conviven con enlaces que no llevan
+   marco: con él, «Más» y los menús de la barra parecían de otra familia. La
+   barra ya tiene su propio borde y el foco sigue marcándose (regla de abajo). */
+.high-contrast header button,
+.high-contrast nav button {
+  outline: none;
 }
 
 /* Los bordes escritos con `border-hover` (40 usos) quedarían en #3A3A3A sobre
@@ -113,7 +400,11 @@ html, body, #root {
 }
 
 /* Las sombras no existen sobre negro; el borde ya hace su trabajo. */
-.high-contrast .shadow-card {
+.high-contrast .shadow-card,
+.high-contrast .card,
+.high-contrast .card-link,
+.high-contrast .popover,
+.high-contrast .shadow-float {
   box-shadow: none;
 }
 
@@ -136,9 +427,143 @@ html, body, #root {
   box-shadow: inset 0 0 0 2px var(--chip-color, currentColor);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
+/* ================================================================== */
+/* Entrada de los desplegables                                        */
+/* ================================================================== */
+/* Desde dónde arranca la transición de `.popover` la primera vez que se
+   pinta. Sin `@starting-style` (navegadores anteriores a 2024) el menú
+   aparece sin animación, pero sale igual de bien. */
+@starting-style {
+  .popover:not([data-state="closed"]) {
+    opacity: 0;
+    transform: scale(0.94);
+    -webkit-backdrop-filter: var(--glass-filter-off);
+    backdrop-filter: var(--glass-filter-off);
   }
+}
+
+/* ================================================================== */
+/* Borde de desplazamiento de la barra superior                       */
+/* ================================================================== */
+/*
+ * La barra superior no es una franja opaca: sus controles son cápsulas de
+ * vidrio que flotan, y detrás solo hay un velo que funde el contenido que pasa
+ * por debajo (desenfoque con una máscara que se desvanece hacia abajo, en vez
+ * de una raya). Es el «scroll edge effect» de iOS 26.
+ *
+ * Arriba del todo no hay nada que fundir, así que el velo aparece con los
+ * primeros 48px de desplazamiento, siguiendo al dedo (animación ligada al
+ * scroll, sin JavaScript). Donde no hay `animation-timeline` (Safari y
+ * Firefox) el velo está siempre puesto, que también se ve bien.
+ */
+.scroll-edge {
+  isolation: isolate;
+}
+.scroll-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -1.5rem 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-base) 92%, transparent) 60%,
+    color-mix(in srgb, var(--color-base) 0%, transparent)
+  );
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 65%, transparent);
+  mask-image: linear-gradient(to bottom, #000 65%, transparent);
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-edge::before {
+    animation: velo-al-desplazar linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 48px;
+  }
+}
+@keyframes velo-al-desplazar {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ================================================================== */
+/* Preferencias del sistema                                           */
+/* ================================================================== */
+
+/*
+ * Movimiento reducido no es «sin respuesta»: es una respuesta que no desplaza
+ * ni escala nada. Lo que entraba deslizándose o materializándose entra con un
+ * fundido corto, y las pulsaciones se notan por el color, no por el tamaño.
+ * El giro del indicador de carga se mantiene: es pequeño y dice «sigo vivo».
+ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadein,
+  [class*="animate-["],
+  [class*="[animation:"] {
+    animation: fundido 150ms ease-out both !important;
+  }
+  .popover,
+  .pressable:active,
+  .card-link:active,
+  [class*="active:scale"]:active {
+    transform: none !important;
+  }
+  *, *::before, *::after {
+    transition-duration: 150ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+@keyframes fundido {
+  from {
+    opacity: 0;
+  }
+}
+
+/*
+ * Transparencia reducida y alto contraste: el vidrio pasa a ser un panel
+ * opaco y el velo de la barra, fondo liso. Basta con las variables.
+ */
+/* Sin `backdrop-filter` (navegadores antiguos o motores que no lo pintan) un
+   vidrio al 55 % sería solo un velo sobre texto nítido e ilegible: se vuelve
+   casi opaco. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-tint: color-mix(in srgb, var(--color-panel) 94%, transparent);
+    --glass-tint-dense: var(--color-panel);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-tint: var(--color-panel);
+    --glass-tint-dense: var(--color-panel);
+    --glass-sheen: none;
+    --glass-filter: none;
+    --glass-filter-off: none;
+  }
+  .scroll-edge::before {
+    background: var(--color-base);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+.high-contrast {
+  --glass-tint: var(--color-panel) !important;
+  --glass-tint-dense: var(--color-panel) !important;
+  --glass-sheen: none !important;
+  --glass-filter: none !important;
+  --glass-filter-off: none !important;
+  --glass-lift: none !important;
+}
+.high-contrast .scroll-edge::before {
+  background: var(--color-base);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  border-bottom: 1px solid var(--color-ink);
 }

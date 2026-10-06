@@ -44,7 +44,17 @@ function langInicial(): string {
 }
 
 type TParams = Record<string, string | number>;
-type Ctx = { lang: string; setLang: (l: string) => void; t: (key: string, params?: TParams) => string };
+/** Cualquier cosa del dataset con nombre en los dos idiomas. */
+export type Named = { name_es: string; name_en?: string | null };
+type Ctx = {
+  lang: string;
+  setLang: (l: string) => void;
+  t: (key: string, params?: TParams) => string;
+  /** El nombre de una entidad del dataset en el idioma activo. Si falta el
+   *  inglés (un override de ROM Hack que solo rellenó el español), cae al
+   *  español en vez de pintar un hueco. */
+  name: (o: Named) => string;
+};
 const I18nContext = createContext<Ctx | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -100,7 +110,17 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     };
   }, [lang]);
 
-  return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;
+  const value = useMemo<Ctx>(
+    () => ({
+      lang,
+      setLang,
+      t,
+      name: (o) => (lang === "en" && o.name_en ? o.name_en : o.name_es),
+    }),
+    [lang, t]
+  );
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {
