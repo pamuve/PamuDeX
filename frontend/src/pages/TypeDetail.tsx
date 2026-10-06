@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api, esFalloDeRed } from "../lib/api";
-import { LoadError } from "../components/LoadError";
+import { api } from "../lib/api";
 import { TypeDetail as TypeDetailT, PokeType } from "../types";
 import { TypeBadge } from "../components/TypeBadge";
 import { EffectivenessPanel } from "../components/EffectivenessPanel";
@@ -10,46 +9,33 @@ import { GenerationSelector, useGenerationView } from "../components/GenerationS
 import { ChangeTag } from "../components/ChangeTag";
 import { ChangeHistory } from "../components/ChangeHistory";
 import { RELATION_IN, RELATION_OUT, otherTypeOf, makeChangeLine } from "../lib/generations";
+import { DetailError, Loading } from "../components/PageState";
+import { useDetail } from "../hooks/useDetail";
 import { useRecordVisit } from "../lib/history";
+import { BackLink } from "../components/BackLink";
 import { useI18n } from "../i18n";
 
 export function TypeDetail() {
   const { id } = useParams();
-  const { t } = useI18n();
-  const [type, setType] = useState<TypeDetailT | null>(null);
+  const { t, name } = useI18n();
   const [typesById, setTypesById] = useState<Record<string, PokeType>>({});
   // Generación que se está viendo; null = la actual (Fase 7).
   const [gen, setGen] = useGenerationView(id);
-
-  // Ver `components/LoadError.tsx` (8.4): sin esto la ficha se quedaba en
-  // «Cargando...» para siempre en cuanto fallaba la petición.
-  const [fallo, setFallo] = useState<null | "red" | "otro">(null);
-  const [reintento, setReintento] = useState(0);
-
-  useEffect(() => {
-    if (!id) return;
-    setFallo(null);
-    // Ver PokemonDetail: descarta la respuesta de una generación ya no elegida.
-    let cancelado = false;
-    api.types
-      .detail(id, gen)
-      .then((tp) => !cancelado && setType(tp))
-      .catch((err) => !cancelado && setFallo(esFalloDeRed(err) ? "red" : "otro"));
-    return () => {
-      cancelado = true;
-    };
-  }, [id, gen, reintento]);
+  const { data: type, fallo, reintentar } = useDetail<TypeDetailT>(() => api.types.detail(id!, gen), [id, gen]);
 
   // El listado es solo para pintar nombres y colores en los paneles: se pide
   // una vez y no depende de la generación.
   useEffect(() => {
-    api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((t) => [t.id, t]))));
+    api.types
+      .list()
+      .then((list) => setTypesById(Object.fromEntries(list.map((t) => [t.id, t]))))
+      .catch(() => {});
   }, []);
 
   useRecordVisit("type", type ? type.id : undefined);
 
-  if (fallo) return <LoadError offline={fallo === "red"} onRetry={() => setReintento((n) => n + 1)} />;
-  if (!type) return <div className="max-w-3xl mx-auto px-4 py-10 text-ink-soft">{t("common.loading")}</div>;
+  if (fallo) return <DetailError fallo={fallo} onRetry={reintentar} />;
+  if (!type) return <Loading />;
 
   // Las etiquetas solo tienen sentido en «Todas las generaciones» (ver
   // PokemonDetail).
@@ -62,7 +48,7 @@ export function TypeDetail() {
    */
   const relacion = (value: unknown, change: { field: string }) => {
     const otro = otherTypeOf(change.field);
-    const nombre = otro ? typesById[otro]?.name_es ?? otro : "";
+    const nombre = otro ? (typesById[otro] ? name(typesById[otro]) : otro) : "";
     const mult = `x${value}`;
     if (!otro) return mult;
     return change.field.startsWith(RELATION_OUT)
@@ -77,7 +63,7 @@ export function TypeDetail() {
     (field) => {
       const otro = otherTypeOf(field);
       if (!otro) return field;
-      const nombre = typesById[otro]?.name_es ?? otro;
+      const nombre = typesById[otro] ? name(typesById[otro]) : otro;
       return field.startsWith(RELATION_OUT)
         ? t("generations.field.offense", { type: nombre })
         : t("generations.field.defense", { type: nombre });
@@ -86,7 +72,8 @@ export function TypeDetail() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 pt-2 pb-6 sm:pt-4 sm:pb-8 space-y-4 sm:space-y-6">
+      <BackLink />
       {/* El distintivo hace de título de la ficha, así que va dentro de un `h1`
           (8.2): era la única página sin encabezado de nivel 1 y empezaba
           directamente en `h2`, lo que rompe el índice del lector de pantalla. */}
@@ -105,14 +92,14 @@ export function TypeDetail() {
 
       <div className="grid sm:grid-cols-2 gap-6">
         <div>
-          <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-4">
+          <h2 className="section-title mb-3">
             {t("type.offensive")}
             <ChangeTag changes={cambios} prefix={RELATION_OUT} format={relacion} />
           </h2>
           <EffectivenessPanel buckets={type.ofensivo} typesById={typesById} />
         </div>
         <div>
-          <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-4">
+          <h2 className="section-title mb-3">
             {t("type.defensive")}
             <ChangeTag changes={cambios} prefix={RELATION_IN} format={relacion} />
           </h2>

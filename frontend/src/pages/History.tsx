@@ -34,7 +34,7 @@ const ROUTE: Record<HistoryType, string> = {
 type Nombres = Record<string, { name: string; color?: string }>;
 
 export default function History() {
-  const { t, lang } = useI18n();
+  const { t, lang, name } = useI18n();
   const [profile] = useActiveProfile();
   const { items, ready, error } = useHistory();
 
@@ -55,8 +55,7 @@ export default function History() {
     let cancelled = false;
 
     const tipos = presentes.split(",") as HistoryType[];
-    const nombre = (o: { name_es: string; name_en: string }) =>
-      lang === "en" ? o.name_en : o.name_es;
+    const nombre = name;
 
     async function resolver() {
       const next: Nombres = {};
@@ -146,11 +145,11 @@ export default function History() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center">
         <UserCircle2 size={40} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
-        <h1 className="font-display font-bold text-2xl text-ink mb-2">{t("history.title")}</h1>
+        <h1 className="page-title mb-2">{t("history.title")}</h1>
         <p className="text-ink-soft mb-5">{t("history.needProfile")}</p>
         <Link
           to="/perfiles"
-          className="inline-block bg-panel hover:bg-hover text-ink rounded-lg px-5 py-2.5 text-sm transition-colors"
+          className="btn-primary"
         >
           {t("profiles.choose")}
         </Link>
@@ -164,7 +163,7 @@ export default function History() {
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-[12rem]">
-          <h1 className="font-display font-bold text-2xl text-ink">{t("history.title")}</h1>
+          <h1 className="page-title">{t("history.title")}</h1>
           <p className="text-ink-soft text-sm mt-1">
             {t("history.subtitle", { name: profile.name })}
           </p>
@@ -181,14 +180,14 @@ export default function History() {
       </div>
 
       {confirmando && (
-        <div className="bg-panel rounded-xl2 shadow-card p-4 animate-fadein">
+        <div className="card animate-fadein">
           <p className="text-ink text-sm font-medium">{t("history.confirmClear")}</p>
           <p className="text-ink-soft text-xs mt-1 mb-3">{t("history.confirmClearHint")}</p>
           <div className="flex gap-2">
             <button
               onClick={handleClear}
               disabled={borrando}
-              className="flex items-center gap-1.5 bg-hover text-ink rounded-lg px-4 py-2.5 text-sm disabled:opacity-50 hover:brightness-125 transition"
+              className="btn-danger bg-danger/15"
             >
               {borrando ? (
                 <Loader2 size={16} className="animate-spin" aria-hidden="true" />
@@ -209,7 +208,7 @@ export default function History() {
       )}
 
       {(error || fallo) && (
-        <div className="bg-panel border border-hover rounded-xl2 p-3 flex items-start gap-2 text-sm text-ink animate-fadein">
+        <div className="notice animate-fadein">
           <AlertTriangle size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
           <span>{t(fallo ? "history.clearError" : "history.loadError")}</span>
         </div>
@@ -221,7 +220,7 @@ export default function History() {
           {t("history.loading")}
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-panel rounded-xl2 shadow-card p-8 text-center animate-fadein">
+        <div className="card p-8 text-center animate-fadein">
           <HistoryIcon size={36} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
           <p className="text-ink font-medium mb-1">{t("history.empty")}</p>
           <p className="text-ink-soft text-sm">{t("history.emptyHint")}</p>
@@ -229,7 +228,7 @@ export default function History() {
       ) : (
         dias.map((dia) => (
           <section key={dia.key} className="animate-fadein">
-            <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-3">
+            <h2 className="section-title mb-3">
               {dia.label}
             </h2>
             <ul className="space-y-2">
@@ -241,7 +240,7 @@ export default function History() {
                   <li key={item.id}>
                     <Link
                       to={`${ruta}/${item.entity_ref}`}
-                      className="flex items-center gap-3 bg-panel hover:bg-hover rounded-xl2 shadow-card px-4 py-3 transition-colors"
+                      className="card-link flex items-center gap-3 px-4 py-3"
                     >
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"

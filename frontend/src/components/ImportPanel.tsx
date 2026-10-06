@@ -122,8 +122,8 @@ export default function ImportPanel({ sessionId }: { sessionId: number | null })
   const bloqueado = !preview || !preview.valid || (modo === "replace" && !confirmaReplace);
 
   return (
-    <section className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
-      <h2 className="flex items-center gap-2 font-display text-sm uppercase tracking-widest text-ink-soft">
+    <section className="card animate-fadein">
+      <h2 className="section-title flex items-center gap-2">
         <Upload size={16} aria-hidden="true" />
         {t("data.importTitle")}
       </h2>

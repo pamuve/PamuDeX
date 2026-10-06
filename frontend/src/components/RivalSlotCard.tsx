@@ -26,10 +26,9 @@ function MoveMultiSelect({
   disabledIds: number[];
   onToggle: (id: number) => void;
 }) {
-  const { t, lang } = useI18n();
+  const { t, name } = useI18n();
   const [filter, setFilter] = useState("");
-  const nombre = (o: { name_es: string; name_en: string }) =>
-    lang === "en" ? o.name_en : o.name_es;
+  const nombre = name;
   const filtered = allMoves.filter((m) => nombre(m).toLowerCase().includes(filter.toLowerCase()));
   return (
     <div role="group" aria-label={title}>
@@ -53,7 +52,7 @@ function MoveMultiSelect({
               aria-pressed={selected}
               className={`w-full flex items-center justify-between text-left px-2 py-1 rounded-lg text-sm transition-colors ${
                 selected
-                  ? "bg-[#1C3350] text-ink"
+                  ? "bg-hover text-ink"
                   : disabled
                   ? "text-ink-soft/30 cursor-not-allowed"
                   : "text-ink-soft hover:bg-hover"
@@ -95,13 +94,12 @@ export function RivalSlotCard({
   onChange: (updated: RivalSlot) => void;
   onRemove: () => void;
 }) {
-  const { t, lang } = useI18n();
-  const nombre = (o: { name_es: string; name_en: string }) =>
-    lang === "en" ? o.name_en : o.name_es;
+  const { t, name } = useI18n();
+  const nombre = name;
 
   if (!pokemon) {
     return (
-      <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein text-ink-soft text-sm">
+      <div className="card animate-fadein text-ink-soft text-sm">
         {t("common.loading")}
       </div>
     );
@@ -130,7 +128,7 @@ export function RivalSlotCard({
   }
 
   return (
-    <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein space-y-3 border-l-2 border-l-[#C03028]/40">
+    <div className="card animate-fadein space-y-3 border-l-2 border-l-danger/40">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-display font-semibold text-ink">{nombre(pokemon)}</span>
@@ -140,7 +138,7 @@ export function RivalSlotCard({
             ))}
           </div>
         </div>
-        <button onClick={onRemove} className="text-ink-soft hover:text-[#C03028] transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
+        <button onClick={onRemove} className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:text-danger hover:bg-danger/10 transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
           <X size={18} />
         </button>
       </div>

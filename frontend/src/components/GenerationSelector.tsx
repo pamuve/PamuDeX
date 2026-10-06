@@ -87,7 +87,7 @@ export function GenerationSelector({ visible, value, onChange }: GenerationSelec
   ];
 
   return (
-    <div className="bg-panel rounded-xl2 p-4 shadow-card animate-fadein">
+    <div className="card animate-fadein">
       <div
         role="group"
         aria-label={t("generations.label")}

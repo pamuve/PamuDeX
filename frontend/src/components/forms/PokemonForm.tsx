@@ -251,7 +251,7 @@ export default function PokemonForm({
   ));
 
   return (
-    <div className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
+    <div className="card animate-fadein">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t("editor.fields.nameEs")} htmlFor="pf-name-es" modified={isModified("name_es")}
           modifiedLabel={t("editor.modified")} error={errors.name_es}>

@@ -1,62 +1,40 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api, esFalloDeRed } from "../lib/api";
-import { LoadError } from "../components/LoadError";
+import { api } from "../lib/api";
 import { MoveDetail as MoveDetailT, PokeType } from "../types";
 import { FavoriteButton } from "../components/FavoriteButton";
 import { GenerationSelector, useGenerationView } from "../components/GenerationSelector";
 import { ChangeTag } from "../components/ChangeTag";
 import { ChangeHistory } from "../components/ChangeHistory";
 import { makeChangeLine } from "../lib/generations";
-import { NotAllowed } from "../components/NotAllowed";
+import { DetailError, Loading } from "../components/PageState";
+import { useDetail } from "../hooks/useDetail";
 import { useRecordVisit } from "../lib/history";
+import { BackLink } from "../components/BackLink";
 import { useI18n } from "../i18n";
 
 export function MoveDetail() {
   const { id } = useParams();
-  const { t } = useI18n();
-  const [move, setMove] = useState<MoveDetailT | null>(null);
+  const { t, name } = useI18n();
   // Solo para poder leer un tipo histórico por su nombre en las etiquetas de
   // cambios: el id que guarda `entity_changes` es canónico y sin tilde
   // ('psiquico'), y pintarlo en crudo quedaría mal en español.
   const [typesById, setTypesById] = useState<Record<string, PokeType>>({});
   // Generación que se está viendo; null = la actual (Fase 7).
   const [gen, setGen] = useGenerationView(id);
-  // En modo Champions el backend responde 404 si la entidad no es legal.
-  const [noPermitido, setNoPermitido] = useState(false);
-  // Un fallo de RED no es lo mismo (8.4): antes acababa también en «no
-  // permitida en Champions», que sin cobertura es un mensaje falso.
-  const [sinRed, setSinRed] = useState(false);
-  const [reintento, setReintento] = useState(0);
+  const { data: move, fallo, reintentar } = useDetail<MoveDetailT>(() => api.moves.detail(id!, gen), [id, gen]);
 
   useEffect(() => {
-    if (!id) return;
-    setNoPermitido(false);
-    setSinRed(false);
-    // Ver PokemonDetail: descarta la respuesta de una generación ya no elegida.
-    let cancelado = false;
-    api.moves
-      .detail(id, gen)
-      .then((m) => !cancelado && setMove(m))
-      .catch((err) => {
-        if (cancelado) return;
-        if (esFalloDeRed(err)) setSinRed(true);
-        else setNoPermitido(true);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [id, gen, reintento]);
-
-  useEffect(() => {
-    api.types.list().then((list) => setTypesById(Object.fromEntries(list.map((tp) => [tp.id, tp]))));
+    api.types
+      .list()
+      .then((list) => setTypesById(Object.fromEntries(list.map((tp) => [tp.id, tp]))))
+      .catch(() => {});
   }, []);
 
   useRecordVisit("move", move ? move.id : undefined);
 
-  if (noPermitido) return <NotAllowed />;
-  if (sinRed) return <LoadError offline onRetry={() => setReintento((n) => n + 1)} />;
-  if (!move) return <div className="max-w-2xl mx-auto px-4 py-10 text-ink-soft">{t("common.loading")}</div>;
+  if (fallo) return <DetailError fallo={fallo} onRetry={reintentar} />;
+  if (!move) return <Loading />;
 
   // Las etiquetas solo tienen sentido en «Todas las generaciones» (ver
   // PokemonDetail).
@@ -64,7 +42,8 @@ export function MoveDetail() {
 
   /** Categorías y tipos se guardan como valor canónico; se traducen al leerlos. */
   const categoria = (value: unknown) => t(`category.${String(value)}`);
-  const nombreDeTipo = (value: unknown) => typesById[String(value)]?.name_es ?? String(value);
+  const nombreDeTipo = (value: unknown) =>
+    typesById[String(value)] ? name(typesById[String(value)]) : String(value);
 
   // Las etiquetas de campo son las mismas que las de la tabla de arriba, para
   // que la línea temporal se lea con el mismo vocabulario que la ficha.
@@ -104,11 +83,12 @@ export function MoveDetail() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <div className="bg-panel rounded-xl2 p-6 shadow-card animate-fadein">
+    <div className="max-w-2xl mx-auto px-4 pt-2 pb-6 sm:pt-4 sm:pb-8 space-y-4 sm:space-y-6">
+      <BackLink />
+      <section className="card animate-fadein">
         <div className="flex items-center gap-2 mb-4">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: move.color }} />
-          <h1 className="font-display text-2xl font-bold text-ink">{move.name_es}</h1>
+          <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: move.color }} aria-hidden="true" />
+          <h1 className="font-display text-2xl font-bold text-ink min-w-0 break-words">{name(move)}</h1>
           <ChangeTag changes={cambios} field="type_id" format={nombreDeTipo} />
           <span className="ml-auto"><FavoriteButton type="move" entityRef={move.id} /></span>
         </div>
@@ -126,12 +106,12 @@ export function MoveDetail() {
                 {label}
                 {field && <ChangeTag changes={cambios} field={field} format={format} />}
               </span>
-              <span className="text-ink font-medium text-sm">{val}</span>
+              <span className="text-ink font-medium text-sm tabular-nums">{val}</span>
             </div>
           ))}
         </div>
-        <p className="text-ink-soft text-sm mt-4">{move.effect_es}</p>
-      </div>
+        <p className="text-ink-soft text-sm mt-4 max-w-prose">{move.effect_es}</p>
+      </section>
 
       <GenerationSelector
         visible={move.has_generational_differences}

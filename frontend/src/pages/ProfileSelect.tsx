@@ -87,7 +87,7 @@ function ProfileForm({
   const { t } = useI18n();
 
   return (
-    <div className="bg-panel rounded-xl2 shadow-card p-4 animate-fadein">
+    <div className="card animate-fadein">
       <label className="block text-sm text-ink-soft mb-1" htmlFor="profile-name">
         {t("profiles.nameLabel")}
       </label>
@@ -151,7 +151,7 @@ function ProfileForm({
         <button
           onClick={onSubmit}
           disabled={!name.trim() || busy}
-          className="flex items-center gap-1.5 bg-hover text-ink rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50 hover:brightness-125 transition"
+          className="btn-primary"
         >
           {busy ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
           {mode === "create" ? t("profiles.create") : t("profiles.save")}
@@ -159,7 +159,7 @@ function ProfileForm({
         <button
           onClick={onCancel}
           disabled={busy}
-          className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-4 py-2.5 text-sm transition-colors"
+          className="btn-ghost"
         >
           <X size={16} />
           {t("profiles.cancel")}
@@ -332,7 +332,7 @@ export default function ProfileSelect() {
       </p>
 
       {error && (
-        <div className="bg-panel border border-hover rounded-xl2 p-3 mb-6 flex items-start gap-2 text-sm text-ink animate-fadein">
+        <div className="notice mb-6 animate-fadein">
           <AlertTriangle size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
           <span>{error}</span>
         </div>
@@ -354,7 +354,7 @@ export default function ProfileSelect() {
                 return (
                   <div
                     key={profile.id}
-                    className="bg-panel rounded-xl2 shadow-card p-3 flex flex-col items-center text-center animate-fadein"
+                    className="card p-3 flex flex-col items-center text-center animate-fadein"
                   >
                     <p className="text-sm text-ink font-medium">
                       {t("profiles.confirmDelete", { name: profile.name })}
@@ -366,7 +366,7 @@ export default function ProfileSelect() {
                       <button
                         onClick={() => handleDelete(profile.id)}
                         disabled={busy}
-                        className="flex items-center gap-1 bg-hover text-ink rounded-lg px-3 py-2 text-sm disabled:opacity-50 hover:brightness-125 transition"
+                        className="btn-danger bg-danger/15 min-h-[2.25rem] px-3"
                       >
                         {busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                         {t("profiles.delete")}
@@ -426,7 +426,7 @@ export default function ProfileSelect() {
                           ? t("pin.removeOf", { name: profile.name })
                           : t("pin.setOf", { name: profile.name })
                       }
-                      className="p-2 rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
+                      className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
                     >
                       {profile.has_pin ? (
                         <LockOpen size={16} aria-hidden="true" />
@@ -438,7 +438,7 @@ export default function ProfileSelect() {
                       onClick={() => startEdit(profile)}
                       title={t("profiles.edit")}
                       aria-label={t("profiles.editOf", { name: profile.name })}
-                      className="p-2 rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
+                      className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
                     >
                       <Pencil size={16} aria-hidden="true" />
                     </button>
@@ -446,7 +446,7 @@ export default function ProfileSelect() {
                       onClick={() => setConfirmId(profile.id)}
                       title={t("profiles.delete")}
                       aria-label={t("profiles.deleteOf", { name: profile.name })}
-                      className="p-2 rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
+                      className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-soft hover:text-danger hover:bg-danger/10 transition-colors"
                     >
                       <Trash2 size={16} aria-hidden="true" />
                     </button>

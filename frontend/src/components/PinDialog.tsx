@@ -201,7 +201,7 @@ export function PinDialog({ mode, profile, onDone, onCancel }: PinDialogProps) {
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="bg-panel rounded-xl2 shadow-card p-5 w-full max-w-xs outline-none"
+        className="popover p-5 w-full max-w-xs outline-none"
       >
         <div className="flex items-start gap-3 mb-4">
           <span
@@ -224,7 +224,7 @@ export function PinDialog({ mode, profile, onDone, onCancel }: PinDialogProps) {
           <button
             onClick={onCancel}
             aria-label={t("pin.cancel")}
-            className="p-1.5 rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
+            className="-m-2 flex h-10 w-10 items-center justify-center rounded-lg text-ink-soft hover:text-ink hover:bg-hover transition-colors"
           >
             <X size={18} aria-hidden="true" />
           </button>
@@ -253,7 +253,7 @@ export function PinDialog({ mode, profile, onDone, onCancel }: PinDialogProps) {
             </span>
           )}
           {!busy && lockedFor === 0 && error && (
-            <span className="text-sm text-[#F85888]" role="alert">
+            <span className="text-sm text-danger" role="alert">
               {error}
             </span>
           )}

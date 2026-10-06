@@ -59,15 +59,15 @@ export default function ImportExport() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
       <header>
-        <h1 className="font-display text-2xl font-bold text-ink">{t("data.title")}</h1>
+        <h1 className="page-title">{t("data.title")}</h1>
         <p className="mt-1 text-sm text-ink-soft">{t("data.subtitle")}</p>
       </header>
 
       {error && (
-        <p className="rounded-xl2 bg-panel p-4 text-sm text-ink-soft shadow-card">{error}</p>
+        <p className="card text-sm text-ink-soft">{error}</p>
       )}
 
-      <section className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
+      <section className="card animate-fadein">
         <label htmlFor="data-session" className="mb-2 block text-sm font-medium text-ink">
           {t("data.sourceLabel")}
         </label>
@@ -98,8 +98,8 @@ export default function ImportExport() {
         )}
       </section>
 
-      <section className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
-        <h2 className="flex items-center gap-2 font-display text-sm uppercase tracking-widest text-ink-soft">
+      <section className="card animate-fadein">
+        <h2 className="section-title flex items-center gap-2">
           <FileJson size={16} aria-hidden="true" />
           {t("data.jsonTitle")}
         </h2>
@@ -107,17 +107,15 @@ export default function ImportExport() {
         <a
           href={`/api/export/json${query}`}
           download
-          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-hover px-4 py-2
-                     text-sm font-medium text-ink transition hover:brightness-125
-                     focus:outline-none focus:ring-2 focus:ring-ink-soft/40"
+          className="btn-secondary mt-4 justify-center"
         >
           <Download size={16} aria-hidden="true" />
           {t("data.downloadJson")}
         </a>
       </section>
 
-      <section className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
-        <h2 className="flex items-center gap-2 font-display text-sm uppercase tracking-widest text-ink-soft">
+      <section className="card animate-fadein">
+        <h2 className="section-title flex items-center gap-2">
           <Sheet size={16} aria-hidden="true" />
           {t("data.csvTitle")}
         </h2>
@@ -134,7 +132,7 @@ export default function ImportExport() {
                  vez de salirse; a tamaño normal siguen cabiendo en una línea. */
               className="inline-flex flex-wrap items-center justify-center gap-1.5 rounded-lg border border-hover
                          px-2 sm:px-3 py-2 text-sm text-ink-soft transition hover:bg-hover hover:text-ink
-                         focus:outline-none focus:ring-2 focus:ring-ink-soft/40"
+                        "
             >
               <Download size={14} aria-hidden="true" />
               {t(`editor.tabs.${entity}`)}
@@ -143,8 +141,8 @@ export default function ImportExport() {
         </div>
       </section>
 
-      <section className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
-        <h2 className="flex items-center gap-2 font-display text-sm uppercase tracking-widest text-ink-soft">
+      <section className="card animate-fadein">
+        <h2 className="section-title flex items-center gap-2">
           <Database size={16} aria-hidden="true" />
           {t("data.sqliteTitle")}
         </h2>
@@ -152,9 +150,7 @@ export default function ImportExport() {
         <a
           href={`/api/export/sqlite${query}`}
           download
-          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-hover px-4 py-2
-                     text-sm font-medium text-ink transition hover:brightness-125
-                     focus:outline-none focus:ring-2 focus:ring-ink-soft/40"
+          className="btn-secondary mt-4 justify-center"
         >
           <Download size={16} aria-hidden="true" />
           {t("data.downloadSqlite")}

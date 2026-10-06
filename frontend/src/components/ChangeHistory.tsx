@@ -53,7 +53,7 @@ export function ChangeHistory({ changes, line }: ChangeHistoryProps) {
   }
 
   return (
-    <div className="bg-panel rounded-xl2 shadow-card animate-fadein overflow-hidden">
+    <div className="card animate-fadein overflow-hidden">
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}
@@ -65,7 +65,7 @@ export function ChangeHistory({ changes, line }: ChangeHistoryProps) {
           aria-hidden="true"
           className={`text-ink-soft transition-transform shrink-0 ${abierto ? "rotate-180" : ""}`}
         />
-        <span className="font-display text-sm tracking-widest text-ink-soft uppercase">
+        <span className="section-title">
           {t("generations.history")}
         </span>
         {/*

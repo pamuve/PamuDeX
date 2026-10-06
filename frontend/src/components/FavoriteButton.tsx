@@ -24,6 +24,9 @@ export function FavoriteButton({ type, entityRef, size = "lg" }: FavoriteButtonP
   const { t } = useI18n();
   const { isFavorite, toggle, enabled } = useFavorite(type, entityRef);
   const [failed, setFailed] = useState(false);
+  // La estrella «aparece» al marcar: crece desde el 70 % con el muelle. Solo al
+  // marcar; al desmarcar basta con que se vacíe.
+  const [pop, setPop] = useState(false);
 
   if (!enabled || entityRef === undefined) return null;
 
@@ -32,6 +35,14 @@ export function FavoriteButton({ type, entityRef, size = "lg" }: FavoriteButtonP
 
   async function handleClick() {
     setFailed(false);
+    if (!isFavorite) {
+      setPop(true);
+      // Un toque háptico corto y en el mismo instante que el cambio visual
+      // (el marcado es optimista): la causa —pulsar— y las dos respuestas van
+      // juntas. Solo al marcar, que es el momento que merece confirmación.
+      // Donde no hay Vibration API (iOS) simplemente no pasa nada.
+      navigator.vibrate?.(10);
+    }
     try {
       await toggle();
     } catch {
@@ -47,15 +58,18 @@ export function FavoriteButton({ type, entityRef, size = "lg" }: FavoriteButtonP
         aria-pressed={isFavorite}
         aria-label={label}
         title={failed ? t("favorites.toggleError") : label}
-        className={`p-2 rounded-lg transition-colors ${
-          isFavorite ? "text-[#F8D030] hover:bg-hover" : "text-ink-soft hover:text-ink hover:bg-hover"
+        className={`pressable flex h-10 w-10 items-center justify-center rounded-lg ${
+          isFavorite ? "text-favorite hover:bg-hover" : "text-ink-soft hover:text-ink hover:bg-hover"
         }`}
       >
         <Star
           size={px}
           aria-hidden="true"
           fill={isFavorite ? "currentColor" : "none"}
-          className={failed ? "animate-pulse" : undefined}
+          className={
+            failed ? "animate-pulse" : pop ? "animate-[estrella_420ms_var(--ease-spring)]" : undefined
+          }
+          onAnimationEnd={() => setPop(false)}
         />
       </button>
       {failed && (

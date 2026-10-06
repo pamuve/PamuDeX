@@ -54,7 +54,7 @@ export default function ThemeForm({ theme, saving, t, onSave, onReset }: Props) 
   }
 
   return (
-    <div className="rounded-xl2 bg-panel p-4 shadow-card animate-fadein">
+    <div className="card animate-fadein">
       <p className="mb-4 text-sm text-ink-soft">{t("theme.hint")}</p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

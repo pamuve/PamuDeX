@@ -41,7 +41,7 @@ frontend/src/
   components/  TopBar, SearchBar, TypeBadge, EffectivenessPanel,
                TeamSlotCard, RivalSlotCard, RecommendationCard, CoverageMap,
                SessionRequired, ImportPanel,
-               PinPad, PinDialog, FavoriteButton, NotAllowed
+               PinPad, PinDialog, FavoriteButton, PageState, BottomNav
   components/forms/  FormField, EntityPicker, PokemonForm, TypeForm, MoveForm,
                      AbilityForm, RelationsMatrix, ThemeForm
   pages/       Home, PokemonDetail, TypeDetail, MoveDetail, AbilityDetail,
@@ -293,9 +293,11 @@ Reglas que hay que mantener:
   páginas. De los objetos, **solo el listado completo**: `?category=` y `?q=` son
   recortes del mismo dato y guardar uno por combinación llenaría la base.
 - **Un fallo de red NO es un 404.** `lib/api.ts` lanza `ApiError` con `status`, y
-  `esFalloDeRed()` los distingue. Una ficha nueva debe enseñar
-  `components/LoadError.tsx` sin red y `NotAllowed` solo ante un 404 real; tratar
-  todo igual hacía decir «no permitida en Champions» estando sin cobertura.
+  `esFalloDeRed()` los distingue. Una ficha nueva carga con `hooks/useDetail.ts`
+  y pinta `DetailError` (`components/PageState.tsx`), que decide: sin red,
+  `LoadError`; 404 en Champions, `NotAllowed`; 404 fuera del modo, `NotFound`.
+  Tratarlo todo igual hacía decir «no permitida en Champions» estando sin
+  cobertura o ante una ficha que sencillamente no existe.
 - **Prueba en modo avión.** Es donde salen los fallos que con conexión no se ven:
   spinners infinitos y mensajes de error equivocados.
 
@@ -523,7 +525,28 @@ Lo que no aparece conserva el valor global. Dos reglas que no son obvias:
 - **Paleta OLED, nunca negro puro**: base `#0A1425`, panel `#132238`, hover `#1C3350`, texto `#F5F7FA`, texto secundario `#A9BDD2`. En Tailwind: `bg-base`, `bg-panel`, `bg-hover`, `text-ink`, `text-ink-soft`. La **única** excepción es el modo de alto contraste de la 8.1, que el usuario activa a mano.
   - **`text-base` es el tamaño de letra, no un color.** El color `base` se declara solo en `backgroundColor` y `borderColor` de `tailwind.config.js`, no en `colors`: metido en `colors` generaba un segundo `.text-base { color: var(--color-base) }` que pisaba al de Tailwind y pintaba el texto del color del fondo. No lo devuelvas a `colors`.
 - **Texto sobre un color del dataset o del usuario**: clase `color-chip` + `--chip-color` en el `style`. En alto contraste esa clase cambia el fondo de color por un marco de 2px y pone el texto en blanco sobre negro, porque los tipos apagados no llegan a AAA. Lo usan `TypeBadge` y los avatares de perfil.
-- **Tarjetas**: `rounded-xl2 shadow-card bg-panel` + `animate-fadein` (ya definidos en `tailwind.config.js`).
+- **Componentes base** (`src/index.css`, `@layer components`): `.card` para
+  tarjetas (+ `animate-fadein`), `.page-title` para el `<h1>`, `.section-title`
+  para los `<h2>` (en frase, sin mayúsculas) y `.btn-primary` / `.btn-secondary`
+  / `.btn-ghost` / `.btn-danger` para botones. Objetivos táctiles de 44px.
+  `shadow-card` para tarjetas, `shadow-float` para menús, listas y diálogos.
+  También `.card-link`, `.notice`, `.popover` y `.pressable`; interruptores con
+  `components/SwitchTrack.tsx`, «Atrás» de las fichas con `components/BackLink.tsx`.
+- **Movimiento**: muelles `--ease-spring` / `--ease-bounce` (`index.css`),
+  transiciones para estados, `@keyframes` solo para entradas y sin
+  `fill-mode: both`. Movimiento reducido = fundidos, no nada.
+- **Liquid glass**: `.glass` (en el elemento) y `.glass-host` (en `::before`,
+  obligatorio si el contenedor lleva menús dentro, por Chromium). Menús con
+  `useMenu().mounted` + `data-state` para que la salida se anime.
+- **Colores de estado**: `success`, `danger`, `warning`, `favorite`. Nunca hex
+  fijos en `className`. La opacidad sobre colores del tema (`bg-base/90`)
+  funciona por el `color-mix` de `tailwind.config.js`.
+- **Estados de página**: `components/PageState.tsx` (`Loading`, `LoadError`,
+  `NotFound`, `NotAllowed`, `DetailError`) y `hooks/useDetail.ts` para fichas.
+  Toda petición lleva su `.catch`: sin red no puede quedar un spinner infinito.
+- **Nombres del dataset**: `useI18n().name(entidad)`.
+- **Navegación**: destinos en `components/BottomNav.tsx`; barra inferior por
+  debajo de `lg`, superior con texto desde `lg`.
 - **i18n**: nunca texto suelto en JSX. Añade la clave a `src/i18n/es.json` Y `en.json`, y usa `useI18n().t("clave")`. Admite parámetros: `t("clave", { name: "X" })` sustituye `{{name}}`.
   - **Los JSON son PLANOS**: `"editor.fields.dex": "Nº de Pokédex"`. `i18n/index.tsx` hace `dict[key]` directo y **no recorre objetos anidados**: si pegas un bloque anidado, la app pinta la clave cruda. Si te entregan claves anidadas, aplánalas antes.
   - Los dos archivos deben tener **exactamente el mismo juego de claves**.
@@ -589,7 +612,8 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     `lib/serviceWorker.ts`, `lib/notifications.ts` y `components/UpdatePrompt.tsx`.
     Ver «PWA: iconos y actualizaciones (Fase 8)».
   - ✅ **8.4** caché local y rendimiento: `lib/localCache.ts` (IndexedDB),
-    `lib/perf.ts`, `components/OfflineData.tsx` y `components/LoadError.tsx`.
+    `components/OfflineData.tsx` y los estados de `components/PageState.tsx`
+    (`lib/perf.ts` y su modo de depuración se retiraron tras medir).
     Medido: 1.1 ms de media leyendo el catálogo. Ver «Caché local (Fase 8)».
 - 🔜 **Fase 9, la siguiente**: ampliaciones (calculadora de daño, simulador,
   recomendador de equipos). Es la fase más abierta: usa
@@ -676,7 +700,7 @@ los guarde como preferencia del perfil.
 
 Las páginas de ficha son **las mismas** dentro y fuera del modo. Por eso las tres
 que pueden dar 404 (Pokémon, movimiento, habilidad) pintan
-`components/NotAllowed.tsx`: se llega a una ficha prohibida desde los favoritos,
+`NotAllowed` (`components/PageState.tsx`) si el modo está activo: se llega a una ficha prohibida desde los favoritos,
 el historial o escribiendo la URL.
 
 Lo que **no** filtra el modo: los tipos y la tabla de tipos (son la física del

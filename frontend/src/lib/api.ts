@@ -6,7 +6,6 @@ import { getActiveSessionId } from "./session";
 import { getActiveChampionsId } from "./champions";
 import { profilesApi, championsApi } from "./apiSession";
 import { leer, guardar } from "./localCache";
-import { anotar } from "./perf";
 
 /**
  * Añade el parámetro del modo activo, si hay alguno.
@@ -99,11 +98,9 @@ async function get<T>(path: string): Promise<T> {
  */
 async function getCatalogo<T>(path: string): Promise<T> {
   const key = withMode(path);
-  const inicio = performance.now();
 
   const guardado = await leer<T>(key);
   if (guardado) {
-    anotar(key, "local", inicio);
     // Refresco en segundo plano: no se espera ni se propaga su error. Si falla
     // (sin red), la copia local se queda como estaba, que es lo que se quiere.
     void get<T>(path)
@@ -113,7 +110,6 @@ async function getCatalogo<T>(path: string): Promise<T> {
   }
 
   const fresco = await get<T>(path);
-  anotar(key, "red", inicio);
   void guardar(key, fresco);
   return fresco;
 }

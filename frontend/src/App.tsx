@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { TopBar } from "./components/TopBar";
+import { BottomNav } from "./components/BottomNav";
 import { UpdatePrompt } from "./components/UpdatePrompt";
 import { Home } from "./pages/Home";
 import ProfileSelect from "./pages/ProfileSelect";
@@ -10,20 +11,29 @@ import { PokemonDetail } from "./pages/PokemonDetail";
 import { TypeDetail } from "./pages/TypeDetail";
 import { MoveDetail } from "./pages/MoveDetail";
 import { AbilityDetail } from "./pages/AbilityDetail";
-import { TeamBuilder } from "./pages/TeamBuilder";
-import Sessions from "./pages/Sessions";
-import Editor from "./pages/Editor";
-import EditorPokemon from "./pages/EditorPokemon";
-import ImportExport from "./pages/ImportExport";
 import History from "./pages/History";
-import Settings from "./pages/Settings";
-import ChampionsRules from "./pages/ChampionsRules";
-import ChampionsHome from "./pages/ChampionsHome";
+import { Loading, NotFound } from "./components/PageState";
 import { useActiveChampions } from "./lib/champions";
 import { useAppTheme } from "./lib/theme";
 import { useActiveSession } from "./lib/session";
 import { useProfileSettings } from "./lib/settings";
 import { useI18n } from "./i18n";
+
+/*
+  Carga diferida de las páginas de trabajo (comparador, sesiones, editor,
+  datos, ajustes y Champions). Son más de la mitad del código y quien abre la
+  app para mirar una debilidad no las necesita. Siguen funcionando sin
+  conexión: sus archivos van en el precache del Service Worker igual que el
+  resto (`globPatterns` coge todo `.js`), solo se descargan aparte.
+*/
+const TeamBuilder = lazy(() => import("./pages/TeamBuilder").then((m) => ({ default: m.TeamBuilder })));
+const Sessions = lazy(() => import("./pages/Sessions"));
+const Editor = lazy(() => import("./pages/Editor"));
+const EditorPokemon = lazy(() => import("./pages/EditorPokemon"));
+const ImportExport = lazy(() => import("./pages/ImportExport"));
+const Settings = lazy(() => import("./pages/Settings"));
+const ChampionsRules = lazy(() => import("./pages/ChampionsRules"));
+const ChampionsHome = lazy(() => import("./pages/ChampionsHome"));
 
 export default function App() {
   useAppTheme();                        // tema efectivo: la sesión pisa al perfil
@@ -87,7 +97,17 @@ export default function App() {
         haya exactamente uno por documento y que las páginas futuras lo hereden.
         `tabIndex={-1}` es lo que permite que reciba el foco al saltar.
       */}
-      <main id="contenido" ref={mainRef} tabIndex={-1} className="outline-none">
+      {/* Por debajo de `lg` la navegación va en una barra fija abajo: el
+          relleno inferior evita que tape el final de cada página. */}
+      <main
+        id="contenido"
+        ref={mainRef}
+        tabIndex={-1}
+        className={`outline-none ${
+          isProfileGate ? "" : "pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-0"
+        }`}
+      >
+        <Suspense fallback={<Loading />}>
         <Routes key={modeKey}>
           <Route path="/perfiles" element={<ProfileSelect />} />
           {/* Sin perfil activo, la portada lleva a elegir uno. */}
@@ -107,11 +127,14 @@ export default function App() {
           <Route path="/editor" element={<Editor />} />
           <Route path="/editor/pokemon" element={<EditorPokemon />} />
           <Route path="/datos" element={<ImportExport />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
 
       {/* Fuera del `<main>`: no es contenido de la página, es un aviso de la
           app. Se pinta solo cuando hay una versión esperando (8.3). */}
+      {!isProfileGate && <BottomNav />}
       <UpdatePrompt />
     </div>
   );

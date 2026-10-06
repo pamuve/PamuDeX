@@ -25,9 +25,8 @@ export function RecommendationCard({
   /** Para traducir el nombre del movimiento: `Reason` solo guarda su id. */
   movesById: Record<number, MoveSummary>;
 }) {
-  const { t, lang } = useI18n();
-  const nombre = (o: { name_es: string; name_en: string }) =>
-    lang === "en" ? o.name_en : o.name_es;
+  const { t, name } = useI18n();
+  const nombre = name;
   /** El movimiento puede no estar en el catálogo si la sesión de ROM Hack lo
    *  quitó después de guardarlo en el equipo: mejor un hueco que reventar. */
   const nombreMovimiento = (id?: number) => {
@@ -38,13 +37,13 @@ export function RecommendationCard({
 
   if (!top) {
     return (
-      <div className="bg-panel rounded-xl2 p-4 shadow-card text-ink-soft text-sm">{t("recommendation.no_candidates")}</div>
+      <div className="card text-ink-soft text-sm">{t("recommendation.no_candidates")}</div>
     );
   }
   const recommended = pokemonById[top.pokemonId];
 
   return (
-    <div className="bg-panel rounded-xl2 p-5 shadow-card animate-fadein space-y-3">
+    <div className="card animate-fadein space-y-3">
       <div className="text-ink-soft text-sm">{t("recommendation.against", { name: nombre(rivalPokemon) })}</div>
       <div className="flex items-baseline gap-2">
         <span className="text-xs uppercase tracking-widest text-ink-soft">{t("recommendation.recommended")}</span>
@@ -59,7 +58,7 @@ export function RecommendationCard({
           <ul className="space-y-1">
             {top.reasons.map((r, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-ink">
-                <Check size={14} className="text-[#78C850] shrink-0" />
+                <Check size={14} className="text-success shrink-0" />
                 {t(REASON_KEY[r.type] ?? r.type, { move: nombreMovimiento(r.moveId), value: r.value ?? "" })}
               </li>
             ))}
@@ -73,7 +72,7 @@ export function RecommendationCard({
           <ul className="space-y-1">
             {top.dangers.map((r, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-ink">
-                <X size={14} className="text-[#C03028] shrink-0" />
+                <X size={14} className="text-danger shrink-0" />
                 {t(DANGER_KEY[r.type] ?? r.type, { move: nombreMovimiento(r.moveId), value: r.value ?? "" })}
               </li>
             ))}

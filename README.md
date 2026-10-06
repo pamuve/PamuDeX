@@ -78,7 +78,7 @@ pamudex/
 │   │   ├── components/     # TopBar, SearchBar, TypeBadge, EffectivenessPanel,
 │   │   │   │               # TeamSlotCard, RivalSlotCard, RecommendationCard,
 │   │   │   │               # CoverageMap, SessionRequired, ImportPanel,
-│   │   │   │               # PinPad, PinDialog, FavoriteButton, NotAllowed
+│   │   │   │               # PinPad, PinDialog, FavoriteButton, PageState, BottomNav
 │   │   │   └── forms/      # PokemonForm, TypeForm, MoveForm, AbilityForm,
 │   │   │                   # RelationsMatrix, ThemeForm, EntityPicker, FormField
 │   │   ├── pages/          # Home, PokemonDetail, TypeDetail, MoveDetail,
@@ -321,8 +321,8 @@ La lectura es **local primero**: si el dato está en el aparato se pinta al
 momento y la red se consulta después, en segundo plano, solo para dejar la copia
 al día. La interfaz nunca espera a la red teniendo copia local.
 
-En `/ajustes` → **Modo de depuración** puedes ver cuánto tarda cada lectura en
-tu propio aparato. Medido aquí, sobre el build servido por el contenedor:
+Medido sobre el build servido por el contenedor (el panel de medición que hubo
+en `/ajustes` se retiró una vez comprobado el requisito):
 
 | Medida | Resultado |
 |---|---|
@@ -433,8 +433,7 @@ con token. Nada de eso está implementado.
 >   *apple-touch* y `favicon.ico`), manifiesto completo y aviso de **versión
 >   nueva lista**, con notificaciones del sistema opcionales y apagadas de
 >   fábrica. Y el catálogo vive en **IndexedDB**: se lee en **1-2 ms**, con
->   descarga explícita para uso sin conexión y un modo de depuración que enseña
->   los tiempos.
+>   descarga explícita para uso sin conexión.
 >
 > **Fase 8 completa.** Siguiente: **Fase 9 — ampliaciones** (calculadora de daño,
 > simulador de combate, recomendador de equipos…), que está abierta a propósito.

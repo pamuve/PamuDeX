@@ -52,6 +52,7 @@ import {
   type ChampionsRulesSummary,
   type MultiplierKey,
 } from "../lib/apiSession";
+import { SwitchTrack } from "../components/SwitchTrack";
 import { useI18n } from "../i18n";
 
 /** Cuántas filas se pintan como mucho. Ver la cabecera. */
@@ -358,7 +359,7 @@ export default function ChampionsRules() {
             partan en escritorio, pero al 130% de escalado (8.1) 14rem son
             291px y no caben en una pantalla de 320. El `min()` cede primero. */}
         <div className="flex-1 min-w-[min(14rem,100%)]">
-          <h1 className="font-display font-bold text-2xl text-ink flex items-center gap-2">
+          <h1 className="page-title flex items-center gap-2">
             <Shield size={22} aria-hidden="true" />
             {t("champions.title")}
           </h1>
@@ -367,7 +368,7 @@ export default function ChampionsRules() {
         {!creating && (
           <button
             onClick={() => setCreating(true)}
-            className="flex items-center gap-1.5 bg-panel hover:bg-hover text-ink rounded-lg px-4 py-2.5 text-sm transition-colors"
+            className="btn-primary"
           >
             <Plus size={16} aria-hidden="true" />
             {t("champions.new")}
@@ -376,14 +377,14 @@ export default function ChampionsRules() {
       </div>
 
       {error && (
-        <div className="bg-panel border border-hover rounded-xl2 p-3 flex items-start gap-2 text-sm text-ink animate-fadein">
+        <div className="notice animate-fadein">
           <AlertTriangle size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
           <span>{error}</span>
         </div>
       )}
 
       {creating && (
-        <div className="bg-panel rounded-xl2 shadow-card p-4 animate-fadein">
+        <div className="card animate-fadein">
           <label className="block text-sm text-ink-soft mb-1" htmlFor="champions-name">
             {t("champions.nameLabel")}
           </label>
@@ -401,7 +402,7 @@ export default function ChampionsRules() {
             <button
               onClick={crear}
               disabled={!newName.trim() || busy}
-              className="flex items-center gap-1.5 bg-hover text-ink rounded-lg px-4 py-2.5 text-sm disabled:opacity-50 hover:brightness-125 transition"
+              className="btn-primary"
             >
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
               {t("champions.create")}
@@ -422,7 +423,7 @@ export default function ChampionsRules() {
           {t("champions.loading")}
         </div>
       ) : list.length === 0 && !creating ? (
-        <div className="bg-panel rounded-xl2 shadow-card p-8 text-center animate-fadein">
+        <div className="card p-8 text-center animate-fadein">
           <Shield size={36} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
           <p className="text-ink font-medium mb-1">{t("champions.empty")}</p>
           <p className="text-ink-soft text-sm">{t("champions.emptyHint")}</p>
@@ -430,7 +431,7 @@ export default function ChampionsRules() {
       ) : (
         <div className="grid md:grid-cols-[16rem_1fr] gap-4 items-start">
           {/* Conjuntos de reglas ------------------------------------------ */}
-          <nav className="bg-panel rounded-xl2 shadow-card p-2 animate-fadein">
+          <nav className="card p-2 animate-fadein">
             <ul className="space-y-1">
               {list.map((reglas) => {
                 const activo = selected !== null && selected.id === reglas.id;
@@ -460,12 +461,12 @@ export default function ChampionsRules() {
 
           {/* Editor -------------------------------------------------------- */}
           {!selected || !draft ? (
-            <div className="bg-panel rounded-xl2 shadow-card p-8 text-center text-ink-soft animate-fadein">
+            <div className="card p-8 text-center text-ink-soft animate-fadein">
               {t("champions.pick")}
             </div>
           ) : (
             <section className="space-y-4 animate-fadein">
-              <div className="bg-panel rounded-xl2 shadow-card p-4">
+              <div className="card">
                 <label className="block text-sm text-ink-soft mb-1" htmlFor="champions-rename">
                   {t("champions.nameLabel")}
                 </label>
@@ -480,7 +481,7 @@ export default function ChampionsRules() {
                   <button
                     onClick={guardar}
                     disabled={!sucio || busy}
-                    className="flex items-center gap-1.5 bg-hover text-ink rounded-lg px-4 py-2.5 text-sm disabled:opacity-50 hover:brightness-125 transition"
+                    className="btn-primary"
                   >
                     {busy ? (
                       <Loader2 size={16} className="animate-spin" aria-hidden="true" />
@@ -493,7 +494,7 @@ export default function ChampionsRules() {
                     <button
                       onClick={descartar}
                       disabled={busy}
-                      className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-3 py-2.5 text-sm transition-colors"
+                      className="btn-ghost"
                     >
                       <X size={16} aria-hidden="true" />
                       {t("champions.discard")}
@@ -513,13 +514,13 @@ export default function ChampionsRules() {
                       <button
                         onClick={borrar}
                         disabled={busy}
-                        className="bg-hover text-ink rounded-lg px-3 py-2 disabled:opacity-50"
+                        className="btn-danger bg-danger/15"
                       >
                         {t("profiles.delete")}
                       </button>
                       <button
                         onClick={() => setConfirmDelete(false)}
-                        className="text-ink-soft hover:text-ink rounded-lg px-2 py-2"
+                        className="btn-ghost"
                       >
                         {t("profiles.cancel")}
                       </button>
@@ -556,27 +557,16 @@ export default function ChampionsRules() {
                 ))}
               </div>
 
-              <div className="bg-panel rounded-xl2 shadow-card p-4">
+              <div className="card">
                 {/* Sin restricción / restringir */}
                 <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-hover">
                   <button
                     onClick={() => setEntidad(restringido ? null : [])}
                     role="switch"
                     aria-checked={restringido}
-                    className="flex items-center gap-2 bg-base hover:bg-hover rounded-lg px-3 py-2 text-sm text-ink transition-colors"
+                    className="btn-secondary bg-base hover:bg-hover"
                   >
-                    <span
-                      className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${
-                        restringido ? "bg-[#F08030]" : "bg-hover"
-                      }`}
-                      aria-hidden="true"
-                    >
-                      <span
-                        className={`w-4 h-4 rounded-full bg-ink transition-transform ${
-                          restringido ? "translate-x-4" : ""
-                        }`}
-                      />
-                    </span>
+                    <SwitchTrack on={restringido} onColor="bg-warning" />
                     {restringido ? t("champions.restricted") : t("champions.unrestricted")}
                   </button>
                   <p className="text-ink-soft text-xs flex-1 min-w-[12rem]">
@@ -615,13 +605,13 @@ export default function ChampionsRules() {
                     <div className="flex flex-wrap gap-2 mt-2">
                       <button
                         onClick={() => marcarFiltradas(true)}
-                        className="text-xs bg-base hover:bg-hover text-ink rounded-lg px-3 py-2 transition-colors"
+                        className="btn-secondary min-h-[2.25rem] px-3 text-xs"
                       >
                         {t("champions.selectFiltered", { n: filtradas.length })}
                       </button>
                       <button
                         onClick={() => marcarFiltradas(false)}
-                        className="text-xs bg-base hover:bg-hover text-ink rounded-lg px-3 py-2 transition-colors"
+                        className="btn-secondary min-h-[2.25rem] px-3 text-xs"
                       >
                         {t("champions.clearFiltered", { n: filtradas.length })}
                       </button>
@@ -637,7 +627,7 @@ export default function ChampionsRules() {
                                 type="checkbox"
                                 checked={activa}
                                 onChange={() => alternar(fila.id)}
-                                className="w-4 h-4 shrink-0 accent-[#78C850]"
+                                className="w-4 h-4 shrink-0 accent-success"
                               />
                               {fila.color && (
                                 <span
@@ -673,8 +663,8 @@ export default function ChampionsRules() {
               </div>
 
               {/* Multiplicadores del modo (Tarea 6.2) --------------------- */}
-              <div className="bg-panel rounded-xl2 shadow-card p-4">
-                <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1">
+              <div className="card">
+                <h2 className="section-title mb-1">
                   {t("champions.multipliers")}
                 </h2>
                 <p className="text-ink-soft text-xs mb-3">{t("champions.multipliersHint")}</p>
@@ -712,7 +702,7 @@ export default function ChampionsRules() {
                     <button
                       onClick={restablecerMultiplicadores}
                       disabled={busy}
-                      className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50"
+                      className="btn-ghost"
                     >
                       <RotateCcw size={14} aria-hidden="true" />
                       {t("champions.multipliersReset")}

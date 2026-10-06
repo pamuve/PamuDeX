@@ -73,7 +73,7 @@ export function ChangeTag({ changes, field, prefix, format = porDefecto }: Chang
       {abierto && (
         <span
           role="tooltip"
-          className="absolute z-20 left-0 top-full mt-1 w-56 max-w-[70vw] rounded-lg bg-hover text-ink shadow-card p-2.5 text-xs font-normal normal-case tracking-normal text-left space-y-1.5"
+          className="absolute z-20 left-0 top-full mt-1 origin-top-left [animation:materializar_320ms_var(--ease-bounce)] w-56 max-w-[70vw] rounded-lg bg-hover text-ink shadow-float p-2.5 text-xs font-normal normal-case tracking-normal text-left space-y-1.5"
         >
           {propios.map((c, i) => (
             <span key={`${c.generation}-${c.field}-${i}`} className="block">

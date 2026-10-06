@@ -85,6 +85,14 @@ const generationMode = require("./middleware/generationMode");
 const sessionsRoutes = require("./routes/sessions");
 const chartRoutes = require("./routes/chart");
 
+// La cabecera solo anuncia qué servidor hay detrás; no aporta nada al cliente.
+app.disable("x-powered-by");
+
+// gzip para todo lo que sale: los listados del catálogo son JSON muy
+// repetitivo (/api/items pasa de 181 KB a una fracción). Va antes de todo lo
+// demás para envolver también la API y los archivos estáticos.
+app.use(require("compression")());
+
 app.use(express.json());
 
 // IMPORTANTE: los tres middlewares van ANTES de las rutas de datos. Interceptan
@@ -137,9 +145,26 @@ app.get("/api/health", (req, res) => res.json({ status: "ok", version: APP_VERSI
 // En producción, el frontend ya compilado (Vite build) se sirve desde aquí
 const FRONTEND_DIST = path.join(__dirname, "..", "frontend", "dist");
 if (fs.existsSync(FRONTEND_DIST)) {
-  app.use(express.static(FRONTEND_DIST));
+  app.use(
+    express.static(FRONTEND_DIST, {
+      // Lo de /assets lleva el hash del contenido en el nombre: si cambia,
+      // cambia el nombre, así que puede guardarse un año sin preguntar. El
+      // resto (index.html, sw.js, manifiesto) se revalida siempre, o una
+      // versión nueva no llegaría nunca.
+      setHeaders(res, filePath) {
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+      },
+    })
+  );
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api")) return res.status(404).json({ error: "No encontrado" });
+    // Una ruta con extensión es un ARCHIVO que no existe (un sprite que no se
+    // bajó, un asset de una versión anterior), no una página de la SPA. Antes
+    // se respondía index.html con 200 y el Service Worker lo guardaba 90 días
+    // como si fuera el sprite, así que seguía roto aunque luego se bajara.
+    if (path.extname(req.path)) return res.status(404).end();
     res.sendFile(path.join(FRONTEND_DIST, "index.html"));
   });
 }

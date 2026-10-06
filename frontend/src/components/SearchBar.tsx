@@ -40,9 +40,12 @@ interface Opcion {
 }
 
 export function SearchBar() {
-  const { t, lang } = useI18n();
+  const { t, name } = useI18n();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
+  // La búsqueda va siempre a la red (no está en la caché local): sin
+  // cobertura fallaba en silencio y parecía que no había resultados.
+  const [errorBusqueda, setErrorBusqueda] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -53,8 +56,7 @@ export function SearchBar() {
    */
   const opciones = useMemo<Opcion[]>(() => {
     if (!results) return [];
-    const nombre = (o: { name_es: string; name_en: string }) =>
-      lang === "en" ? o.name_en : o.name_es;
+    const nombre = name;
     return [
       ...results.pokemon.map((p) => ({
         key: `p-${p.id}`,
@@ -80,7 +82,7 @@ export function SearchBar() {
         label: nombre(a),
       })),
     ];
-  }, [results, lang]);
+  }, [results, name]);
 
   function go(path: string) {
     navigate(path);
@@ -97,21 +99,35 @@ export function SearchBar() {
     onEscapeClosed: () => setQ(""),
   });
 
-  const abierta = combo.open && results !== null;
+  const abierta = combo.open && (results !== null || errorBusqueda);
   const hasResults = opciones.length > 0;
 
   useEffect(() => {
+    setErrorBusqueda(false);
     if (q.trim().length < 2) {
       setResults(null);
       return;
     }
+    let cancelado = false;
     const handle = setTimeout(() => {
-      api.search(q).then((r) => {
-        setResults(r);
-        combo.setOpen(true);
-      });
+      api
+        .search(q)
+        .then((r) => {
+          if (cancelado) return;
+          setResults(r);
+          combo.setOpen(true);
+        })
+        .catch(() => {
+          if (cancelado) return;
+          setResults(null);
+          setErrorBusqueda(true);
+          combo.setOpen(true);
+        });
     }, 150);
-    return () => clearTimeout(handle);
+    return () => {
+      cancelado = true;
+      clearTimeout(handle);
+    };
   }, [q]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -124,7 +140,7 @@ export function SearchBar() {
 
   return (
     <div ref={boxRef} className="relative w-full max-w-xl mx-auto">
-      <div className="flex items-center gap-2 bg-panel rounded-xl2 px-4 py-3 shadow-card border border-hover focus-within:border-[#6890F0] transition-colors">
+      <div className="card flex items-center gap-2 px-4 py-3 border border-hover focus-within:border-accent transition-colors">
         <Search size={18} className="text-ink-soft" aria-hidden="true" />
         <input
           value={q}
@@ -142,7 +158,7 @@ export function SearchBar() {
       {/* Cuántos resultados hay. `polite` para no cortar al lector mientras se
           escribe, y fuera del flujo visual porque en pantalla ya se ve. */}
       <span className="sr-only" role="status" aria-live="polite">
-        {abierta ? t("search.count", { count: opciones.length }) : ""}
+        {abierta ? (errorBusqueda ? t("search.error") : t("search.count", { count: opciones.length })) : ""}
       </span>
 
       {abierta && (
@@ -151,10 +167,12 @@ export function SearchBar() {
           id={combo.listId}
           role="listbox"
           aria-label={t("search.label")}
-          className="absolute mt-2 w-full bg-panel border border-hover rounded-xl2 shadow-card max-h-96 overflow-auto z-20 animate-fadein"
+          className="popover absolute mt-2 w-full origin-top max-h-96 overflow-auto z-20"
         >
           {!hasResults && (
-            <li className="px-4 py-4 text-sm text-ink-soft">{t("empty.results")}</li>
+            <li className={`px-4 py-4 text-sm ${errorBusqueda ? "text-danger" : "text-ink-soft"}`}>
+              {errorBusqueda ? t("search.error") : t("empty.results")}
+            </li>
           )}
 
           {opciones.map((o, i) => (

@@ -37,6 +37,7 @@ import { useA11y, TEXT_SCALES } from "../lib/a11y";
 import { useNotifications } from "../lib/notifications";
 import { OfflineData } from "../components/OfflineData";
 import { PROFILE_THEMES, PROFILE_THEME_IDS } from "../lib/theme";
+import { SwitchTrack } from "../components/SwitchTrack";
 import { useI18n, AVAILABLE_LANGS } from "../i18n";
 
 /**
@@ -56,8 +57,8 @@ function Accesibilidad() {
   const [a11y, setA11yPref] = useA11y();
 
   return (
-    <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
-      <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1 flex items-center gap-2">
+    <section className="card animate-fadein">
+      <h2 className="section-title mb-1 flex items-center gap-2">
         <Contrast size={14} aria-hidden="true" />
         {t("settings.a11y")}
       </h2>
@@ -70,20 +71,9 @@ function Accesibilidad() {
         onClick={() => setA11yPref({ highContrast: !a11y.highContrast })}
         role="switch"
         aria-checked={a11y.highContrast}
-        className="flex items-center gap-2 bg-base hover:bg-hover rounded-lg px-4 py-2.5 text-sm text-ink transition-colors"
+        className="btn-secondary bg-base hover:bg-hover"
       >
-        <span
-          className={`w-9 h-5 rounded-full flex items-center px-0.5 shrink-0 transition-colors ${
-            a11y.highContrast ? "bg-[#78C850]" : "bg-hover"
-          }`}
-          aria-hidden="true"
-        >
-          <span
-            className={`w-4 h-4 rounded-full bg-ink transition-transform ${
-              a11y.highContrast ? "translate-x-4" : ""
-            }`}
-          />
-        </span>
+        <SwitchTrack on={a11y.highContrast} />
         {a11y.highContrast ? t("settings.on") : t("settings.off")}
       </button>
 
@@ -170,8 +160,8 @@ function Notificaciones() {
   }
 
   return (
-    <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
-      <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1 flex items-center gap-2">
+    <section className="card animate-fadein">
+      <h2 className="section-title mb-1 flex items-center gap-2">
         <Bell size={14} aria-hidden="true" />
         {t("settings.notifications")}
       </h2>
@@ -189,21 +179,9 @@ function Notificaciones() {
             role="switch"
             aria-checked={activadas}
             disabled={denegado || ocupado}
-            className="flex items-center gap-2 bg-base hover:bg-hover disabled:opacity-60
-                       disabled:cursor-not-allowed rounded-lg px-4 py-2.5 text-sm text-ink transition-colors"
+            className="btn-secondary bg-base hover:bg-hover"
           >
-            <span
-              className={`w-9 h-5 rounded-full flex items-center px-0.5 shrink-0 transition-colors ${
-                activadas ? "bg-[#78C850]" : "bg-hover"
-              }`}
-              aria-hidden="true"
-            >
-              <span
-                className={`w-4 h-4 rounded-full bg-ink transition-transform ${
-                  activadas ? "translate-x-4" : ""
-                }`}
-              />
-            </span>
+            <SwitchTrack on={activadas} />
             {activadas ? t("settings.on") : t("settings.off")}
           </button>
 
@@ -236,11 +214,11 @@ export default function Settings() {
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">
         <div className="text-center">
           <UserCircle2 size={40} className="mx-auto text-ink-soft mb-3" aria-hidden="true" />
-          <h1 className="font-display font-bold text-2xl text-ink mb-2">{t("settings.title")}</h1>
+          <h1 className="page-title mb-2">{t("settings.title")}</h1>
           <p className="text-ink-soft mb-5">{t("settings.needProfile")}</p>
           <Link
             to="/perfiles"
-            className="inline-block bg-panel hover:bg-hover text-ink rounded-lg px-5 py-2.5 text-sm transition-colors"
+            className="btn-primary"
           >
             {t("profiles.choose")}
           </Link>
@@ -283,14 +261,14 @@ export default function Settings() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("settings.title")}</h1>
+        <h1 className="page-title">{t("settings.title")}</h1>
         <p className="text-ink-soft text-sm mt-1">
           {t("settings.subtitle", { name: profile.name })}
         </p>
       </div>
 
       {error && (
-        <div className="bg-panel border border-hover rounded-xl2 p-3 text-sm text-ink animate-fadein">
+        <div className="notice animate-fadein">
           {error}
         </div>
       )}
@@ -305,8 +283,8 @@ export default function Settings() {
       <OfflineData />
 
       {/* Idioma ------------------------------------------------------- */}
-      <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1">
+      <section className="card animate-fadein">
+        <h2 className="section-title mb-1">
           {t("settings.language")}
         </h2>
         <p className="text-ink-soft text-xs mb-3">{t("settings.languageHint")}</p>
@@ -331,8 +309,8 @@ export default function Settings() {
       </section>
 
       {/* Tema --------------------------------------------------------- */}
-      <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1 flex items-center gap-2">
+      <section className="card animate-fadein">
+        <h2 className="section-title mb-1 flex items-center gap-2">
           <Palette size={14} aria-hidden="true" />
           {t("settings.theme")}
           {guardandoTema && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
@@ -386,8 +364,8 @@ export default function Settings() {
       </section>
 
       {/* Historial ---------------------------------------------------- */}
-      <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1 flex items-center gap-2">
+      <section className="card animate-fadein">
+        <h2 className="section-title mb-1 flex items-center gap-2">
           <HistoryIcon size={14} aria-hidden="true" />
           {t("settings.history")}
         </h2>
@@ -398,26 +376,15 @@ export default function Settings() {
             onClick={alternarHistorial}
             role="switch"
             aria-checked={historialActivo}
-            className="flex items-center gap-2 bg-base hover:bg-hover rounded-lg px-4 py-2.5 text-sm text-ink transition-colors"
+            className="btn-secondary bg-base hover:bg-hover"
           >
-            <span
-              className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${
-                historialActivo ? "bg-[#78C850]" : "bg-hover"
-              }`}
-              aria-hidden="true"
-            >
-              <span
-                className={`w-4 h-4 rounded-full bg-ink transition-transform ${
-                  historialActivo ? "translate-x-4" : ""
-                }`}
-              />
-            </span>
+            <SwitchTrack on={historialActivo} />
             {historialActivo ? t("settings.historyOn") : t("settings.historyOff")}
           </button>
 
           <Link
             to="/historial"
-            className="flex items-center gap-1.5 text-ink-soft hover:text-ink hover:bg-hover rounded-lg px-3 py-2.5 text-sm transition-colors"
+            className="btn-ghost"
           >
             <HistoryIcon size={16} aria-hidden="true" />
             {t("history.title")}
@@ -426,14 +393,14 @@ export default function Settings() {
       </section>
 
       {/* Identidad del perfil ---------------------------------------- */}
-      <section className="bg-panel rounded-xl2 shadow-card p-5 animate-fadein">
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase mb-1">
+      <section className="card animate-fadein">
+        <h2 className="section-title mb-1">
           {t("settings.profile")}
         </h2>
         <p className="text-ink-soft text-xs mb-3">{t("settings.profileHint")}</p>
         <Link
           to="/perfiles"
-          className="inline-flex items-center gap-1.5 bg-base hover:bg-hover text-ink rounded-lg px-4 py-2.5 text-sm transition-colors"
+          className="btn-secondary"
         >
           <Users size={16} aria-hidden="true" />
           {t("profiles.title")}

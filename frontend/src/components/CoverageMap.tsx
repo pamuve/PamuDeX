@@ -32,11 +32,11 @@ export function CoverageMap({ report, typesById }: { report: CoverageReport; typ
   const { t } = useI18n();
   return (
     <div className="grid sm:grid-cols-2 gap-3">
-      <Section title={t("coverage.global_weakness")} typeIds={report.globalWeakness} typesById={typesById} accent="border-l-[#C03028]" />
-      <Section title={t("coverage.no_resist")} typeIds={report.noResist} typesById={typesById} accent="border-l-[#F08030]" />
-      <Section title={t("coverage.overrepresented")} typeIds={report.overrepresented} typesById={typesById} accent="border-l-[#6890F0]" />
-      <Section title={t("coverage.offensive")} typeIds={report.offensiveGaps} typesById={typesById} accent="border-l-[#A9BDD2]" />
-      <Section title={t("coverage.defensive")} typeIds={report.defensiveHotspots} typesById={typesById} accent="border-l-[#705898]" />
+      <Section title={t("coverage.global_weakness")} typeIds={report.globalWeakness} typesById={typesById} accent="border-l-danger" />
+      <Section title={t("coverage.no_resist")} typeIds={report.noResist} typesById={typesById} accent="border-l-warning" />
+      <Section title={t("coverage.overrepresented")} typeIds={report.overrepresented} typesById={typesById} accent="border-l-accent" />
+      <Section title={t("coverage.offensive")} typeIds={report.offensiveGaps} typesById={typesById} accent="border-l-ink-soft" />
+      <Section title={t("coverage.defensive")} typeIds={report.defensiveHotspots} typesById={typesById} accent="border-l-danger/50" />
     </div>
   );
 }

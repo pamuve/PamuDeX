@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { api } from "../lib/api";
 import {
@@ -46,9 +46,9 @@ function AddPokemonBox({
   placeholder: string;
   onAdd: (dex: number, id: number) => void;
 }) {
-  const { t, lang } = useI18n();
+  const { t, name } = useI18n();
   const [q, setQ] = useState("");
-  const nombre = (p: PokemonSummary) => (lang === "en" ? p.name_en : p.name_es);
+  const nombre = name;
   const filtered = allPokemon
     .filter((p) => nombre(p).toLowerCase().includes(q.toLowerCase()))
     .slice(0, 8);
@@ -95,7 +95,7 @@ function AddPokemonBox({
           id={combo.listId}
           role="listbox"
           aria-label={label}
-          className="absolute mt-1 w-full bg-panel border border-hover rounded-xl2 shadow-card max-h-56 overflow-auto z-20 animate-fadein"
+          className="popover absolute mt-1 w-full origin-top max-h-56 overflow-auto z-20"
         >
           {filtered.map((p, i) => (
             <li
@@ -128,11 +128,7 @@ function AddPokemonBox({
 }
 
 export function TeamBuilder() {
-  const { t, lang } = useI18n();
-  const nombreDe = useCallback(
-    (p: { name_es: string; name_en: string }) => (lang === "en" ? p.name_en : p.name_es),
-    [lang]
-  );
+  const { t, name: nombreDe } = useI18n();
   const [ownTeam, setOwnTeam] = useState<Team>({ slots: [] });
   const [rivalTeam, setRivalTeam] = useState<RivalTeam>({ slots: [] });
   const [allPokemon, setAllPokemon] = useState<PokemonSummary[]>([]);
@@ -158,14 +154,18 @@ export function TeamBuilder() {
     cargado ya está en su sitio.
   */
   const [cargado, setCargado] = useState(false);
+  // Un catálogo que no llega deja los autocompletados vacíos sin explicación;
+  // basta un aviso, porque el equipo guardado sigue viéndose.
+  const [falloCarga, setFalloCarga] = useState(false);
 
   // Carga inicial: equipo guardado + catálogos
   useEffect(() => {
     setOwnTeam(loadTeam());
     setRivalTeam(loadRivalTeam());
     setCargado(true);
-    api.pokemon.list().then(setAllPokemon);
-    api.moves.list().then(setAllMoves);
+    const fallo = () => setFalloCarga(true);
+    api.pokemon.list().then(setAllPokemon).catch(fallo);
+    api.moves.list().then(setAllMoves).catch(fallo);
     /*
       El catálogo entero de objetos, una vez, y el filtrado en local: es lo mismo
       que ya se hace con los 1025 Pokémon y los 901 movimientos. Son 2151 filas
@@ -176,12 +176,12 @@ export function TeamBuilder() {
       Sin argumentos, `api.items.list()` pasa por la caché de IndexedDB
       (`RUTAS_CATALOGO`), así que en la segunda visita responde sin red.
     */
-    api.items.list().then(setAllItems);
-    api.types.list().then((list) => {
-      Promise.all(list.map((tp) => api.types.detail(tp.id))).then((details) => {
-        setTypesById(Object.fromEntries(details.map((d) => [d.id, d])));
-      });
-    });
+    api.items.list().then(setAllItems).catch(fallo);
+    api.types
+      .list()
+      .then((list) => Promise.all(list.map((tp) => api.types.detail(tp.id))))
+      .then((details) => setTypesById(Object.fromEntries(details.map((d) => [d.id, d]))))
+      .catch(fallo);
   }, []);
 
   // Persistencia automática, nunca antes de haber leído lo que ya había.
@@ -200,9 +200,11 @@ export function TeamBuilder() {
     ]);
     const missing = [...neededIds].filter((id) => !pokemonCache[id]);
     if (missing.length === 0) return;
-    Promise.all(missing.map((id) => api.pokemon.detail(id))).then((details) => {
-      setPokemonCache((prev) => ({ ...prev, ...Object.fromEntries(details.map((d) => [d.id, d])) }));
-    });
+    Promise.all(missing.map((id) => api.pokemon.detail(id)))
+      .then((details) => {
+        setPokemonCache((prev) => ({ ...prev, ...Object.fromEntries(details.map((d) => [d.id, d])) }));
+      })
+      .catch(() => setFalloCarga(true));
   }, [ownTeam, rivalTeam, pokemonCache]);
 
   const movesById = useMemo(() => Object.fromEntries(allMoves.map((m) => [m.id, m])), [allMoves]);
@@ -266,12 +268,18 @@ export function TeamBuilder() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <h1 className="font-display text-2xl font-bold text-ink text-center">{t("team.title")}</h1>
+      <h1 className="page-title">{t("team.title")}</h1>
+
+      {falloCarga && (
+        <p role="alert" className="rounded-xl2 bg-danger/10 px-4 py-3 text-sm text-ink">
+          {t("common.loadErrorInline")}
+        </p>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase">{t("team.own")}</h2>
+            <h2 className="section-title">{t("team.own")}</h2>
             <span className="text-xs text-ink-soft">{ownTeam.slots.length}/{MAX_TEAM_SIZE}</span>
           </div>
 
@@ -308,7 +316,7 @@ export function TeamBuilder() {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase">{t("team.rival")}</h2>
+            <h2 className="section-title">{t("team.rival")}</h2>
             <span className="text-xs text-ink-soft">{rivalTeam.slots.length}/{MAX_TEAM_SIZE}</span>
           </div>
 
@@ -362,7 +370,7 @@ export function TeamBuilder() {
 
       {rivalTeam.slots.length > 0 && (
         <section className="space-y-3">
-          <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase">{t("recommendation.title")}</h2>
+          <h2 className="section-title">{t("recommendation.title")}</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {recomendaciones.map(({ rival, rivalPokemon, recommendation, key }) => (
               <RecommendationCard
@@ -378,7 +386,7 @@ export function TeamBuilder() {
       )}
 
       <section className="space-y-3">
-        <h2 className="font-display text-sm tracking-widest text-ink-soft uppercase">{t("coverage.title")}</h2>
+        <h2 className="section-title">{t("coverage.title")}</h2>
         {ownTeam.slots.length === 0 ? (
           <p className="text-ink-soft text-sm">{t("coverage.empty")}</p>
         ) : (

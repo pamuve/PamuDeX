@@ -57,7 +57,7 @@ export default function RelationsMatrix({
   }
 
   return (
-    <div className="rounded-xl2 bg-panel p-3 shadow-card animate-fadein sm:p-4">
+    <div className="card p-3 animate-fadein sm:p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-ink-soft">{t("editor.relations.hint")}</p>
         <button type="button" className={btnGhost} onClick={onResetAll} disabled={saving}>
@@ -127,7 +127,7 @@ export default function RelationsMatrix({
                           defender: typeName(defender, lang),
                           value: `x${value}`,
                         })}
-                        className="h-9 w-9 border border-base font-medium transition hover:brightness-125 focus:outline-none focus:ring-2 focus:ring-ink-soft/60 disabled:opacity-50"
+                        className="h-9 w-9 border border-base font-medium transition hover:brightness-125 disabled:opacity-50"
                         style={{
                           backgroundColor: style.bg,
                           color: style.fg,
