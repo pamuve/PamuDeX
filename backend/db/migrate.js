@@ -221,6 +221,119 @@ const MIGRATIONS = [
       db.transaction(() => insertEntityChanges(db, rows))();
     },
   },
+  /* ------------------------- Fase 9 — ampliaciones ------------------------ */
+  //
+  // CREAR Y SEMBRAR VAN EN LA MISMA MIGRACIÓN. `migrate()` decide qué hace
+  // falta en una primera pasada, ANTES de ejecutar nada: una migración de
+  // siembra aparte, con la condición «la tabla está vacía», se evaluaría cuando
+  // la tabla todavía no existe, saldría como «no hace falta» y quedaría anotada
+  // sin haberse ejecutado nunca. Como cada migración corre en su transacción y
+  // en SQLite el DDL es transaccional, si la siembra falla tampoco queda la
+  // tabla y el arranque siguiente lo reintenta entero.
+  {
+    name: "tabla pokemon_moves",
+    needed: (db) => !hasTable(db, "pokemon_moves") || isEmpty(db, "pokemon_moves"),
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS pokemon_moves (
+          pokemon_id INTEGER NOT NULL,
+          move_id INTEGER NOT NULL,
+          method TEXT NOT NULL,
+          level INTEGER,
+          PRIMARY KEY (pokemon_id, move_id, method)
+        ) WITHOUT ROWID;
+        CREATE INDEX IF NOT EXISTS idx_pokemon_moves_movimiento ON pokemon_moves (move_id);
+      `);
+      require("./extras").seedLearnsets(db);
+    },
+  },
+  {
+    name: "tabla evolutions",
+    needed: (db) => !hasTable(db, "evolutions") || isEmpty(db, "evolutions"),
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS evolutions (
+          from_pokemon_id INTEGER NOT NULL,
+          to_pokemon_id INTEGER NOT NULL,
+          method_es TEXT,
+          method_en TEXT,
+          PRIMARY KEY (from_pokemon_id, to_pokemon_id)
+        ) WITHOUT ROWID;
+        CREATE INDEX IF NOT EXISTS idx_evolutions_destino ON evolutions (to_pokemon_id);
+      `);
+      require("./extras").seedEvolutions(db);
+    },
+  },
+  {
+    name: "tabla pokemon_forms",
+    needed: (db) => !hasTable(db, "pokemon_forms") || isEmpty(db, "pokemon_forms"),
+    run: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS pokemon_forms (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          pokemon_id INTEGER NOT NULL,
+          form_key TEXT NOT NULL UNIQUE,
+          sprite_id INTEGER,
+          kind TEXT NOT NULL,
+          name_es TEXT NOT NULL,
+          name_en TEXT NOT NULL,
+          types_json TEXT NOT NULL,
+          hp INTEGER, atk INTEGER, def INTEGER, spa INTEGER, spd INTEGER, spe INTEGER,
+          height_m REAL,
+          weight_kg REAL
+        );
+        CREATE INDEX IF NOT EXISTS idx_pokemon_forms_pokemon ON pokemon_forms (pokemon_id);
+      `);
+      require("./extras").seedForms(db);
+    },
+  },
+  {
+    // Efectos en inglés. Tres columnas, una por tabla; cada ALTER se salta si
+    // la columna ya está, para que un fallo a mitad no deje la migración sin
+    // poder repetirse.
+    name: "columnas effect_en",
+    needed: (db) =>
+      ["moves", "abilities", "items"].some((t) => hasTable(db, t) && !hasColumn(db, t, "effect_en")) ||
+      !require("./extras").hasAnyEffectEn(db),
+    run: (db) => {
+      for (const tabla of ["moves", "abilities", "items"]) {
+        if (hasTable(db, tabla) && !hasColumn(db, tabla, "effect_en")) {
+          db.exec(`ALTER TABLE ${tabla} ADD COLUMN effect_en TEXT`);
+        }
+      }
+      require("./extras").fillEffectsEn(db);
+    },
+  },
+  {
+    name: "tabla teams",
+    needed: (db) => !hasTable(db, "teams"),
+    run: (db) =>
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS teams (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+          scope TEXT NOT NULL DEFAULT 'global',
+          name TEXT NOT NULL,
+          data_json TEXT NOT NULL,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_teams_perfil ON teams (profile_id, scope);
+      `),
+  },
+  {
+    name: "tabla captures",
+    needed: (db) => !hasTable(db, "captures"),
+    run: (db) =>
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS captures (
+          profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+          scope TEXT NOT NULL DEFAULT 'global',
+          pokemon_id INTEGER NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (profile_id, scope, pokemon_id)
+        ) WITHOUT ROWID;
+      `),
+  },
 ];
 
 /**

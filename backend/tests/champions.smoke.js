@@ -200,6 +200,9 @@ const fakeDb = {
     }
 
     /* --- catálogo ---------------------------------------------------- */
+    // El listado lleva los tipos en un subselect sobre `pokemon_types` (Fase 9),
+    // así que hay que reconocerlo ANTES que la consulta de tipos de una ficha.
+    if (sql.includes("FROM pokemon p ORDER BY")) return { all: () => POKEMON };
     if (sql.includes("FROM pokemon_types")) {
       return {
         all: (pokemonId) =>

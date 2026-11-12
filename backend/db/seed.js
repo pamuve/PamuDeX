@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const Database = require("better-sqlite3");
 const { populate, insertEntityChanges } = require("./populate");
+const { seedLearnsets, seedEvolutions, seedForms, fillEffectsEn } = require("./extras");
 
 // Ruta compartida con server.js: en Docker la lleva a /data (ver db/paths.js).
 const { DB_PATH, SCHEMA_PATH, ensureDbDir } = require("./paths");
@@ -35,12 +36,25 @@ function seed() {
   // Pokédex, name_es) contra las filas recién insertadas.
   const cambios = insertEntityChanges(db, readJSON("entity_changes.json"));
 
+  // Datos «extra» de la Fase 9. Las mismas funciones que usan las migraciones
+  // para una instalación que ya existía.
+  const extras = {
+    movimientos: seedLearnsets(db),
+    evoluciones: seedEvolutions(db),
+    formas: seedForms(db),
+    efectosEn: fillEffectsEn(db),
+  };
+
   console.log(`✔ Base de datos creada en ${DB_PATH}`);
   console.log(
     `  · ${counts.types} tipos, ${counts.pokemon} Pokémon, ${counts.moves} movimientos, ` +
       `${counts.abilities} habilidades, ${counts.items} objetos`
   );
   console.log(`  · ${cambios} cambios históricos entre generaciones`);
+  console.log(
+    `  · ${extras.movimientos} movimientos por Pokémon, ${extras.evoluciones} evoluciones, ` +
+      `${extras.formas} formas, ${extras.efectosEn} efectos en inglés`
+  );
   db.close();
 }
 

@@ -16,6 +16,8 @@ const express = require("express");
 
 const MAX_NAME = 60;
 const MAX_DESCRIPTION = 300;
+const SHARE_FORMAT = "pamudex-romhack";
+const SHARE_VERSION = 1;
 
 /** Recorta y limita un texto libre. Devuelve "" si no es una cadena. */
 function cleanText(value, maxLength) {
@@ -87,6 +89,97 @@ module.exports = (db) => {
   // GET /api/sessions -> lista ligera (sin data_json, que puede ser grande)
   router.get("/", (req, res) => {
     res.json(q.list.all());
+  });
+
+  /* --------------------------- compartir un ROM Hack ----------------------- */
+  //
+  // Una sesión guarda sus overrides por ID INTERNO (`pokemon: { "25": … }`), y
+  // esos ids los reparte SQLite al sembrar: no hay garantía de que coincidan en
+  // otra instalación. El archivo para compartir los traduce a CLAVE NATURAL —nº
+  // de Pokédex para los Pokémon, nombre en inglés para movimientos y
+  // habilidades— y al importarlo se resuelven contra la base de quien lo
+  // recibe. Los tipos ya van por su id canónico ('fuego').
+  //
+  // Lo que no se pueda resolver al importar (un movimiento que la otra
+  // instalación no tiene) se omite y se cuenta, no rompe la importación.
+  const naturales = {
+    pokemon: {
+      aClave: db.prepare("SELECT dex AS k FROM pokemon WHERE id = ?"),
+      aId: db.prepare("SELECT id FROM pokemon WHERE dex = ? ORDER BY id LIMIT 1"),
+    },
+    moves: {
+      aClave: db.prepare("SELECT name_en AS k FROM moves WHERE id = ?"),
+      aId: db.prepare("SELECT id FROM moves WHERE name_en = ? ORDER BY id LIMIT 1"),
+    },
+    abilities: {
+      aClave: db.prepare("SELECT name_en AS k FROM abilities WHERE id = ?"),
+      aId: db.prepare("SELECT id FROM abilities WHERE name_en = ? ORDER BY id LIMIT 1"),
+    },
+  };
+
+  function traducir(data, direccion) {
+    const salida = {};
+    let omitidos = 0;
+    for (const [clave, valor] of Object.entries(data || {})) {
+      const tabla = naturales[clave];
+      if (!tabla || valor === null || typeof valor !== "object" || Array.isArray(valor)) {
+        salida[clave] = valor; // types, relations, theme, options: tal cual
+        continue;
+      }
+      salida[clave] = {};
+      for (const [ref, patch] of Object.entries(valor)) {
+        const fila = direccion === "exportar" ? tabla.aClave.get(ref) : tabla.aId.get(ref);
+        const destino = fila ? (direccion === "exportar" ? fila.k : fila.id) : null;
+        if (destino === null || destino === undefined) omitidos += 1;
+        else salida[clave][String(destino)] = patch;
+      }
+    }
+    return { data: salida, omitidos };
+  }
+
+  // GET /api/sessions/:id/share — el ROM Hack en un archivo portable
+  router.get("/:id/share", (req, res) => {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: "id_invalido" });
+    const row = q.byId.get(id);
+    if (!row) return res.status(404).json({ error: "sesion_no_encontrada" });
+
+    let data = {};
+    try {
+      data = JSON.parse(row.data_json || "{}");
+    } catch (err) {
+      data = {};
+    }
+    res.json({
+      format: SHARE_FORMAT,
+      version: SHARE_VERSION,
+      name: row.name,
+      description: row.description || "",
+      data: traducir(data, "exportar").data,
+    });
+  });
+
+  // POST /api/sessions/import — crea una sesión NUEVA desde un archivo compartido
+  router.post("/import", (req, res) => {
+    const body = req.body || {};
+    if (body.format !== SHARE_FORMAT) return res.status(400).json({ error: "formato_desconocido" });
+    if (!Number.isInteger(body.version) || body.version > SHARE_VERSION) {
+      return res.status(400).json({ error: "version_no_soportada" });
+    }
+    const data = body.data;
+    if (data === null || typeof data !== "object" || Array.isArray(data)) {
+      return res.status(400).json({ error: "data_json_invalido" });
+    }
+
+    const base = cleanText(body.name, MAX_NAME) || "ROM Hack";
+    // No se pisa ni se mezcla con una sesión que ya exista con ese nombre.
+    let name = base;
+    for (let n = 2; q.nameExists.get(name) && n < 1000; n++) {
+      name = `${base.slice(0, MAX_NAME - 6)} (${n})`;
+    }
+    const { data: traducido, omitidos } = traducir(data, "importar");
+    const info = q.insert.run(name, cleanText(body.description, MAX_DESCRIPTION), JSON.stringify(traducido));
+    res.status(201).json({ ...q.byId.get(info.lastInsertRowid), skipped: omitidos });
   });
 
   // GET /api/sessions/:id -> sesión completa, con data_json ya parseado en "data"

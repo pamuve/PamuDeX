@@ -37,6 +37,7 @@ const { getSessionOverrides } = require("../lib/overrides");
 const { buildDataset, STAT_KEYS } = require("../lib/dataset");
 const { populate } = require("../db/populate");
 const { catalogChanged } = require("../lib/catalogVersion");
+const { fillEffectsEn } = require("../db/extras");
 const {
   ENTITIES, KEY_OF, CAMPOS, parseCsv, csvToEntity, validate, diff, igual,
 } = require("../lib/importValidator");
@@ -404,6 +405,9 @@ module.exports = (db, { crearCopia } = {}) => {
       }
       populate(db, final, { ids });
     })();
+
+    // `populate` no conoce `effect_en`: todo lo reinsertado lo tiene a NULL.
+    fillEffectsEn(db);
 
     // El catálogo ha cambiado en caliente: lo que haya en caché derivado de él
     // (tipos del modo generación, del motor de efectividad) se recalcula.

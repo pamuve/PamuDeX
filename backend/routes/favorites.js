@@ -28,7 +28,7 @@
 const express = require("express");
 
 /** Tipos de entidad admitidos. Cualquier otro se rechaza. */
-const ENTITY_TYPES = ["pokemon", "move", "ability", "type"];
+const ENTITY_TYPES = ["pokemon", "move", "ability", "type", "item"];
 
 const MAX_REF = 40;
 
@@ -113,7 +113,7 @@ module.exports = (db) => {
     if (!profileId) return;
 
     const items = q.list.all(profileId);
-    const byType = { pokemon: [], move: [], ability: [], type: [] };
+    const byType = { pokemon: [], move: [], ability: [], type: [], item: [] };
     for (const item of items) {
       if (byType[item.entity_type]) byType[item.entity_type].push(item.entity_ref);
     }

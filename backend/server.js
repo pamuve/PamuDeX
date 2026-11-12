@@ -149,6 +149,11 @@ app.use("/api/abilities", require("./routes/abilities")(db));
 app.use("/api/items", require("./routes/items")(db));
 app.use("/api/champions", require("./routes/champions")(db));
 app.use("/api/search", require("./routes/search")(db));
+// Fase 9. Ninguna cuelga de /api/pokemon ni /api/moves a propósito: ahí los
+// middlewares de arriba reescriben la respuesta (ver routes/extra.js).
+app.use("/api/extra", require("./routes/extra")(db));
+app.use("/api/teams", require("./routes/teams")(db));
+app.use("/api/captures", require("./routes/captures")(db));
 
 // El healthcheck de Docker. NO toca SQLite a propósito: si la base está
 // ocupada, el contenedor no debe marcarse como enfermo por eso. La versión se

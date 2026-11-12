@@ -40,7 +40,7 @@
 const express = require("express");
 
 /** Tipos de entidad admitidos. Cualquier otro se rechaza. */
-const ENTITY_TYPES = ["pokemon", "move", "ability", "type"];
+const ENTITY_TYPES = ["pokemon", "move", "ability", "type", "item"];
 
 const MAX_REF = 40;
 
