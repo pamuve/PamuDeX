@@ -129,7 +129,18 @@ app.use("/api/settings", require("./routes/settings")(db));
 app.use("/api/sessions", sessionsRoutes(db));
 app.use("/api/chart", chartRoutes(db));
 app.use("/api/export", require("./routes/export")(db));
-app.use("/api/import", require("./routes/import")(db));
+app.use(
+  "/api/import",
+  require("./routes/import")(db, {
+    // Copia previa a una importación global. Se poda aquí mismo para que
+    // importar varias veces seguidas no llene el volumen.
+    crearCopia: (etiqueta) => {
+      const archivo = crearCopia(db, etiqueta);
+      podarCopias();
+      return archivo;
+    },
+  })
+);
 
 app.use("/api/types", require("./routes/types")(db));
 app.use("/api/pokemon", require("./routes/pokemon")(db));

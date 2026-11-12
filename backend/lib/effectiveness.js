@@ -1,5 +1,7 @@
 "use strict";
 
+const { catalogVersion } = require("./catalogVersion");
+
 /**
  * PamuDeX — motor de efectividad de tipos.
  * Fase 1, reescrito como factoría en la Tarea 6.2.
@@ -112,7 +114,19 @@ function isCustomized(multipliers) {
 function createEffectiveness(db, multipliers) {
   const efectivos = { ...DEFAULT_MULTIPLIERS, ...(multipliers || {}) };
 
-  const ALL_TYPES = db.prepare("SELECT id FROM types").all().map((r) => r.id);
+  // La lista de tipos se guarda, pero se relee si una importación global ha
+  // cambiado el catálogo: un tipo añadido al importar no entraba en los
+  // perfiles de efectividad hasta reiniciar.
+  const leerTipos = db.prepare("SELECT id FROM types");
+  let tipos = null;
+  let tiposVersion = -1;
+  const allTypes = () => {
+    if (!tipos || tiposVersion !== catalogVersion()) {
+      tipos = leerTipos.all().map((r) => r.id);
+      tiposVersion = catalogVersion();
+    }
+    return tipos;
+  };
 
   // Preparada UNA vez, no una por cruce de tipos.
   const relacion = db.prepare(
@@ -141,7 +155,7 @@ function createEffectiveness(db, multipliers) {
   /** Efectividad DEFENSIVA de un Pokémon (puede tener dos tipos). */
   function defensiveProfile(defenderTypes) {
     const porCategoria = {};
-    for (const attackerType of ALL_TYPES) {
+    for (const attackerType of allTypes()) {
       let total = 1;
       for (const dt of defenderTypes) total *= getMultiplier(attackerType, dt);
       const { key } = categoryOf(total);
@@ -153,7 +167,7 @@ function createEffectiveness(db, multipliers) {
   /** Efectividad OFENSIVA de un tipo de ataque contra todos los demás. */
   function offensiveProfile(attackerType) {
     const porCategoria = {};
-    for (const defenderType of ALL_TYPES) {
+    for (const defenderType of allTypes()) {
       const { key } = categoryOf(getMultiplier(attackerType, defenderType));
       (porCategoria[key] = porCategoria[key] || []).push(defenderType);
     }
@@ -169,7 +183,9 @@ function createEffectiveness(db, multipliers) {
     defensiveProfile,
     offensiveProfile,
     defensiveProfileForSingleType,
-    ALL_TYPES,
+    get ALL_TYPES() {
+      return allTypes();
+    },
     multipliers: efectivos,
   };
 }

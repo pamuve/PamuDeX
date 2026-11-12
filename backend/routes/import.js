@@ -36,6 +36,7 @@ const Database = require("better-sqlite3");
 const { getSessionOverrides } = require("../lib/overrides");
 const { buildDataset, STAT_KEYS } = require("../lib/dataset");
 const { populate } = require("../db/populate");
+const { catalogChanged } = require("../lib/catalogVersion");
 const {
   ENTITIES, KEY_OF, CAMPOS, parseCsv, csvToEntity, validate, diff, igual,
 } = require("../lib/importValidator");
@@ -161,7 +162,7 @@ function aOverride(entity, fila, actual, abilityByName) {
 
 /* --------------------------------- rutas ---------------------------------- */
 
-module.exports = (db) => {
+module.exports = (db, { crearCopia } = {}) => {
   const router = express.Router();
   const crudo = express.raw({ type: () => true, limit: LIMITE });
 
@@ -381,6 +382,15 @@ module.exports = (db) => {
     };
     final.pokemon.sort((a, b) => a.dex - b.dex);
 
+    // COPIA DE SEGURIDAD ANTES DE TOCAR NADA. Una importación global reescribe
+    // el catálogo entero y en modo `replace` borra lo que el archivo no traiga:
+    // es la única operación de la app, junto a las migraciones, que puede
+    // estropear la base de un golpe. La copia va con las demás, en
+    // <PAMUDEX_DB_DIR>/backups, y se restaura igual (`pnpm run restore`).
+    // Si no se puede copiar, no se importa: `crearCopia` lanza y la ruta
+    // responde `aplicacion_fallida` sin haber escrito.
+    const backup = crearCopia ? crearCopia("antes-de-importar") : null;
+
     // Los ids internos de lo que ya existe, ANTES de vaciar: sin esto el
     // AUTOINCREMENT renumera el catálogo entero y los favoritos, el historial,
     // los overrides de sesión y las listas de Champions se quedan apuntando a
@@ -395,8 +405,13 @@ module.exports = (db) => {
       populate(db, final, { ids });
     })();
 
+    // El catálogo ha cambiado en caliente: lo que haya en caché derivado de él
+    // (tipos del modo generación, del motor de efectividad) se recalcula.
+    catalogChanged();
+
     return {
       target: "global",
+      backup: backup ? path.basename(backup) : null,
       counts: { types: final.types.length, pokemon: final.pokemon.length, moves: final.moves.length, abilities: final.abilities.length },
     };
   }

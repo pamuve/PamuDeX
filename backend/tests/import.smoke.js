@@ -50,10 +50,21 @@ function crearApp() {
   app.use(jsonBody());
   app.use("/api/sessions", require("../routes/sessions")(db));
   app.use("/api/export", require("../routes/export")(db));
-  app.use("/api/import", require("../routes/import")(db));
+  // La copia previa se simula: la real escribiría un archivo en el volumen.
+  const copias = [];
+  app.use(
+    "/api/import",
+    require("../routes/import")(db, {
+      crearCopia: (etiqueta) => {
+        // Se anota cuántos Pokémon había AL COPIAR: demuestra que va antes de vaciar.
+        copias.push({ etiqueta, pokemon: db.prepare("SELECT COUNT(*) AS c FROM pokemon").get().c });
+        return `/copias/${etiqueta}.sqlite`;
+      },
+    })
+  );
   app.use("/api/search", require("../routes/search")(db));
   app.use(apiErrors);
-  return { app, db };
+  return { app, db, copias };
 }
 
 /** Los ids actuales por clave natural, que es lo que no debe moverse. */
@@ -78,7 +89,7 @@ function mismosIds(antes, despues, entidad) {
 }
 
 async function main() {
-  const { app, db } = crearApp();
+  const { app, db, copias } = crearApp();
   const server = await new Promise((resolve) => {
     const s = app.listen(0, "127.0.0.1", () => resolve(s));
   });
@@ -105,7 +116,12 @@ async function main() {
         assert.strictEqual(despues[entidad].size, antes[entidad].size, `${entidad}: mismo número de filas`);
         mismosIds(antes, despues, entidad);
       }
+      const cuerpo = await res.json();
+      assert.strictEqual(copias.length, 1, "una importación global hace exactamente una copia");
+      assert.strictEqual(copias[0].pokemon, antes.pokemon.size, "la copia se hace ANTES de vaciar el catálogo");
+      assert.strictEqual(cuerpo.backup, "antes-de-importar.sqlite", "la respuesta dice qué copia se hizo");
       console.log("✔ Reimportar la exportación conserva todos los ids internos");
+      console.log("✔ La importación global hace una copia de seguridad antes de escribir");
     }
 
     /* ------------------------------------------------------------ */

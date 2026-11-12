@@ -108,4 +108,18 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 # SIGTERM de `docker stop` tal cual. Con la forma shell, el SIGTERM se lo queda
 # /bin/sh, node nunca se entera y SQLite se cierra a la brava en cada
 # actualización. El manejador está en server.js.
+# EL SERVIDOR NO CORRE COMO ROOT.
+#
+# El contenedor ARRANCA como root solo para una cosa: dejar /data a nombre del
+# usuario `node`. Un volumen creado por una versión anterior de la imagen tiene
+# sus archivos a nombre de root, y sin ese paso el servidor sin privilegios no
+# podría abrir la base que ya existe. Hecho eso, `su-exec` sustituye el proceso
+# por node con el usuario `node` (uid 1000): no queda ningún proceso de root.
+#
+# `su-exec` hace exec, no fork: node sigue siendo el PID 1 y sigue recibiendo el
+# SIGTERM de `docker stop`, que es lo que cierra SQLite limpiamente.
+RUN apk add --no-cache su-exec
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.js"]

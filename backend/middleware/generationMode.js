@@ -50,6 +50,7 @@ const {
 const { TYPE_IDS, buildChart, defensiveMultiplier } = require("../lib/typechart");
 const { loadTypesMeta, rebuildGroups } = require("../lib/buckets");
 const { isPlainObject } = require("../lib/overrides");
+const { catalogVersion } = require("../lib/catalogVersion");
 
 /** Solo las fichas: `/pokemon/25`, `/types/acero`… nunca los listados. */
 const DETAIL_PATH = /^\/(pokemon|moves|abilities|types)\/(.+)$/;
@@ -79,10 +80,19 @@ function setField(body, field, value) {
 module.exports = (db) => {
   const generations = createGenerations(db);
 
-  // Los metadatos de tipos se cargan una vez por proceso: la tabla `types` no
-  // cambia en caliente (los renombres de sesión los aplica el otro middleware).
+  // Los metadatos de tipos se guardan entre peticiones, pero se vuelven a leer
+  // si una importación global ha cambiado el catálogo (lib/catalogVersion.js).
+  // Antes se cargaban una vez por proceso y un tipo renombrado o recoloreado al
+  // importar no se veía aquí hasta reiniciar el contenedor.
   let typesMeta = null;
-  const getTypesMeta = () => (typesMeta || (typesMeta = loadTypesMeta(db)));
+  let typesMetaVersion = -1;
+  const getTypesMeta = () => {
+    if (!typesMeta || typesMetaVersion !== catalogVersion()) {
+      typesMeta = loadTypesMeta(db);
+      typesMetaVersion = catalogVersion();
+    }
+    return typesMeta;
+  };
 
   return function generationMode(req, res, next) {
     const match = (req.path.replace(/\/+$/, "") || "/").match(DETAIL_PATH);
