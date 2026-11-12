@@ -1,9 +1,9 @@
 const express = require("express");
-const router = express.Router();
 const { createCatalog } = require("../lib/catalog");
 const { createEffectiveness } = require("../lib/effectiveness");
 
 module.exports = (db) => {
+  const router = express.Router();
   const catalog = createCatalog(db);
   // Sin multiplicadores propios: el modo estándar usa los de siempre
   // (x4/x2/x1/x0.5/x0.25/x0). Los redefine solo el modo Champions (Tarea 6.2).

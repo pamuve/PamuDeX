@@ -89,7 +89,9 @@ y no rompe nada.
 Esto mismo lo ejecuta GitHub Actions en cada push
 (`.github/workflows/verificacion.yml`), y **si falla no se publica imagen**.
 
-Ninguna prueba necesita servidor ni SQLite: simulan `db`, `req` y `res`.
+Las pruebas simulan `db`, `req` y `res`, sin servidor ni SQLite. La excepción
+es `import.smoke.js`, que usa SQLite **en memoria** y un puerto efímero porque
+lo que comprueba (cómo reparte ids el AUTOINCREMENT) no se puede simular.
 
 - `overrides.smoke.js` — overrides de sesión, middleware y tabla de tipos.
 - `history.smoke.js` — historial (ventana de 5 minutos y poda) y ajustes.
@@ -102,6 +104,9 @@ Ninguna prueba necesita servidor ni SQLite: simulan `db`, `req` y `res`.
 - `migrate.smoke.js` — el sistema de actualizaciones: el registro
   `schema_migrations`, que la copia de seguridad se haga **antes** de la primera
   escritura y que una migración fallida aborte sin quedar anotada.
+
+- `import.smoke.js` — la importación global conserva los ids internos, una sesión
+  grande se puede guardar y los errores del cuerpo salen en JSON.
 
 Ejecuta la que corresponda a lo que toques.
 
@@ -116,23 +121,31 @@ backend/
   db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
   lib/         effectiveness.js, catalog.js, overrides.js, typechart.js,
                dataset.js, importValidator.js, pin.js, pinThrottle.js,
-               championsFilter.js
+               championsFilter.js, http.js
   middleware/  sessionOverrides.js, championsMode.js
   routes/      types, pokemon, moves, abilities, items, search, sessions,
                chart, export, import, profiles, favorites, history, settings,
                champions
   tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js,
-               championsMode.smoke.js
+               championsMode.smoke.js, generations.smoke.js, migrate.smoke.js,
+               import.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
   pages/       una por ruta, registrada en App.tsx
   hooks/       useSessionOverride.ts
   lib/         api, apiSession, session, profile, favorites, history, settings,
-               champions, theme, team, damage, recommendation, coverage
+               champions, theme, team, damage, recommendation, coverage,
+               search, localCache
   i18n/        es.json, en.json, index.tsx
 ```
 
 - **Cada ruta del backend es un módulo que exporta `(db) => router`** y se monta en `server.js`.
+  El `express.Router()` se crea **dentro** de la factoría y las sentencias se
+  preparan ahí una vez (`db.prepare` fuera de los manejadores), no por petición.
+- **`lib/http.js`** tiene el tope del cuerpo JSON (10 MB: `PUT /api/sessions/:id`
+  manda el documento de overrides entero y con 100 KB un ROM Hack grande dejaba
+  de poder guardarse) y `apiErrors`, que va después de todas las rutas de `/api`
+  para que ningún error salga como página HTML.
 - **Componentes** reutilizables en `src/components/`; **páginas** con ruta propia en `src/pages/` + registrar la ruta en `src/App.tsx`.
 
 ### El volumen de Docker va en `/data`, nunca en `backend/db/`
@@ -368,6 +381,16 @@ historial y ajustes. Los datos nuevos entran por `db/migrate.js`, condicionados 
 que la tabla esté vacía. Así se sembraron los objetos en la 6.0, y así hay que
 hacerlo con lo que venga.
 
+### La importación global conserva los ids internos
+
+`aplicarGlobal` vacía el catálogo y lo vuelve a volcar, y SQLite **no reutiliza
+ids de una tabla AUTOINCREMENT**. Por eso `populate(db, dataset, { ids })` recibe
+el mapa de ids anteriores (Pokémon por nº de Pokédex, movimientos y habilidades
+por `name_en`) y los reinserta con el mismo id. Sin eso, reimportar la propia
+exportación renumeraba todo y dejaba huérfanos los favoritos, el historial, los
+overrides de sesión, las listas de Champions y el equipo guardado. Cualquier
+cosa nueva que reconstruya tablas del catálogo tiene que hacer lo mismo.
+
 ## Cómo se organiza el trabajo
 
 `docs/ROADMAP.md` divide el proyecto en fases; cada fase se parte en tareas del
@@ -403,10 +426,22 @@ abierta del proyecto, hay que partirla con `docs/AI_TASK_TEMPLATE.md`.
 **primero**, refrescando por detrás. No sustituye al Service Worker: aquél da
 tolerancia a fallos de red, esto da los 100 ms del requisito (medido: 1.1 ms).
 
+Encima de IndexedDB hay una **copia en memoria** (`memoria` en `lib/api.ts`): la
+primera lectura deja el listado ahí y las siguientes lo devuelven sin clonar ni
+ir a la red, con un refresco en segundo plano como mucho cada 5 s por clave. Lo
+que devuelve `api.*.list()` es por tanto **compartido: no lo mutes**, ordena
+sobre una copia. Se vacía sola con `CACHE_EVENT`, así que invalidar la caché
+local (`invalidarSesion`, `borrarTodo`) la invalida también.
+
+**El buscador de la portada filtra en local** (`lib/search.ts`) sobre esos
+listados, sin tildes y con lo que empieza por el texto primero. No llama a
+`/api/search`: así funciona sin conexión con cualquier texto y respeta la sesión
+o Champions sin hacer nada, porque los listados ya vienen transformados.
+
 **La clave es la ruta con `?session=` o `?champions=` dentro**, o cambiar de ROM
 Hack serviría el catálogo del anterior. Al guardar overrides hay que invalidar
-con `invalidarSesion(id)` — lo hace `useSessionOverride` en `persist`, su único
-camino de escritura.
+con `invalidarSesion(id)` — lo hacen `useSessionOverride` en `persist` y
+`ImportPanel` al aplicar una importación, los dos caminos de escritura.
 
 Solo van los cinco listados (tipos, Pokémon, movimientos, habilidades y objetos)
 y las 18 fichas de tipo; las demás fichas son más de 2200 y se quedan con el

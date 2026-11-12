@@ -381,12 +381,18 @@ module.exports = (db) => {
     };
     final.pokemon.sort((a, b) => a.dex - b.dex);
 
+    // Los ids internos de lo que ya existe, ANTES de vaciar: sin esto el
+    // AUTOINCREMENT renumera el catálogo entero y los favoritos, el historial,
+    // los overrides de sesión y las listas de Champions se quedan apuntando a
+    // filas que ya no existen. Ver `volcar` en db/populate.js.
+    const ids = indices(db);
+
     db.transaction(() => {
       // Orden inverso a las claves foráneas.
       for (const t of ["pokemon_abilities", "pokemon_types", "pokemon", "moves", "abilities", "relations", "types", "generations"]) {
         db.prepare(`DELETE FROM ${t}`).run();
       }
-      populate(db, final);
+      populate(db, final, { ids });
     })();
 
     return {

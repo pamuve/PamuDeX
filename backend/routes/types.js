@@ -1,9 +1,9 @@
 const express = require("express");
-const router = express.Router();
 const { createCatalog } = require("../lib/catalog");
 const { createEffectiveness } = require("../lib/effectiveness");
 
 module.exports = (db) => {
+  const router = express.Router();
   const catalog = createCatalog(db);
   // Modo estándar: multiplicadores de siempre (ver routes/pokemon.js).
   const { offensiveProfile, defensiveProfileForSingleType } = createEffectiveness(db, null);

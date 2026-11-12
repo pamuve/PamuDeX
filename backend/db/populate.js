@@ -37,11 +37,41 @@ const GENERATIONS = 9;
  * síncrono, así que bloquearía el bucle de eventos entero ese tiempo — con
  * varias descargas seguidas el servidor deja de responder.
  */
-function populate(db, dataset) {
-  return db.transaction(() => volcar(db, dataset))();
+function populate(db, dataset, opciones) {
+  return db.transaction(() => volcar(db, dataset, opciones))();
 }
 
-function volcar(db, { types, typeChart, pokemon, moves, abilities, items = [] }) {
+/**
+ * `ids` (opcional) conserva los ids internos de lo que ya existía:
+ *   { pokemon: Map(dex -> id), moves: Map(name_en -> id), abilities: Map(name_en -> id) }
+ *
+ * POR QUÉ HACE FALTA
+ * ------------------
+ * La importación global vacía las tablas y vuelve a volcar. Con AUTOINCREMENT,
+ * SQLite no reutiliza un id aunque la tabla esté vacía, así que reimportar el
+ * mismo dataset dejaba a Bulbasaur en el id 1026 y a todos los movimientos y
+ * habilidades con id nuevo. Los favoritos, el historial, los overrides de las
+ * sesiones, las listas de Champions, `entity_changes` y el equipo guardado
+ * apuntan a ids internos: todo eso quedaba señalando a filas que ya no existen.
+ *
+ * Con el mapa, lo que ya estaba conserva su id y solo lo nuevo de verdad recibe
+ * uno del AUTOINCREMENT (que sigue por encima de todos los anteriores, así que
+ * no puede chocar). Sin `ids` —la siembra y la exportación a SQLite— todo se
+ * numera desde cero como siempre.
+ */
+function volcar(db, { types, typeChart, pokemon, moves, abilities, items = [] }, { ids } = {}) {
+  // Cada id se entrega UNA vez: si el archivo trae dos filas con la misma clave
+  // (dos formas con el mismo nº de Pokédex), la segunda recibe id nuevo en vez
+  // de chocar con la clave primaria y tumbar la importación entera.
+  const entregados = new Set();
+  const idDe = (entidad, clave) => {
+    const mapa = ids && ids[entidad];
+    const id = mapa ? mapa.get(clave) : undefined;
+    if (id === undefined || entregados.has(`${entidad}:${id}`)) return null;
+    entregados.add(`${entidad}:${id}`);
+    return id;
+  };
+
   const insertGen = db.prepare("INSERT INTO generations (id, name_es, name_en) VALUES (?, ?, ?)");
   for (let n = 1; n <= GENERATIONS; n++) {
     insertGen.run(n, `Generación ${n}`, `Generation ${n}`);
@@ -61,11 +91,12 @@ function volcar(db, { types, typeChart, pokemon, moves, abilities, items = [] })
   });
 
   const insertAbility = db.prepare(
-    "INSERT INTO abilities (name_es, name_en, generation, effect_es) VALUES (?, ?, ?, ?)"
+    "INSERT INTO abilities (id, name_es, name_en, generation, effect_es) VALUES (?, ?, ?, ?, ?)"
   );
   const abilityIdByName = new Map();
   abilities.forEach((a) => {
-    const info = insertAbility.run(a.name_es, a.name_en, a.generation, a.effect_es);
+    // Un id a NULL en una columna INTEGER PRIMARY KEY lo reparte SQLite.
+    const info = insertAbility.run(idDe("abilities", a.name_en), a.name_es, a.name_en, a.generation, a.effect_es);
     abilityIdByName.set(a.name_es, info.lastInsertRowid);
   });
 
@@ -74,14 +105,14 @@ function volcar(db, { types, typeChart, pokemon, moves, abilities, items = [] })
   function ensureAbilityId(name) {
     if (!name) return null;
     if (abilityIdByName.has(name)) return abilityIdByName.get(name);
-    const info = insertAbility.run(name, name, null, null);
+    const info = insertAbility.run(null, name, name, null, null);
     abilityIdByName.set(name, info.lastInsertRowid);
     return info.lastInsertRowid;
   }
 
   const insertPokemon = db.prepare(`
-    INSERT INTO pokemon (dex, name_es, name_en, generation, hidden_ability, hp, atk, def, spa, spd, spe, height_m, weight_kg)
-    VALUES (@dex, @name_es, @name_en, @generation, @hidden_ability, @hp, @atk, @def, @spa, @spd, @spe, @height_m, @weight_kg)
+    INSERT INTO pokemon (id, dex, name_es, name_en, generation, hidden_ability, hp, atk, def, spa, spd, spe, height_m, weight_kg)
+    VALUES (@id, @dex, @name_es, @name_en, @generation, @hidden_ability, @hp, @atk, @def, @spa, @spd, @spe, @height_m, @weight_kg)
   `);
   const insertPokemonType = db.prepare(
     "INSERT INTO pokemon_types (pokemon_id, type_id, slot) VALUES (?, ?, ?)"
@@ -92,6 +123,7 @@ function volcar(db, { types, typeChart, pokemon, moves, abilities, items = [] })
 
   pokemon.forEach((p) => {
     const info = insertPokemon.run({
+      id: idDe("pokemon", String(p.dex)),
       dex: p.dex,
       name_es: p.name_es,
       name_en: p.name_en,
@@ -113,14 +145,15 @@ function volcar(db, { types, typeChart, pokemon, moves, abilities, items = [] })
   });
 
   const insertMove = db.prepare(`
-    INSERT INTO moves (name_es, name_en, type_id, category, power, accuracy, pp, priority, makes_contact, generation, effect_es)
-    VALUES (@name_es, @name_en, @type, @category, @power, @accuracy, @pp, @priority, @makes_contact, @generation, @effect_es)
+    INSERT INTO moves (id, name_es, name_en, type_id, category, power, accuracy, pp, priority, makes_contact, generation, effect_es)
+    VALUES (@id, @name_es, @name_en, @type, @category, @power, @accuracy, @pp, @priority, @makes_contact, @generation, @effect_es)
   `);
   // makes_contact admite null = desconocido (PokeAPI no expone ese dato), así
   // que la ficha puede distinguir «no hace contacto» de «no lo sabemos».
   moves.forEach((m) =>
     insertMove.run({
       ...m,
+      id: idDe("moves", m.name_en),
       makes_contact:
         m.makes_contact === null || m.makes_contact === undefined ? null : m.makes_contact ? 1 : 0,
     })

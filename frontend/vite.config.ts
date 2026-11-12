@@ -104,6 +104,23 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // React y el enrutador van en su propio archivo. Son dos tercios del
+        // JavaScript de entrada y no cambian entre versiones de PamuDeX, pero
+        // al ir en el mismo archivo que el código de la app su hash cambiaba
+        // con cada despliegue y el Service Worker volvía a bajarlos enteros en
+        // cada actualización. Separados, una versión nueva solo descarga lo que
+        // de verdad ha cambiado.
+        manualChunks(id) {
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|@remix-run\/router|scheduler)\//.test(id)) {
+            return "vendor";
+          }
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       "/api": "http://localhost:4000",

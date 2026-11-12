@@ -47,6 +47,9 @@ COPY backend/ ./backend/
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 WORKDIR /app/backend
+# Express en modo producción: no manda trazas de error al cliente y no
+# recompila nada por petición.
+ENV NODE_ENV=production
 ENV PORT=4000
 
 # La base de datos vive en /data, un directorio que contiene DATOS Y NADA MÁS.

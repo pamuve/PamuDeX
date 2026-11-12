@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { api } from "../lib/api";
 import {
@@ -192,19 +192,39 @@ export function TeamBuilder() {
     if (cargado) saveRivalTeam(rivalTeam);
   }, [cargado, rivalTeam]);
 
-  // Carga perezosa de fichas de Pokémon que aún no estén en caché
+  // Carga perezosa de fichas de Pokémon que aún no estén en caché.
+  //
+  // `allSettled` y no `all`: con `all`, una sola ficha que fallase (un Pokémon
+  // que ya no existe, o no permitido en Champions) dejaba sin cargar a TODO el
+  // equipo. Ahora cada una va por su cuenta y solo falta la que falla.
+  //
+  // Se guardan bajo el id PEDIDO, no bajo `d.id`: el backend acepta también el
+  // nº de Pokédex, y si resolvía por ahí la ficha entraba con otro id, el hueco
+  // seguía «faltando» y este efecto la volvía a pedir sin fin.
+  //
+  // `pedidas` evita repetir una petición que ya está en vuelo cuando el equipo
+  // cambia a mitad de la carga.
+  const pedidas = useRef(new Set<number>());
   useEffect(() => {
     const neededIds = new Set<number>([
       ...ownTeam.slots.map((s) => s.pokemonId),
       ...rivalTeam.slots.map((s) => s.pokemonId),
     ]);
-    const missing = [...neededIds].filter((id) => !pokemonCache[id]);
+    const missing = [...neededIds].filter((id) => !pokemonCache[id] && !pedidas.current.has(id));
     if (missing.length === 0) return;
-    Promise.all(missing.map((id) => api.pokemon.detail(id)))
-      .then((details) => {
-        setPokemonCache((prev) => ({ ...prev, ...Object.fromEntries(details.map((d) => [d.id, d])) }));
-      })
-      .catch(() => setFalloCarga(true));
+    missing.forEach((id) => pedidas.current.add(id));
+
+    Promise.allSettled(missing.map((id) => api.pokemon.detail(id))).then((resultados) => {
+      const nuevas: Record<number, PokemonDetail> = {};
+      let algunFallo = false;
+      resultados.forEach((r, i) => {
+        if (r.status === "fulfilled") nuevas[missing[i]] = r.value;
+        else algunFallo = true;
+        pedidas.current.delete(missing[i]);
+      });
+      if (Object.keys(nuevas).length) setPokemonCache((prev) => ({ ...prev, ...nuevas }));
+      if (algunFallo) setFalloCarga(true);
+    });
   }, [ownTeam, rivalTeam, pokemonCache]);
 
   const movesById = useMemo(() => Object.fromEntries(allMoves.map((m) => [m.id, m])), [allMoves]);

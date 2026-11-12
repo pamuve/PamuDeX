@@ -33,6 +33,7 @@ const db = new Database(DB_PATH);
 const { migrate } = require("./db/migrate");
 const { crearCopia, podarCopias, restaurarCopia } = require("./db/backup");
 const { version: APP_VERSION } = require("./lib/version");
+const { jsonBody, apiErrors } = require("./lib/http");
 
 try {
   const { applied, backup, backfilled } = migrate(db, {
@@ -93,7 +94,9 @@ app.disable("x-powered-by");
 // demás para envolver también la API y los archivos estáticos.
 app.use(require("compression")());
 
-app.use(express.json());
+// El tope del cuerpo y el porqué están en lib/http.js: el de Express por
+// defecto (100 KB) impedía guardar una sesión con muchos overrides.
+app.use(jsonBody());
 
 // IMPORTANTE: los tres middlewares van ANTES de las rutas de datos. Interceptan
 // res.json, así que ninguna ruta sabe nada de modos.
@@ -141,6 +144,11 @@ app.use("/api/search", require("./routes/search")(db));
 // lee de una constante, así que sigue sin costar nada; el detalle del
 // despliegue (migraciones, copias) está en /api/version.
 app.get("/api/health", (req, res) => res.json({ status: "ok", version: APP_VERSION }));
+
+// Errores de la API en JSON (cuerpo mal formado, demasiado grande, o una
+// excepción en una ruta). Después de todas las rutas de /api y antes de los
+// estáticos, que tienen su propio tratamiento.
+app.use("/api", apiErrors);
 
 // En producción, el frontend ya compilado (Vite build) se sirve desde aquí
 const FRONTEND_DIST = path.join(__dirname, "..", "frontend", "dist");

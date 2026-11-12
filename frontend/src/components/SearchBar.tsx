@@ -24,7 +24,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
-import { api } from "../lib/api";
+import { buscar, precargarBusqueda } from "../lib/search";
 import { SearchResults } from "../types";
 import { useCombobox } from "../hooks/useCombobox";
 import { PokemonSprite } from "./PokemonSprite";
@@ -110,8 +110,7 @@ export function SearchBar() {
     }
     let cancelado = false;
     const handle = setTimeout(() => {
-      api
-        .search(q)
+      buscar(q)
         .then((r) => {
           if (cancelado) return;
           setResults(r);
@@ -123,7 +122,7 @@ export function SearchBar() {
           setErrorBusqueda(true);
           combo.setOpen(true);
         });
-    }, 150);
+    }, 80);
     return () => {
       cancelado = true;
       clearTimeout(handle);
@@ -145,7 +144,12 @@ export function SearchBar() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          onFocus={() => results && combo.setOpen(true)}
+          onFocus={() => {
+            // Al enfocar se dejan los listados en memoria: la primera letra ya
+            // se filtra en local, sin esperar a nada.
+            precargarBusqueda();
+            if (results) combo.setOpen(true);
+          }}
           placeholder={t("search.placeholder")}
           // El marcador de posición NO sirve de nombre accesible: desaparece al
           // escribir y no todos los lectores lo anuncian.

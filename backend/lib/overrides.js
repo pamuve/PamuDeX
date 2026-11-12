@@ -44,12 +44,27 @@ function applyOverrides(baseEntity, override) {
   return result;
 }
 
+/**
+ * La sentencia se prepara una vez por conexión. Con una sesión activa, CADA
+ * petición de datos pasa por aquí (el middleware la llama antes de saber si hay
+ * algo que mezclar), y antes se compilaba el SQL en todas.
+ */
+const sentencias = new WeakMap();
+function sentenciaDe(db) {
+  let sentencia = sentencias.get(db);
+  if (!sentencia) {
+    sentencia = db.prepare("SELECT data_json FROM sessions WHERE id = ?");
+    sentencias.set(db, sentencia);
+  }
+  return sentencia;
+}
+
 /** Lee y parsea data_json de una sesión. Devuelve {} si no existe o está roto. */
 function getSessionOverrides(db, sessionId) {
   const id = Number.parseInt(sessionId, 10);
   if (!Number.isInteger(id) || id <= 0) return {};
   try {
-    const row = db.prepare("SELECT data_json FROM sessions WHERE id = ?").get(id);
+    const row = sentenciaDe(db).get(id);
     if (!row || !row.data_json) return {};
     const parsed = JSON.parse(row.data_json);
     return isPlainObject(parsed) ? parsed : {};

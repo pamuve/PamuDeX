@@ -5,7 +5,7 @@
 import { getActiveSessionId } from "./session";
 import { getActiveChampionsId } from "./champions";
 import { profilesApi, championsApi } from "./apiSession";
-import { leer, guardar } from "./localCache";
+import { leer, guardar, CACHE_EVENT } from "./localCache";
 
 /**
  * Añade el parámetro del modo activo, si hay alguno.
@@ -99,19 +99,85 @@ async function get<T>(path: string): Promise<T> {
 async function getCatalogo<T>(path: string): Promise<T> {
   const key = withMode(path);
 
-  const guardado = await leer<T>(key);
-  if (guardado) {
-    // Refresco en segundo plano: no se espera ni se propaga su error. Si falla
-    // (sin red), la copia local se queda como estaba, que es lo que se quiere.
-    void get<T>(path)
-      .then((fresco) => guardar(key, fresco))
-      .catch(() => {});
-    return guardado.data;
+  // 1. Memoria: sin IndexedDB, sin red y sin clonar. Ver `memoria` más abajo.
+  const enMemoria = memoria.get(key);
+  if (enMemoria) {
+    refrescar<T>(key, path);
+    return enMemoria.data as T;
   }
 
-  const fresco = await get<T>(path);
-  void guardar(key, fresco);
-  return fresco;
+  // 2. Si otra parte de la pantalla ya lo está pidiendo, se comparte la espera.
+  const pendiente = cargando.get(key);
+  if (pendiente) return pendiente as Promise<T>;
+
+  const carga = (async () => {
+    const guardado = await leer<T>(key);
+    if (guardado) {
+      memoria.set(key, { data: guardado.data, refrescado: 0 });
+      refrescar<T>(key, path);
+      return guardado.data;
+    }
+    const fresco = await get<T>(path);
+    memoria.set(key, { data: fresco, refrescado: Date.now() });
+    void guardar(key, fresco);
+    return fresco;
+  })();
+
+  cargando.set(key, carga);
+  try {
+    return await carga;
+  } finally {
+    cargando.delete(key);
+  }
+}
+
+/**
+ * COPIA EN MEMORIA DE LOS LISTADOS
+ * --------------------------------
+ * IndexedDB responde rápido, pero cada lectura clona el listado entero (1025
+ * Pokémon, 901 movimientos, 2151 objetos) y cada llamada lanzaba además su
+ * propio refresco por red. Un cambio de página pide tres o cuatro listados, y
+ * el buscador y el comparador los piden otra vez: eran lecturas, clones y
+ * peticiones repetidas del mismo dato en la misma sesión de uso.
+ *
+ * Ahora la primera lectura deja el listado aquí y las siguientes lo devuelven
+ * tal cual. El refresco en segundo plano se mantiene —la copia sigue poniéndose
+ * al día sola— pero como mucho uno por clave cada `REFRESCO_MS`, y nunca dos a
+ * la vez.
+ *
+ * LO QUE SE DEVUELVE ES COMPARTIDO: NO LO MUTES. Ordena o filtra sobre una
+ * copia (`[...lista].sort()`), como ya hace todo el código.
+ *
+ * Se vacía sola cuando `lib/localCache.ts` anuncia un cambio (overrides
+ * guardados, importación, borrado o descarga explícita), así que quien invalida
+ * la caché local invalida también esta sin saber que existe.
+ */
+const REFRESCO_MS = 5000;
+const memoria = new Map<string, { data: unknown; refrescado: number }>();
+const cargando = new Map<string, Promise<unknown>>();
+const refrescando = new Set<string>();
+
+function refrescar<T>(key: string, path: string): void {
+  const entrada = memoria.get(key);
+  if (!entrada || refrescando.has(key)) return;
+  if (Date.now() - entrada.refrescado < REFRESCO_MS) return;
+
+  refrescando.add(key);
+  // No se espera ni se propaga su error. Si falla (sin red), la copia se queda
+  // como estaba, que es lo que se quiere.
+  void get<T>(path)
+    .then((fresco) => {
+      // Si entretanto se invalidó la clave, este dato puede ser anterior al
+      // cambio: no se vuelve a meter en memoria.
+      if (memoria.get(key) === entrada) memoria.set(key, { data: fresco, refrescado: Date.now() });
+      return guardar(key, fresco);
+    })
+    .catch(() => {})
+    .finally(() => refrescando.delete(key));
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener(CACHE_EVENT, () => memoria.clear());
 }
 
 /**
@@ -167,7 +233,8 @@ export const api = {
     detail: (id: string | number, gen?: number | null) =>
       get<import("../types").AbilityDetail>(`/abilities/${id}${genQuery(gen)}`),
   },
-  search: (q: string) => get<import("../types").SearchResults>(`/search?q=${encodeURIComponent(q)}`),
+  // La búsqueda de la portada ya no pasa por aquí: se filtra en local sobre
+  // los listados (lib/search.ts), que es lo que la hace funcionar sin conexión.
 
   /**
    * Objetos (Tarea 6.0). A diferencia del resto de listados, este admite
