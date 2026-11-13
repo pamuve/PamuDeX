@@ -22,7 +22,7 @@ import { useCallback, useEffect, useState } from "react";
 import { favoritesApi } from "./apiSession";
 import { getActiveProfileId, ACTIVE_PROFILE_EVENT } from "./profile";
 
-export type FavoriteType = "pokemon" | "move" | "ability" | "type";
+export type FavoriteType = "pokemon" | "move" | "ability" | "type" | "item";
 
 export const FAVORITES_EVENT = "pamudex:favorites";
 
@@ -192,10 +192,12 @@ export function useAllFavorites() {
     move: favoritesOf("move"),
     ability: favoritesOf("ability"),
     type: favoritesOf("type"),
+    item: favoritesOf("item"),
     total:
       favoritesOf("pokemon").length +
       favoritesOf("move").length +
       favoritesOf("ability").length +
-      favoritesOf("type").length,
+      favoritesOf("type").length +
+      favoritesOf("item").length,
   };
 }

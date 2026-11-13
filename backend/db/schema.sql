@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS abilities (
   name_es TEXT NOT NULL,
   name_en TEXT NOT NULL,
   generation INTEGER,
-  effect_es TEXT
+  effect_es TEXT,
+  effect_en TEXT
 );
 
 CREATE TABLE IF NOT EXISTS pokemon_abilities (
@@ -74,7 +75,8 @@ CREATE TABLE IF NOT EXISTS moves (
   priority INTEGER DEFAULT 0,
   makes_contact INTEGER DEFAULT 0,
   generation INTEGER,
-  effect_es TEXT
+  effect_es TEXT,
+  effect_en TEXT
 );
 
 -- ===================== FASE 2 (esquema preparado, sin UI todavía) =====================
@@ -84,7 +86,8 @@ CREATE TABLE IF NOT EXISTS items (
   name_es TEXT NOT NULL,
   name_en TEXT,
   category TEXT,
-  effect_es TEXT
+  effect_es TEXT,
+  effect_en TEXT
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -215,3 +218,74 @@ CREATE TABLE IF NOT EXISTS champions_rules (
   allowed_abilities_json TEXT,
   custom_multipliers_json TEXT   -- ej. { "hiper_eficaz": 4 }
 );
+
+-- ---------------------------------------------------------------------------
+-- Fase 9 — ampliaciones
+--
+-- Las tres tablas de datos (movimientos por Pokémon, evoluciones y formas) NO
+-- llevan claves foráneas al catálogo a propósito: la importación global vacía
+-- y vuelve a volcar `pokemon` y `moves` conservando sus ids, y con un
+-- ON DELETE CASCADE estas tablas se vaciarían en cada importación.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS pokemon_moves (
+  pokemon_id INTEGER NOT NULL,
+  move_id INTEGER NOT NULL,
+  method TEXT NOT NULL,          -- 'level' | 'machine' | 'egg' | 'tutor'
+  level INTEGER,                 -- solo con method = 'level'
+  PRIMARY KEY (pokemon_id, move_id, method)
+) WITHOUT ROWID;
+
+CREATE INDEX IF NOT EXISTS idx_pokemon_moves_movimiento
+  ON pokemon_moves (move_id);
+
+CREATE TABLE IF NOT EXISTS evolutions (
+  from_pokemon_id INTEGER NOT NULL,
+  to_pokemon_id INTEGER NOT NULL,
+  method_es TEXT,
+  method_en TEXT,
+  PRIMARY KEY (from_pokemon_id, to_pokemon_id)
+) WITHOUT ROWID;
+
+CREATE INDEX IF NOT EXISTS idx_evolutions_destino
+  ON evolutions (to_pokemon_id);
+
+CREATE TABLE IF NOT EXISTS pokemon_forms (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pokemon_id INTEGER NOT NULL,
+  form_key TEXT NOT NULL UNIQUE,  -- identificador de PokeAPI, ej. 'charizard-mega-x'
+  sprite_id INTEGER,              -- archivo en /sprites/forms/<sprite_id>.png
+  kind TEXT NOT NULL,             -- 'mega' | 'regional' | 'other'
+  name_es TEXT NOT NULL,
+  name_en TEXT NOT NULL,
+  types_json TEXT NOT NULL,       -- ["fuego","dragon"]
+  hp INTEGER, atk INTEGER, def INTEGER, spa INTEGER, spd INTEGER, spe INTEGER,
+  height_m REAL,
+  weight_kg REAL
+);
+
+CREATE INDEX IF NOT EXISTS idx_pokemon_forms_pokemon
+  ON pokemon_forms (pokemon_id);
+
+-- Equipos guardados. `scope` dice a qué juego pertenece el equipo:
+-- 'global', 'session:<id>' o 'champions:<id>'.
+CREATE TABLE IF NOT EXISTS teams (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  scope TEXT NOT NULL DEFAULT 'global',
+  name TEXT NOT NULL,
+  data_json TEXT NOT NULL,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_teams_perfil
+  ON teams (profile_id, scope);
+
+-- Seguimiento de partida: qué Pokémon ha capturado cada perfil en cada juego.
+CREATE TABLE IF NOT EXISTS captures (
+  profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  scope TEXT NOT NULL DEFAULT 'global',
+  pokemon_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (profile_id, scope, pokemon_id)
+) WITHOUT ROWID;

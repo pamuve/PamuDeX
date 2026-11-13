@@ -33,6 +33,7 @@ const db = new Database(DB_PATH);
 const { migrate } = require("./db/migrate");
 const { crearCopia, podarCopias, restaurarCopia } = require("./db/backup");
 const { version: APP_VERSION } = require("./lib/version");
+const { jsonBody, apiErrors } = require("./lib/http");
 
 try {
   const { applied, backup, backfilled } = migrate(db, {
@@ -93,7 +94,9 @@ app.disable("x-powered-by");
 // demás para envolver también la API y los archivos estáticos.
 app.use(require("compression")());
 
-app.use(express.json());
+// El tope del cuerpo y el porqué están en lib/http.js: el de Express por
+// defecto (100 KB) impedía guardar una sesión con muchos overrides.
+app.use(jsonBody());
 
 // IMPORTANTE: los tres middlewares van ANTES de las rutas de datos. Interceptan
 // res.json, así que ninguna ruta sabe nada de modos.
@@ -126,7 +129,18 @@ app.use("/api/settings", require("./routes/settings")(db));
 app.use("/api/sessions", sessionsRoutes(db));
 app.use("/api/chart", chartRoutes(db));
 app.use("/api/export", require("./routes/export")(db));
-app.use("/api/import", require("./routes/import")(db));
+app.use(
+  "/api/import",
+  require("./routes/import")(db, {
+    // Copia previa a una importación global. Se poda aquí mismo para que
+    // importar varias veces seguidas no llene el volumen.
+    crearCopia: (etiqueta) => {
+      const archivo = crearCopia(db, etiqueta);
+      podarCopias();
+      return archivo;
+    },
+  })
+);
 
 app.use("/api/types", require("./routes/types")(db));
 app.use("/api/pokemon", require("./routes/pokemon")(db));
@@ -135,12 +149,22 @@ app.use("/api/abilities", require("./routes/abilities")(db));
 app.use("/api/items", require("./routes/items")(db));
 app.use("/api/champions", require("./routes/champions")(db));
 app.use("/api/search", require("./routes/search")(db));
+// Fase 9. Ninguna cuelga de /api/pokemon ni /api/moves a propósito: ahí los
+// middlewares de arriba reescriben la respuesta (ver routes/extra.js).
+app.use("/api/extra", require("./routes/extra")(db));
+app.use("/api/teams", require("./routes/teams")(db));
+app.use("/api/captures", require("./routes/captures")(db));
 
 // El healthcheck de Docker. NO toca SQLite a propósito: si la base está
 // ocupada, el contenedor no debe marcarse como enfermo por eso. La versión se
 // lee de una constante, así que sigue sin costar nada; el detalle del
 // despliegue (migraciones, copias) está en /api/version.
 app.get("/api/health", (req, res) => res.json({ status: "ok", version: APP_VERSION }));
+
+// Errores de la API en JSON (cuerpo mal formado, demasiado grande, o una
+// excepción en una ruta). Después de todas las rutas de /api y antes de los
+// estáticos, que tienen su propio tratamiento.
+app.use("/api", apiErrors);
 
 // En producción, el frontend ya compilado (Vite build) se sirve desde aquí
 const FRONTEND_DIST = path.join(__dirname, "..", "frontend", "dist");

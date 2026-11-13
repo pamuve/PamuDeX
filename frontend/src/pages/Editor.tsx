@@ -26,6 +26,7 @@ import MoveForm from "../components/forms/MoveForm";
 import AbilityForm from "../components/forms/AbilityForm";
 import RelationsMatrix from "../components/forms/RelationsMatrix";
 import ThemeForm from "../components/forms/ThemeForm";
+import { SwitchTrack } from "../components/SwitchTrack";
 import SessionRequired from "../components/SessionRequired";
 import { Loading } from "../components/PageState";
 
@@ -334,6 +335,29 @@ export default function Editor() {
                 {t(`editor.tabs.${item}`)}
               </button>
             ))}
+          </div>
+
+          {/* Reglas del ROM Hack (Fase 9). Hay hacks en los que cualquier Pokémon
+              aprende cualquier movimiento: ahí la lista de «movimientos que
+              aprende» del dataset no vale, y el comparador y la calculadora no
+              deben filtrar por ella. */}
+          <div className="card mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-[min(16rem,100%)] flex-1">
+              <p className="text-sm font-medium text-ink">{t("editor.anyMove")}</p>
+              <p className="text-xs text-ink-soft">{t("editor.anyMoveHint")}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={Boolean(overrides.doc.options?.any_move)}
+              aria-label={t("editor.anyMove")}
+              disabled={overrides.saving}
+              onClick={() => overrides.setOption("any_move", !overrides.doc.options?.any_move)}
+              className="btn-secondary bg-base hover:bg-hover"
+            >
+              <SwitchTrack on={Boolean(overrides.doc.options?.any_move)} />
+              {overrides.doc.options?.any_move ? t("settings.on") : t("settings.off")}
+            </button>
           </div>
 
           {overrides.error === "save" && (

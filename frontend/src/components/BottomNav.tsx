@@ -19,7 +19,10 @@ import { Fragment } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  Backpack,
   BookOpen,
+  Calculator,
+  Grid3x3,
   DatabaseBackup,
   History,
   Layers,
@@ -47,6 +50,13 @@ export const NAV_PRIMARY: NavItem[] = [
   { to: "/favoritos", Icon: Star, labelKey: "favorites.title" },
 ];
 
+/** Consulta y herramientas (Fase 9): la tabla de tipos, los objetos y la calculadora. */
+export const NAV_TOOLS: NavItem[] = [
+  { to: "/tipos", Icon: Grid3x3, labelKey: "typechart.nav" },
+  { to: "/objetos", Icon: Backpack, labelKey: "items.title", also: ["/objeto/"] },
+  { to: "/calculadora", Icon: Calculator, labelKey: "calc.nav" },
+];
+
 export const NAV_WORK: NavItem[] = [
   { to: "/sesiones", Icon: Layers, labelKey: "sessions.nav" },
   { to: "/editor", Icon: SlidersHorizontal, labelKey: "editor.nav" },
@@ -58,11 +68,14 @@ export const NAV_PROFILE: NavItem[] = [
   { to: "/ajustes", Icon: Settings, labelKey: "nav.settings" },
 ];
 
-const NAV_MORE = [...NAV_WORK, ...NAV_PROFILE];
+const NAV_MORE = [...NAV_TOOLS, ...NAV_WORK, ...NAV_PROFILE];
+/** Dónde va un separador en el menú «Más»: al empezar cada grupo. */
+const SEPARADORES = [NAV_TOOLS.length, NAV_TOOLS.length + NAV_WORK.length];
 
 /** ¿Está la ruta actual dentro de este destino? */
 export function isActive(item: NavItem, pathname: string): boolean {
-  if (item.to === "/") return pathname === "/" || (item.also ?? []).some((p) => pathname.startsWith(p));
+  if ((item.also ?? []).some((p) => pathname.startsWith(p))) return true;
+  if (item.to === "/") return pathname === "/";
   return pathname === item.to || pathname.startsWith(`${item.to}/`);
 }
 
@@ -166,7 +179,7 @@ export function BottomNav() {
                 const active = isActive(item, pathname);
                 return (
                   <Fragment key={item.to}>
-                    {i === NAV_WORK.length && (
+                    {SEPARADORES.includes(i) && (
                       <div role="separator" className="mx-2 my-1.5 border-t border-ink/10" />
                     )}
                     <button

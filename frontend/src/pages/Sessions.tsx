@@ -4,11 +4,13 @@
  * El contenido de cada sesión (overrides) llega en la tarea 3.2.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
   Copy,
+  Share2,
+  Upload,
   Pencil,
   Trash2,
   Check,
@@ -113,6 +115,70 @@ export default function Sessions() {
     }
   }
 
+  /*
+    COMPARTIR E IMPORTAR UN ROM HACK (Fase 9)
+    Una sesión se descarga como un archivo `.pamudex.json` con sus cambios
+    referenciados por clave natural (nº de Pokédex, nombre en inglés), no por
+    los ids internos de esta instalación. Quien lo recibe lo importa aquí y le
+    aparece como una sesión NUEVA: nunca pisa una que ya tenga.
+  */
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function handleShare(id: number) {
+    setBusyId(id);
+    setError(null);
+    setNotice(null);
+    try {
+      const doc = await sessionsApi.share(id);
+      const json = JSON.stringify(doc, null, 2);
+      const nombre = `${doc.name.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "romhack"}.pamudex.json`;
+      const file = new File([json], nombre, { type: "application/json" });
+
+      // En móvil, la hoja de compartir del sistema (WhatsApp, Telegram, AirDrop…).
+      // Donde no existe o no admite archivos, se descarga.
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: doc.name });
+          return;
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return; // el usuario cerró la hoja
+        }
+      }
+      const url = URL.createObjectURL(file);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = nombre;
+      enlace.click();
+      URL.revokeObjectURL(url);
+      setNotice(t("sessions.shared", { file: nombre }));
+    } catch {
+      setError(t("sessions.shareError"));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleImportFile(file: File) {
+    setError(null);
+    setNotice(null);
+    setBusyId("new");
+    try {
+      const doc = JSON.parse(await file.text());
+      const creada = await sessionsApi.importShared(doc);
+      await load();
+      setNotice(
+        creada.skipped > 0
+          ? t("sessions.importedSkipped", { name: creada.name, count: creada.skipped })
+          : t("sessions.imported", { name: creada.name })
+      );
+    } catch {
+      setError(t("sessions.importError"));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleDelete(id: number) {
     setBusyId(id);
     setError(null);
@@ -138,16 +204,42 @@ export default function Sessions() {
           <p className="mt-1 text-sm text-ink-soft">{t("sessions.subtitle")}</p>
         </div>
 
-        <button
-          type="button"
-          className={btnPrimary}
-          onClick={() => setCreating((v) => !v)}
-          aria-expanded={creating}
-        >
-          <Plus size={18} aria-hidden="true" />
-          {t("sessions.new")}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={busyId === "new"}
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload size={18} aria-hidden="true" />
+            {t("sessions.import")}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleImportFile(f);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            className={btnPrimary}
+            onClick={() => setCreating((v) => !v)}
+            aria-expanded={creating}
+          >
+            <Plus size={18} aria-hidden="true" />
+            {t("sessions.new")}
+          </button>
+        </div>
       </header>
+
+      <p className="mb-3 text-sm text-ink-soft empty:hidden" role="status" aria-live="polite">
+        {notice}
+      </p>
 
       {error && (
         <p
@@ -382,6 +474,15 @@ export default function Sessions() {
                     >
                       <Copy size={16} aria-hidden="true" />
                       {t("sessions.duplicate")}
+                    </button>
+                    <button
+                      type="button"
+                      className={btnGhost}
+                      disabled={busy}
+                      onClick={() => handleShare(session.id)}
+                    >
+                      <Share2 size={16} aria-hidden="true" />
+                      {t("sessions.share")}
                     </button>
                     <button
                       type="button"

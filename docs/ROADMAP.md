@@ -168,15 +168,35 @@ Notas de la fase:
 
 ---
 
-## 🔜 Fase 9 — Ampliaciones futuras (abierta / opcional)
+## 🚧 Fase 9 — Ampliaciones (en marcha)
+
+**Hecho:**
+
+| Qué | Dónde |
+|-----|-------|
+| Movimientos que aprende cada Pokémon, y quién aprende cada movimiento | Fichas de Pokémon y de movimiento · `/api/extra` |
+| Opción de sesión «cualquier Pokémon aprende cualquier movimiento» | `/editor` |
+| Línea evolutiva navegable y formas (megas, regionales, alternativas) | Ficha de Pokémon |
+| Sprite variocolor | Ficha de Pokémon |
+| Efectos en inglés de movimientos, habilidades y objetos | `effect_en` + `useI18n().effect()` |
+| Filtros (tipo, generación, capturados) y orden en la Pokédex | Portada |
+| Seguimiento de partida: botón «Capturado», por perfil y por juego | Ficha y portada · `/api/captures` |
+| Tabla de tipos completa 18×18 | `/tipos` |
+| Objetos con listado, ficha y favoritos | `/objetos`, `/objeto/:id` |
+| Calculadora de daño (nivel, EVs, IVs, naturaleza, clima, crítico, objetos) | `/calculadora` |
+| Varios equipos guardados por perfil y por juego | `/equipo` · `/api/teams` |
+| Botón «Derrotado» en el comparador | `/equipo` |
+| Importar y exportar equipos en formato Showdown y en texto simple | `/equipo` |
+| Compartir un ROM Hack como archivo e importarlo | `/sesiones` |
+
+**Pendiente:**
 
 | # | Tarea | Tamaño |
 |---|-------|--------|
-| 9.1 | Calculadora de daño completa (con rangos, naturaleza, EVs/IVs, clima, terreno) | Grande → dividir en sub-tareas al llegar |
+| 9.1b | Calculadora: habilidades, terreno y movimientos de potencia variable | Media |
 | 9.2 | Simulador de combate turno a turno | Grande → dividir en sub-tareas al llegar |
 | 9.3 | IA que recomienda equipos según cobertura | Media-Grande |
-| 9.4 | Sincronización opcional con Pokémon Showdown + import/export formato Showdown | Media |
-| 9.5 | Editor de ROM Hacks avanzado + gestión de sprites personalizados (subida de imágenes propias) | Media |
+| 9.5 | Editor de ROM Hacks avanzado: movimientos por Pokémon editables por sesión y sprites personalizados | Media |
 
 > La Fase 9 es intencionadamente la más abierta: cuando llegues aquí, usa `docs/AI_TASK_TEMPLATE.md` para partir cada punto en tareas del tamaño de una sola conversación, igual que se hizo con las fases 2-8.
 

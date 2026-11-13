@@ -98,12 +98,29 @@ function crearDb(estado = {}) {
 }
 
 /** Una base con TODO lo que traen las migraciones actuales ya aplicado. */
+// Lo que deja `schema.sql` + la siembra. Al añadir una migración hay que
+// reflejarla aquí, o estas pruebas la verán como pendiente.
+const TABLAS_AL_DIA = [
+  "profiles", "favorites", "history", "items", "entity_changes", "sessions",
+  "moves", "abilities", "pokemon_moves", "evolutions", "pokemon_forms", "teams", "captures",
+];
+const COLUMNAS_AL_DIA = {
+  profiles: ["id", "name", "pin_hash"],
+  moves: ["id", "effect_es", "effect_en"],
+  abilities: ["id", "effect_es", "effect_en"],
+  items: ["id", "effect_es", "effect_en"],
+};
+const FILAS_AL_DIA = {
+  items: 2151, entity_changes: 120, pokemon_moves: 101966, evolutions: 484, pokemon_forms: 229,
+  moves: 896, // el COUNT de `effect_en IS NOT NULL`
+};
+
 function dbAlDia() {
   return crearDb({
-    tablas: ["profiles", "favorites", "history", "items", "entity_changes", "sessions"],
-    columnas: { profiles: ["id", "name", "pin_hash"] },
+    tablas: TABLAS_AL_DIA,
+    columnas: COLUMNAS_AL_DIA,
     indices: ["idx_history_perfil"],
-    filas: { items: 2151, entity_changes: 120 },
+    filas: FILAS_AL_DIA,
   });
 }
 
@@ -263,10 +280,10 @@ function conMigraciones(lista) {
   // Como sale de `schema.sql`: están todas las tablas, pero no el índice del
   // historial ni los datos de items/entity_changes, que los carga la migración.
   const db = crearDb({
-    tablas: ["profiles", "favorites", "history", "items", "entity_changes", "sessions"],
-    columnas: { profiles: ["id", "name", "pin_hash"] },
+    tablas: TABLAS_AL_DIA,
+    columnas: COLUMNAS_AL_DIA,
     indices: [],
-    filas: { items: 2151, entity_changes: 120 },
+    filas: FILAS_AL_DIA,
   });
 
   const { applied, backfilled } = migrate(db, { crearCopia: () => "/tmp/copia.sqlite" });

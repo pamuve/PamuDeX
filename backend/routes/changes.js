@@ -26,13 +26,13 @@
  */
 
 const express = require("express");
-const router = express.Router();
 const { createGenerations, ENTITY_BY_PATH } = require("../lib/generations");
 
 /** Se aceptan también los plurales de las URLs, que es el error fácil de cometer. */
 const TIPOS_VALIDOS = new Set(Object.values(ENTITY_BY_PATH));
 
 module.exports = (db) => {
+  const router = express.Router();
   const generations = createGenerations(db);
 
   router.get("/:entityType/:entityRef", (req, res) => {

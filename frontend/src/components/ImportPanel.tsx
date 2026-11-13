@@ -16,6 +16,7 @@ import { useRef, useState } from "react";
 import { Upload, AlertTriangle, CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import { useI18n } from "../i18n";
 import { inputClass, btnPrimary, btnGhost } from "./forms/FormField";
+import { borrarTodo, invalidarSesion } from "../lib/localCache";
 
 const ENTITIES = ["pokemon", "moves", "abilities", "types"] as const;
 
@@ -92,6 +93,11 @@ export default function ImportPanel({ sessionId }: { sessionId: number | null })
       } else if (!res.ok) {
         setFallo(mensajeError(data));
       } else {
+        // La copia local del catálogo es anterior a lo importado: sin esto, la
+        // siguiente pantalla enseñaba los datos viejos una vez más antes de
+        // refrescarse. En global cambia todo; en una sesión, solo sus claves.
+        if (sessionId === null) void borrarTodo();
+        else void invalidarSesion(sessionId);
         setHecho(t("data.applied"));
         setPreview(null);
         setFile(null);

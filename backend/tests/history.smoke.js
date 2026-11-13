@@ -284,7 +284,7 @@ assert.strictEqual(pedir(history, "GET", "/", { query: { profile: "99" } }).stat
 
 r = pedir(history, "POST", "/", {
   query: { profile: "1" },
-  body: { entity_type: "item", entity_ref: 1 },
+  body: { entity_type: "ubicacion", entity_ref: 1 },
 });
 assert.strictEqual(r.status, 400);
 assert.strictEqual(r.body.error, "tipo_invalido");

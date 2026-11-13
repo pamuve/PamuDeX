@@ -40,7 +40,7 @@
 const express = require("express");
 
 /** Tipos de entidad admitidos. Cualquier otro se rechaza. */
-const ENTITY_TYPES = ["pokemon", "move", "ability", "type"];
+const ENTITY_TYPES = ["pokemon", "move", "ability", "type", "item"];
 
 const MAX_REF = 40;
 
@@ -117,6 +117,14 @@ module.exports = (db) => {
    * Saca el perfil de la query y comprueba que existe.
    * Devuelve el id, o null tras haber respondido ya con el error.
    */
+  // Alta y poda en UNA transacción: son dos escrituras por cada ficha que se
+  // abre, y por separado cada una espera su propia confirmación en disco.
+  const registrarVisita = db.transaction((profileId, entityType, entityRef) => {
+    const info = q.insert.run(profileId, entityType, entityRef);
+    q.prune.run(profileId, profileId, MAX_ROWS);
+    return info;
+  });
+
   function profileFrom(req, res) {
     const profileId = parseId(req.query.profile);
     if (!profileId) {
@@ -190,8 +198,7 @@ module.exports = (db) => {
       });
     }
 
-    const info = q.insert.run(profileId, entity.entityType, entity.entityRef);
-    q.prune.run(profileId, profileId, MAX_ROWS);
+    const info = registrarVisita(profileId, entity.entityType, entity.entityRef);
 
     res.json({
       ok: true,

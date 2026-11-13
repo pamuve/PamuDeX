@@ -1,4 +1,6 @@
 import { Team, RivalTeam, TeamSlot, RivalSlot, Nature } from "../types";
+import { getActiveProfileId } from "./profile";
+import { currentScope } from "./scope";
 
 const TEAM_KEY = "pamudex_team_own";
 const RIVAL_KEY = "pamudex_team_rival";
@@ -14,18 +16,57 @@ function safeParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
-export function loadTeam(): Team {
-  return safeParse<Team>(localStorage.getItem(TEAM_KEY), { slots: [] });
+/**
+ * EL EQUIPO EN USO ES POR PERFIL Y POR JUEGO (Fase 9).
+ *
+ * Antes había una sola clave para todo el aparato: el equipo de un perfil lo
+ * veía el siguiente, y el de un ROM Hack aparecía en otro con ids que allí
+ * podían no significar lo mismo. Ahora la clave lleva el perfil y el ámbito
+ * (`lib/scope.ts`).
+ *
+ * El equipo que hubiera en la clave antigua NO se pierde: se lee como reserva
+ * la primera vez que un perfil abre el comparador sin sesión, y a partir de
+ * ahí manda la clave nueva.
+ */
+function claves(): { own: string; rival: string; legado: boolean } {
+  const sufijo = `:${getActiveProfileId() ?? 0}:${currentScope()}`;
+  return { own: TEAM_KEY + sufijo, rival: RIVAL_KEY + sufijo, legado: currentScope() === "global" };
 }
+
+function leer<T>(clave: string, antigua: string, legado: boolean, vacio: T): T {
+  try {
+    const propio = localStorage.getItem(clave);
+    if (propio) return safeParse<T>(propio, vacio);
+    return legado ? safeParse<T>(localStorage.getItem(antigua), vacio) : vacio;
+  } catch {
+    return vacio;
+  }
+}
+
+function guardar(clave: string, valor: unknown) {
+  try {
+    localStorage.setItem(clave, JSON.stringify(valor));
+  } catch {
+    /* almacenamiento lleno o bloqueado: el equipo dura lo que dure la página */
+  }
+}
+
+export function loadTeam(): Team {
+  const k = claves();
+  return leer<Team>(k.own, TEAM_KEY, k.legado, { slots: [] });
+}
+
 export function saveTeam(team: Team) {
-  localStorage.setItem(TEAM_KEY, JSON.stringify(team));
+  guardar(claves().own, team);
 }
 
 export function loadRivalTeam(): RivalTeam {
-  return safeParse<RivalTeam>(localStorage.getItem(RIVAL_KEY), { slots: [] });
+  const k = claves();
+  return leer<RivalTeam>(k.rival, RIVAL_KEY, k.legado, { slots: [] });
 }
+
 export function saveRivalTeam(team: RivalTeam) {
-  localStorage.setItem(RIVAL_KEY, JSON.stringify(team));
+  guardar(claves().rival, team);
 }
 
 export function emptyTeamSlot(pokemonId: number): TeamSlot {

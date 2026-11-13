@@ -216,7 +216,8 @@ pnpm install
 pnpm start
 ```
 
-**Los sprites hay que bajarlos una vez.** Son 1025 PNG (~1,1 MB) que **no están
+**Los sprites hay que bajarlos una vez.** Son unos 2300 PNG (~3 MB: el normal y
+el variocolor de cada Pokémon, y el de cada forma) que **no están
 en el repo**: los descarga el build de Docker, así que para trabajar en local
 hace falta ejecutarlo a mano o las fichas y las listas saldrán con la inicial
 del Pokémon en vez del sprite.

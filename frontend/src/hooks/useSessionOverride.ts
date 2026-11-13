@@ -22,6 +22,8 @@ export interface OverrideDoc {
   abilities?: Record<string, EntityPatch>;
   relations?: Record<string, Record<string, number>>;
   theme?: Record<string, string>;
+  /** Reglas del ROM Hack que no son un override de una entidad (Fase 9). */
+  options?: { any_move?: boolean };
 }
 
 export interface SessionOverrides {
@@ -40,6 +42,7 @@ export interface SessionOverrides {
   setRelation: (attacker: string, defender: string, multiplier: number) => Promise<void>;
   resetRelations: () => Promise<void>;
   setTheme: (theme: Record<string, string> | null) => Promise<void>;
+  setOption: (key: "any_move", value: boolean) => Promise<void>;
 }
 
 function readDoc(session: Session | null): OverrideDoc {
@@ -176,6 +179,20 @@ export function useSessionOverrides(): SessionOverrides {
     [doc, persist]
   );
 
+  const setOption = useCallback(
+    async (key: "any_move", value: boolean) => {
+      const options = { ...(doc.options || {}) };
+      // Apagada no se guarda: el documento solo lleva lo que se sale de lo normal.
+      if (value) options[key] = true;
+      else delete options[key];
+      const next = { ...doc };
+      if (Object.keys(options).length) next.options = options;
+      else delete next.options;
+      await persist(next);
+    },
+    [doc, persist]
+  );
+
   return useMemo(
     () => ({
       sessionId,
@@ -191,10 +208,11 @@ export function useSessionOverrides(): SessionOverrides {
       setRelation,
       resetRelations,
       setTheme,
+      setOption,
     }),
     [
       sessionId, session, doc, loading, saving, error, savedAt,
-      reload, saveEntity, resetEntity, setRelation, resetRelations, setTheme,
+      reload, saveEntity, resetEntity, setRelation, resetRelations, setTheme, setOption,
     ]
   );
 }

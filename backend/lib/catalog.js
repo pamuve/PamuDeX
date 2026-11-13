@@ -26,7 +26,10 @@ function createCatalog(db) {
   const q = {
     /* --------------------------- listados --------------------------- */
     pokemonList: db.prepare(
-      `SELECT p.id, p.dex, p.name_es, p.name_en, p.generation
+      `SELECT p.id, p.dex, p.name_es, p.name_en, p.generation,
+              p.hp, p.atk, p.def, p.spa, p.spd, p.spe,
+              (SELECT group_concat(type_id) FROM
+                 (SELECT type_id FROM pokemon_types WHERE pokemon_id = p.id ORDER BY slot)) AS tipos
          FROM pokemon p ORDER BY p.dex ASC`
     ),
     movesList: db.prepare(
@@ -51,7 +54,7 @@ function createCatalog(db) {
     // Orden estable: sin ORDER BY, las habilidades salían en un orden que
     // depende de los ability_id y variaba entre bases.
     pokemonAbilities: db.prepare(
-      `SELECT a.name_es, a.name_en, a.effect_es, pa.is_hidden FROM pokemon_abilities pa
+      `SELECT a.name_es, a.name_en, a.effect_es, a.effect_en, pa.is_hidden FROM pokemon_abilities pa
          JOIN abilities a ON a.id = pa.ability_id WHERE pa.pokemon_id = ?
          ORDER BY pa.is_hidden, a.name_es`
     ),
@@ -86,7 +89,17 @@ function createCatalog(db) {
 
   return {
     // listados
-    pokemon: () => q.pokemonList.all(),
+    // El listado lleva tipos y stats (Fase 9) para poder filtrar y ordenar la
+    // Pokédex sin pedir 1025 fichas. Los `stats` van con la MISMA forma que en
+    // la ficha, así que el override de una sesión los mezcla clave a clave. Los
+    // tipos van como ids; un override de sesión los sustituye por los objetos de
+    // la ficha, y el frontend acepta las dos formas (`typeIdsOf`).
+    pokemon: () =>
+      q.pokemonList.all().map(({ tipos, hp, atk, def, spa, spd, spe, ...p }) => ({
+        ...p,
+        types: tipos ? tipos.split(",") : [],
+        stats: { hp, atk, def, spa, spd, spe },
+      })),
     moves: () => q.movesList.all(),
     abilities: () => q.abilitiesList.all(),
     items: () => q.itemsList.all(),

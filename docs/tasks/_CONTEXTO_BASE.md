@@ -615,9 +615,16 @@ Respétalos: `lib/damage.ts` y `types.ts` comparan contra ellos.
     `components/OfflineData.tsx` y los estados de `components/PageState.tsx`
     (`lib/perf.ts` y su modo de depuración se retiraron tras medir).
     Medido: 1.1 ms de media leyendo el catálogo. Ver «Caché local (Fase 8)».
-- 🔜 **Fase 9, la siguiente**: ampliaciones (calculadora de daño, simulador,
-  recomendador de equipos). Es la fase más abierta: usa
-  `docs/AI_TASK_TEMPLATE.md` para partirla. Ver `docs/ROADMAP.md`.
+- 🚧 **Fase 9, en marcha**: ampliaciones. Hecho: movimientos por Pokémon,
+  evoluciones y formas (`/api/extra`, `db/extras.js`), sprite variocolor,
+  efectos en inglés (`effect_en`), filtros y orden en la Pokédex, capturas
+  (`/api/captures`), tabla de tipos (`/tipos`), objetos (`/objetos`),
+  calculadora (`/calculadora`, `lib/calc.ts`), equipos guardados
+  (`/api/teams`), botón «Derrotado», equipos en texto (`lib/teamText.ts`) y
+  compartir un ROM Hack (`/api/sessions/:id/share`). Pendiente: simulador,
+  recomendador de equipos y movimientos por Pokémon editables por sesión.
+  Las convenciones de la fase están en `CLAUDE.md`, «Fase 9: datos extra y
+  dónde cuelgan sus rutas». Ver `docs/ROADMAP.md`.
 
 ## Actualizaciones: lo que no se puede perder
 
