@@ -26,6 +26,8 @@ RUN pnpm install --frozen-lockfile
 # La ruta importa: el script resuelve el destino como ../../frontend/public/
 # sprites desde su propia carpeta, así que tiene que caer en /app/backend/tools.
 COPY backend/tools/fetch-sprites.js /app/backend/tools/fetch-sprites.js
+# La lista de formas (megas, regionales…) dice qué sprites de forma hay que bajar.
+COPY backend/data/forms.json /app/backend/data/forms.json
 RUN node /app/backend/tools/fetch-sprites.js
 
 COPY frontend/ ./

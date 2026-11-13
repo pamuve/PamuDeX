@@ -28,6 +28,7 @@ const ROUTE: Record<HistoryType, string> = {
   move: "/movimiento",
   ability: "/habilidad",
   type: "/tipo",
+  item: "/objeto",
 };
 
 /** Nombre resuelto de una entidad, indexado por `tipo:referencia`. */
@@ -86,6 +87,14 @@ export default function History() {
         tareas.push(
           api.types.list().then((list: PokeType[]) => {
             for (const tp of list) next[`type:${tp.id}`] = { name: nombre(tp), color: tp.color };
+          })
+        );
+      }
+
+      if (tipos.includes("item")) {
+        tareas.push(
+          api.items.list().then((list) => {
+            for (const it of list) next[`item:${it.id}`] = { name: nombre(it) };
           })
         );
       }

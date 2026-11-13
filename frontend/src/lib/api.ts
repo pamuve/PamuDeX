@@ -269,6 +269,13 @@ export const api = {
    * solo sabe hacer GET y además añade `?session=`, que aquí no queremos.
    * Se expone desde `api` para que las páginas tengan un único punto de entrada.
    */
+  // Datos extra de una ficha (Fase 9). Devuelven solo ids, que se cruzan con
+  // los listados de arriba: así respetan la sesión y Champions sin que el
+  // backend tenga que saber nada de modos en esas rutas.
+  extra: {
+    pokemon: (id: number) => get<import("../types").PokemonExtra>(`/extra/pokemon/${id}`),
+    move: (id: number) => get<import("../types").MoveLearners>(`/extra/move/${id}`),
+  },
   profiles: profilesApi,
 
   /**

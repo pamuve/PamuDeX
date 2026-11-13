@@ -36,6 +36,7 @@ const ROUTE: Record<FavoriteType, string> = {
   move: "/movimiento",
   ability: "/habilidad",
   type: "/tipo",
+  item: "/objeto",
 };
 
 export default function Favorites() {
@@ -48,6 +49,7 @@ export default function Favorites() {
     move: [],
     ability: [],
     type: [],
+        item: [],
   });
   const [resolving, setResolving] = useState(false);
 
@@ -56,6 +58,7 @@ export default function Favorites() {
     favorites.move.join(","),
     favorites.ability.join(","),
     favorites.type.join(","),
+    favorites.item.join(","),
   ].join("|");
 
   useEffect(() => {
@@ -71,6 +74,7 @@ export default function Favorites() {
         move: [],
         ability: [],
         type: [],
+        item: [],
       };
 
       try {
@@ -140,6 +144,17 @@ export default function Favorites() {
           );
         }
 
+        if (favorites.item.length) {
+          tareas.push(
+            api.items.list().then((list) => {
+              const byId = new Map(list.map((it) => [String(it.id), it]));
+              next.item = favorites.item.map((ref) => {
+                const found = byId.get(ref);
+                return { ref, name: found ? nombre(found) : `#${ref}`, to: `${ROUTE.item}/${ref}` };
+              });
+            })
+          );
+        }
         await Promise.all(tareas);
       } catch {
         // Sin conexión y sin caché: se muestran las referencias en crudo, que
@@ -181,6 +196,7 @@ export default function Favorites() {
     { type: "move", label: t("favorites.moves") },
     { type: "ability", label: t("favorites.abilities") },
     { type: "type", label: t("favorites.types") },
+    { type: "item", label: t("favorites.items") },
   ];
 
   return (

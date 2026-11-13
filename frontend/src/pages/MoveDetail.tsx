@@ -11,11 +11,12 @@ import { DetailError, Loading } from "../components/PageState";
 import { useDetail } from "../hooks/useDetail";
 import { useRecordVisit } from "../lib/history";
 import { BackLink } from "../components/BackLink";
+import { MoveLearnersSection } from "../components/PokemonExtras";
 import { useI18n } from "../i18n";
 
 export function MoveDetail() {
   const { id } = useParams();
-  const { t, name } = useI18n();
+  const { t, name, effect } = useI18n();
   // Solo para poder leer un tipo histórico por su nombre en las etiquetas de
   // cambios: el id que guarda `entity_changes` es canónico y sin tilde
   // ('psiquico'), y pintarlo en crudo quedaría mal en español.
@@ -110,7 +111,7 @@ export function MoveDetail() {
             </div>
           ))}
         </div>
-        <p className="text-ink-soft text-sm mt-4 max-w-prose">{move.effect_es}</p>
+        <p className="text-ink-soft text-sm mt-4 max-w-prose">{effect(move)}</p>
       </section>
 
       <GenerationSelector
@@ -118,6 +119,8 @@ export function MoveDetail() {
         value={gen}
         onChange={setGen}
       />
+
+      <MoveLearnersSection moveId={move.id} />
 
       <ChangeHistory changes={move.generational_changes} line={linea} />
     </div>

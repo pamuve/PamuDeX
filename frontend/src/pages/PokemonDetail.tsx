@@ -14,6 +14,9 @@ import { DetailError, Loading } from "../components/PageState";
 import { useDetail } from "../hooks/useDetail";
 import { useRecordVisit } from "../lib/history";
 import { BackLink } from "../components/BackLink";
+import { CaptureButton } from "../components/CaptureButton";
+import { EvolutionLine, FormsSection, Learnset, usePokemonExtra } from "../components/PokemonExtras";
+import { Sparkles } from "lucide-react";
 import { useI18n } from "../i18n";
 
 const STAT_MAX = 180;
@@ -32,7 +35,7 @@ function colorDeStat(val: number): string {
 
 export function PokemonDetail() {
   const { id } = useParams();
-  const { t, name } = useI18n();
+  const { t, name, effect } = useI18n();
   const [typesById, setTypesById] = useState<Record<string, PokeType>>({});
   // Generación que se está viendo; null = la actual (Fase 7).
   const [gen, setGen] = useGenerationView(id);
@@ -50,6 +53,14 @@ export function PokemonDetail() {
   // Se anota el id interno, no el :id de la URL: la ruta acepta también el nº de
   // Pokédex, y el historial (como los favoritos) se indexa siempre por id.
   useRecordVisit("pokemon", poke ? poke.id : undefined);
+
+  // Evoluciones, formas y movimientos (Fase 9). Van aparte de la ficha: si no
+  // llegan, la ficha se ve igual que antes, sin esas secciones.
+  const extra = usePokemonExtra(poke ? poke.id : undefined);
+  // El variocolor se apaga al cambiar de Pokémon: la página se reutiliza al
+  // navegar por la línea evolutiva.
+  const [shiny, setShiny] = useState(false);
+  useEffect(() => setShiny(false), [id]);
 
   if (fallo) return <DetailError fallo={fallo} onRetry={reintentar} />;
   if (!poke) return <Loading />;
@@ -86,10 +97,24 @@ export function PokemonDetail() {
       <BackLink />
       <section className="card flex flex-col sm:flex-row gap-5 sm:gap-6 items-center animate-fadein">
         <div
-          className="w-32 h-32 rounded-xl2 flex items-center justify-center text-5xl font-display font-bold shrink-0 overflow-hidden"
+          className="relative w-32 h-32 rounded-xl2 flex items-center justify-center text-5xl font-display font-bold shrink-0 overflow-hidden"
           style={{ background: `linear-gradient(135deg, ${poke.types[0]?.color}33, ${poke.types[poke.types.length - 1]?.color}33)` }}
         >
-          <PokemonSprite dex={poke.dex} nombre={name(poke)} className="w-24 h-24" />
+          <PokemonSprite dex={poke.dex} nombre={name(poke)} className="w-24 h-24" shiny={shiny} />
+          {/* Versión variocolor (Fase 9). Conmutador sobre la propia caja del
+              sprite: `aria-pressed` dice el estado y el icono se rellena. */}
+          <button
+            type="button"
+            onClick={() => setShiny((v) => !v)}
+            aria-pressed={shiny}
+            aria-label={t("pokemon.shiny")}
+            title={t("pokemon.shiny")}
+            className={`pressable absolute bottom-1 right-1 flex h-10 w-10 items-center justify-center rounded-full ${
+              shiny ? "bg-favorite/20 text-favorite" : "bg-base/60 text-ink-soft hover:text-ink"
+            }`}
+          >
+            <Sparkles size={18} aria-hidden="true" fill={shiny ? "currentColor" : "none"} />
+          </button>
         </div>
         <div className="flex-1 min-w-0 text-center sm:text-left space-y-2">
           <div className="text-ink-soft font-mono text-sm tabular-nums">
@@ -108,6 +133,9 @@ export function PokemonDetail() {
           <div className="flex gap-4 text-sm text-ink-soft pt-1 justify-center sm:justify-start tabular-nums">
             <span>{t("pokemon.height")}: <span className="text-ink">{poke.height_m} m</span></span>
             <span>{t("pokemon.weight")}: <span className="text-ink">{poke.weight_kg} kg</span></span>
+          </div>
+          <div className="flex justify-center pt-1 sm:justify-start">
+            <CaptureButton pokemonId={poke.id} />
           </div>
         </div>
       </section>
@@ -131,7 +159,7 @@ export function PokemonDetail() {
             {poke.abilities.map((a) => (
               <div key={a.name_es} className="flex flex-col">
                 <span className="text-ink font-medium">{name(a)}</span>
-                <span className="text-ink-soft text-sm">{a.effect_es}</span>
+                <span className="text-ink-soft text-sm">{effect(a)}</span>
               </div>
             ))}
             {poke.hidden_ability && (
@@ -140,7 +168,7 @@ export function PokemonDetail() {
                   {name(poke.hidden_ability)}{" "}
                   <span className="text-ink-soft text-xs">({t("pokemon.hidden_ability")})</span>
                 </span>
-                <span className="text-ink-soft text-sm">{poke.hidden_ability.effect_es}</span>
+                <span className="text-ink-soft text-sm">{effect(poke.hidden_ability)}</span>
               </div>
             )}
           </div>
@@ -182,6 +210,10 @@ export function PokemonDetail() {
         <h2 className="section-title mb-3">{t("pokemon.weaknesses")}</h2>
         <EffectivenessPanel buckets={poke.efectividad} typesById={typesById} />
       </section>
+
+      <EvolutionLine extra={extra} currentId={poke.id} />
+      <FormsSection extra={extra} typesById={typesById} />
+      <Learnset extra={extra} />
 
       <ChangeHistory changes={poke.generational_changes} line={linea} />
     </div>

@@ -18,14 +18,14 @@ import { useActiveProfile, profileInitial } from "../lib/profile";
 import { readableInk } from "../lib/theme";
 import { useActiveChampions } from "../lib/champions";
 import { useActiveSession } from "../lib/session";
-import { NAV_PRIMARY, NAV_WORK, isActive } from "./BottomNav";
+import { NAV_PRIMARY, NAV_TOOLS, NAV_WORK, isActive } from "./BottomNav";
 
 /**
  * Destinos de la barra de escritorio (`lg` en adelante). Por debajo van en
  * `BottomNav`, que es donde se definen. Historial y ajustes no están aquí: son
  * del perfil y viven en su menú.
  */
-const NAV_DESKTOP = [...NAV_PRIMARY, ...NAV_WORK];
+const NAV_DESKTOP = [...NAV_PRIMARY, ...NAV_TOOLS, ...NAV_WORK];
 
 /** Opciones de los menús desplegables de la barra: 44px de alto mínimo. */
 const MENU_ITEM = "glass-item";

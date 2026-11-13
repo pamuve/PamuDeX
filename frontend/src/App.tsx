@@ -34,6 +34,11 @@ const ImportExport = lazy(() => import("./pages/ImportExport"));
 const Settings = lazy(() => import("./pages/Settings"));
 const ChampionsRules = lazy(() => import("./pages/ChampionsRules"));
 const ChampionsHome = lazy(() => import("./pages/ChampionsHome"));
+// Fase 9: tabla de tipos, objetos y calculadora.
+const TypeChart = lazy(() => import("./pages/TypeChart"));
+const Items = lazy(() => import("./pages/Items"));
+const ItemDetail = lazy(() => import("./pages/ItemDetail"));
+const Calculator = lazy(() => import("./pages/Calculator"));
 
 export default function App() {
   useAppTheme();                        // tema efectivo: la sesión pisa al perfil
@@ -116,6 +121,10 @@ export default function App() {
           <Route path="/tipo/:id" element={<TypeDetail />} />
           <Route path="/movimiento/:id" element={<MoveDetail />} />
           <Route path="/habilidad/:id" element={<AbilityDetail />} />
+          <Route path="/tipos" element={<TypeChart />} />
+          <Route path="/objetos" element={<Items />} />
+          <Route path="/objeto/:id" element={<ItemDetail />} />
+          <Route path="/calculadora" element={<Calculator />} />
           <Route path="/favoritos" element={<Favorites />} />
           <Route path="/historial" element={<History />} />
           <Route path="/ajustes" element={<Settings />} />

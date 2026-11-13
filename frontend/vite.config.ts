@@ -71,7 +71,7 @@ export default defineConfig({
             handler: "CacheFirst",
             options: {
               cacheName: "pamudex-sprite-cache",
-              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 90 },
             },
           },
           {
@@ -85,7 +85,7 @@ export default defineConfig({
             // cuando no la hay, así que no se pierde el modo offline.
             //
             // Si añades un endpoint que el usuario pueda modificar, va AQUÍ.
-            urlPattern: /\/api\/(favorites|profiles|sessions|history|settings|champions)\b/,
+            urlPattern: /\/api\/(favorites|profiles|sessions|history|settings|champions|teams|captures)\b/,
             handler: "NetworkFirst",
             options: {
               cacheName: "pamudex-user-cache",

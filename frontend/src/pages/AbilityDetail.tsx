@@ -14,7 +14,7 @@ import { useI18n } from "../i18n";
 
 export function AbilityDetail() {
   const { id } = useParams();
-  const { t, name } = useI18n();
+  const { t, name, effect } = useI18n();
   // Generación que se está viendo; null = la actual (Fase 7).
   const [gen, setGen] = useGenerationView(id);
   const { data: ability, fallo, reintentar } = useDetail<AbilityDetailT>(
@@ -47,7 +47,7 @@ export function AbilityDetail() {
         </div>
         <p className="text-ink-soft text-sm mb-1">{t("pokemon.generation")} {ability.generation ?? "—"}</p>
         <p className="text-ink text-sm mt-3 max-w-prose">
-          {ability.effect_es}
+          {effect(ability)}
           <ChangeTag changes={cambios} field="effect_es" />
         </p>
       </section>

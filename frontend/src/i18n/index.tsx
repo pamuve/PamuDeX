@@ -46,6 +46,7 @@ function langInicial(): string {
 type TParams = Record<string, string | number>;
 /** Cualquier cosa del dataset con nombre en los dos idiomas. */
 export type Named = { name_es: string; name_en?: string | null };
+export type WithEffect = { effect_es?: string | null; effect_en?: string | null };
 type Ctx = {
   lang: string;
   setLang: (l: string) => void;
@@ -54,6 +55,13 @@ type Ctx = {
    *  inglés (un override de ROM Hack que solo rellenó el español), cae al
    *  español en vez de pintar un hueco. */
   name: (o: Named) => string;
+  /**
+   * El efecto en el idioma activo (Fase 9). En inglés usa `effect_en` si lo hay
+   * y si no cae al español: es mejor un texto en otro idioma que ninguno, y un
+   * efecto reescrito en un ROM Hack (que solo guarda `effect_es`) tampoco lleva
+   * versión inglesa.
+   */
+  effect: (o: WithEffect) => string;
 };
 const I18nContext = createContext<Ctx | null>(null);
 
@@ -116,6 +124,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       setLang,
       t,
       name: (o) => (lang === "en" && o.name_en ? o.name_en : o.name_es),
+      effect: (o) => (lang === "en" && o.effect_en ? o.effect_en : o.effect_es || ""),
     }),
     [lang, t]
   );

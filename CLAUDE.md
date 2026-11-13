@@ -55,7 +55,13 @@ cd backend && pnpm run seed          # recrear la DB desde backend/data/*.json
 # build: los JSON van versionados para que la PWA siga siendo offline-first).
 cd backend && node tools/fetch-dataset.js
 
-# Descargar los sprites a frontend/public/sprites/ (1025 PNG, ~1,1 MB). Hace
+# Regenerar los datos «extra» (movimientos por Pokémon, evoluciones, formas y
+# efectos en inglés) desde los CSV del repositorio de PokeAPI. Tampoco corre en
+# el arranque: los cuatro JSON van versionados.
+cd backend && node tools/fetch-extras.js
+
+# Descargar los sprites a frontend/public/sprites/ (normal, variocolor y formas:
+# unos 2300 PNG, ~3 MB). Hace
 # falta una vez para trabajar en local: NO están en el repo y el frontend los
 # pide a /sprites. Solo baja los que faltan; --force los rebaja todos.
 cd backend && node tools/fetch-sprites.js
@@ -90,7 +96,7 @@ Esto mismo lo ejecuta GitHub Actions en cada push
 (`.github/workflows/verificacion.yml`), y **si falla no se publica imagen**.
 
 Las pruebas simulan `db`, `req` y `res`, sin servidor ni SQLite. La excepción
-es `import.smoke.js`, que usa SQLite **en memoria** y un puerto efímero porque
+son `import.smoke.js` y `fase9.smoke.js`, que usan SQLite **en memoria** y un puerto efímero porque
 lo que comprueba (cómo reparte ids el AUTOINCREMENT) no se puede simular.
 
 - `overrides.smoke.js` — overrides de sesión, middleware y tabla de tipos.
@@ -107,6 +113,9 @@ lo que comprueba (cómo reparte ids el AUTOINCREMENT) no se puede simular.
 
 - `import.smoke.js` — la importación global conserva los ids internos, una sesión
   grande se puede guardar y los errores del cuerpo salen en JSON.
+- `fase9.smoke.js` — la carga de los datos extra, `/api/extra`, capturas y
+  equipos por ámbito, y el viaje de ida y vuelta de un ROM Hack compartido.
+  También con SQLite en memoria.
 
 Ejecuta la que corresponda a lo que toques.
 
@@ -118,24 +127,25 @@ comprobar tú.
 ```
 backend/
   data/        JSON semilla — la fuente de verdad del dataset
-  db/          schema.sql, seed.js, populate.js, migrate.js, paths.js
+  db/          schema.sql, seed.js, populate.js, migrate.js, paths.js, extras.js
   lib/         effectiveness.js, catalog.js, overrides.js, typechart.js,
                dataset.js, importValidator.js, pin.js, pinThrottle.js,
-               championsFilter.js, http.js
+               championsFilter.js, http.js, catalogVersion.js, scope.js
   middleware/  sessionOverrides.js, championsMode.js
   routes/      types, pokemon, moves, abilities, items, search, sessions,
                chart, export, import, profiles, favorites, history, settings,
-               champions
+               champions, extra, teams, captures
   tests/       overrides.smoke.js, history.smoke.js, champions.smoke.js,
                championsMode.smoke.js, generations.smoke.js, migrate.smoke.js,
-               import.smoke.js
+               import.smoke.js, fase9.smoke.js
 frontend/src/
   components/  + components/forms/ para los editores
   pages/       una por ruta, registrada en App.tsx
   hooks/       useSessionOverride.ts
   lib/         api, apiSession, session, profile, favorites, history, settings,
                champions, theme, team, damage, recommendation, coverage,
-               search, localCache
+               search, localCache, scope, captures, sessionOptions, pokedex,
+               calc, teamText
   i18n/        es.json, en.json, index.tsx
 ```
 
@@ -164,6 +174,14 @@ tumba el contenedor al arrancar. Estuvo así desde la Fase 1 y se corrigió en l
 Las columnas nuevas se añaden en `db/migrate.js`, que corre en cada arranque y
 es **idempotente y solo aditivo**: `schema.sql` únicamente se ejecuta al sembrar
 desde cero, y un despliegue en marcha no puede perder sus sesiones.
+
+### El contenedor no corre como root
+
+`docker-entrypoint.sh` arranca como root **solo** para dejar `/data` a nombre
+del usuario `node` (un volumen creado por una imagen anterior tiene los archivos
+de root) y luego hace `exec su-exec node …`. Es `exec`, no un proceso hijo: node
+sigue siendo el PID 1 y sigue recibiendo el SIGTERM. Si el contenedor se lanza
+con `--user`, el script lo respeta y no cambia nada.
 
 ### El sistema de actualizaciones
 
@@ -391,6 +409,64 @@ exportación renumeraba todo y dejaba huérfanos los favoritos, el historial, lo
 overrides de sesión, las listas de Champions y el equipo guardado. Cualquier
 cosa nueva que reconstruya tablas del catálogo tiene que hacer lo mismo.
 
+### Fase 9: datos extra y dónde cuelgan sus rutas
+
+Movimientos por Pokémon (`pokemon_moves`), evoluciones (`evolutions`), formas
+(`pokemon_forms`) y efectos en inglés (`effect_en` en `moves`, `abilities` e
+`items`). Los genera `tools/fetch-extras.js` y los carga `db/extras.js`, que
+resuelve por **clave natural** (nº de Pokédex, `name_en`), igual que
+`entity_changes.json`.
+
+**`/api/extra/*` no cuelga de `/api/pokemon` ni de `/api/moves` a propósito.**
+Los tres middlewares tratan cualquier ruta de más de un segmento bajo esos
+prefijos como una ficha: un `/api/pokemon/25/moves` que devolviera una lista
+saldría convertido en `{}` por el de sesiones. Por lo mismo, **devuelve solo
+ids**: el frontend los cruza con `api.moves.list()` y `api.pokemon.list()`, que
+sí pasan por los middlewares, y así un movimiento renombrado en el hack sale con
+su nombre nuevo y uno no permitido en Champions no sale.
+
+**Esas tres tablas no llevan claves foráneas al catálogo**: la importación
+global vacía `pokemon` y `moves` (conservando ids) y un `ON DELETE CASCADE` las
+vaciaría con ellos.
+
+**Crear y sembrar una tabla van en la MISMA migración.** `migrate()` decide qué
+hace falta en una primera pasada, antes de ejecutar nada: una migración de
+siembra aparte con la condición «la tabla está vacía» se evalúa cuando la tabla
+aún no existe, sale como «no hace falta» y queda anotada sin ejecutarse.
+
+**El listado de Pokémon lleva `types` y `stats`** para filtrar y ordenar la
+Pokédex. Los tipos van como ids, pero un override de sesión sustituye el campo
+por los objetos de la ficha: léelos siempre con `typeIdsOf()` (`lib/pokedex.ts`).
+
+**El ámbito** (`lib/scope.js` y `lib/scope.ts`): los equipos guardados
+(`teams`) y las capturas (`captures`) son del perfil **y del juego** —
+`global`, `session:<id>` o `champions:<id>`—, porque un equipo o una partida de
+un ROM Hack no significan nada en otro. El equipo en uso del comparador sigue
+en `localStorage` (con el perfil y el ámbito en la clave); `/api/teams` es la
+estantería donde se guardan con nombre.
+
+**Opciones de la sesión**: `data_json.options.any_move` marca un ROM Hack donde
+cualquier Pokémon aprende cualquier movimiento. Con ella el comparador y la
+calculadora no filtran por lo que aprende cada uno y la ficha lo avisa. La leen
+con `useSessionOptions()`; la escribe el editor con `setOption`.
+
+**Compartir un ROM Hack** (`GET /api/sessions/:id/share`,
+`POST /api/sessions/import`): el archivo lleva los overrides por clave natural,
+no por id interno, y al importarlo crea siempre una sesión nueva.
+
+**Los efectos se pintan con `useI18n().effect(entidad)`**, no con
+`.effect_es`: en inglés usa `effect_en` y cae al español si no lo hay (un
+efecto reescrito en un hack solo guarda `effect_es`).
+
+**Hay dos cálculos de daño y no son intercambiables.** `lib/damage.ts` estima
+con stats base para ordenar candidatos en el comparador; `lib/calc.ts` es la
+fórmula real con nivel, EVs, IVs y naturaleza para `/calculadora`. Los dos
+sacan la efectividad de la ficha del defensor, así que respetan el modo activo.
+
+**Los objetos tienen su sección** (`/objetos`, `/objeto/:id`) y pueden ser
+favoritos, pero **no entran en el buscador de la portada**: son más que todo lo
+demás junto y muchos se llaman como un movimiento.
+
 ## Cómo se organiza el trabajo
 
 `docs/ROADMAP.md` divide el proyecto en fases; cada fase se parte en tareas del
@@ -417,8 +493,14 @@ middleware (**7.1**), vista «Todas las generaciones» con etiquetas de cambios
 **Fase 8 completa** (accesibilidad, rendimiento y PWA avanzada): alto contraste
 y escalado de texto (**8.1**), teclado y lectores de pantalla (**8.2**), iconos
 definitivos y notificaciones opcionales (**8.3**) y caché en IndexedDB con
-medición de tiempos (**8.4**). Siguiente: **Fase 9, ampliaciones** — la más
-abierta del proyecto, hay que partirla con `docs/AI_TASK_TEMPLATE.md`.
+medición de tiempos (**8.4**).
+
+**Fase 9 en marcha** (ampliaciones). Hecho: movimientos que aprende cada
+Pokémon, línea evolutiva y formas en la ficha, sprite variocolor, efectos en
+inglés, filtros y orden en la Pokédex, seguimiento de capturas, tabla de tipos
+(`/tipos`), objetos (`/objetos`), calculadora de daño (`/calculadora`), equipos
+guardados, botón «Derrotado» e importación/exportación de equipos en texto, y
+compartir un ROM Hack.
 
 ### Caché local (Fase 8)
 
@@ -471,7 +553,9 @@ en mitad de una edición en el editor de ROM Hacks eso pierde trabajo.
 él (comando en el README). El `maskable` es un SVG distinto: a sangre y sin
 esquinas redondeadas, porque el sistema aplica su propia máscara.
 
-**Los sprites no están en el repo ni en el precache.** Los 1025 PNG de
+**Los sprites no están en el repo ni en el precache.** Además del normal hay
+`sprites/shiny/<dex>.png` y `sprites/forms/<id>.png` (megas, regionales…), que
+`fetch-sprites.js` baja leyendo `data/forms.json`. Los 1025 PNG de
 `frontend/public/sprites/` están en `.gitignore`: los baja el **build de
 Docker** (`RUN node .../fetch-sprites.js`, antes de copiar el código para que la
 capa se cachee) y en local se bajan a mano una vez. Es la excepción a la regla

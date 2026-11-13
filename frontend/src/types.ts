@@ -57,20 +57,32 @@ export type TypeDetail = PokeType &
     defensivo: EffectivenessBucket[];
   };
 
+export type Stats = { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
+
 export type PokemonSummary = {
   id: number;
   dex: number;
   name_es: string;
   name_en: string;
   generation: number;
+  /**
+   * Tipos y stats en el listado (Fase 9), para filtrar y ordenar la Pokédex.
+   * Opcionales: una copia local antigua del catálogo no los trae.
+   *
+   * Los tipos llegan como ids (`"fuego"`), salvo que una sesión de ROM Hack los
+   * haya cambiado: el override sustituye el campo por los objetos de la ficha.
+   * Léelos siempre con `typeIdsOf()` de `lib/pokedex.ts`.
+   */
+  types?: (string | PokeType)[];
+  stats?: Stats;
 };
 
-export type PokemonDetail = PokemonSummary &
+export type PokemonDetail = Omit<PokemonSummary, "types" | "stats"> &
   WithGenerationalDifferences & {
     types: PokeType[];
-    abilities: { name_es: string; name_en: string; effect_es: string }[];
-    hidden_ability: { name_es: string; name_en: string; effect_es: string } | null;
-    stats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
+    abilities: { name_es: string; name_en: string; effect_es: string; effect_en?: string | null }[];
+    hidden_ability: { name_es: string; name_en: string; effect_es: string; effect_en?: string | null } | null;
+    stats: Stats;
     height_m: number;
     weight_kg: number;
     efectividad: EffectivenessBucket[];
@@ -94,6 +106,7 @@ export type MoveDetail = MoveSummary &
     makes_contact: number | null;
     generation: number;
     effect_es: string;
+    effect_en?: string | null;
     type_name_es: string;
     type_name_en: string;
   };
@@ -104,6 +117,7 @@ export type AbilityDetail = AbilitySummary &
   WithGenerationalDifferences & {
     generation: number;
     effect_es: string;
+    effect_en?: string | null;
     pokemon: { id: number; dex: number; name_es: string; name_en: string; is_hidden: number }[];
   };
 
@@ -130,7 +144,36 @@ export type ItemSummary = {
   category: string | null;
 };
 
-export type ItemDetail = ItemSummary & { effect_es: string | null };
+export type ItemDetail = ItemSummary & { effect_es: string | null; effect_en?: string | null };
+
+/* ------------------------- Fase 9: datos extra ------------------------- */
+
+export type LearnMethod = "level" | "machine" | "egg" | "tutor";
+export type LearnEntry = { move_id: number; method: LearnMethod; level: number | null };
+export type EvolutionEdge = { from: number; to: number; method_es: string | null; method_en: string | null };
+export type PokemonForm = {
+  id: number;
+  form_key: string;
+  sprite_id: number | null;
+  kind: "mega" | "regional" | "other";
+  name_es: string;
+  name_en: string;
+  types: string[];
+  stats: Stats;
+  height_m: number | null;
+  weight_kg: number | null;
+};
+/** `/api/extra/pokemon/:id`. Solo ids: los nombres salen de los listados. */
+export type PokemonExtra = {
+  pokemon_id: number;
+  moves: LearnEntry[];
+  evolutions: { root: number; edges: EvolutionEdge[] };
+  forms: PokemonForm[];
+};
+export type MoveLearners = {
+  move_id: number;
+  pokemon: { pokemon_id: number; method: LearnMethod; level: number | null }[];
+};
 
 export type ItemCategory = { category: string; total: number };
 
@@ -151,6 +194,8 @@ export type TeamSlot = {
   ability: string; // name_es de una habilidad real del Pokémon (incluida la oculta)
   nature: string; // name_es de una Nature
   moveIds: number[]; // hasta 4 ids de MoveSummary
+  /** Debilitado en el combate en curso: no entra en las recomendaciones. */
+  defeated?: boolean;
 };
 
 export type Team = {
@@ -163,6 +208,8 @@ export type RivalSlot = {
   ability: string;
   knownMoveIds: number[];
   suspectedMoveIds: number[];
+  /** Ya derrotado: no se calcula respuesta contra él. */
+  defeated?: boolean;
 };
 
 export type RivalTeam = {

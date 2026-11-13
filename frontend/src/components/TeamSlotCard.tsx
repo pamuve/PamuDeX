@@ -4,6 +4,7 @@ import { PokemonDetail, TeamSlot, MoveSummary, ItemSummary } from "../types";
 import { NATURES, MAX_MOVES_PER_SLOT } from "../lib/team";
 import { TypeBadge } from "./TypeBadge";
 import { ItemCombobox } from "./ItemCombobox";
+import { DefeatedToggle } from "./DefeatedToggle";
 import { useI18n } from "../i18n";
 
 export function TeamSlotCard({
@@ -63,8 +64,8 @@ export function TeamSlotCard({
   }
 
   return (
-    <div className="card animate-fadein space-y-3">
-      <div className="flex items-center justify-between">
+    <div className={`card animate-fadein space-y-3${slot.defeated ? " opacity-60" : ""}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-display font-semibold text-ink">{nombre(pokemon)}</span>
           <div className="flex gap-1">
@@ -73,9 +74,16 @@ export function TeamSlotCard({
             ))}
           </div>
         </div>
-        <button onClick={onRemove} className="-m-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:text-danger hover:bg-danger/10 transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
-          <X size={18} />
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <DefeatedToggle
+            defeated={Boolean(slot.defeated)}
+            name={nombre(pokemon)}
+            onChange={(defeated) => onChange({ ...slot, defeated })}
+          />
+  <button onClick={onRemove} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-soft hover:text-danger hover:bg-danger/10 transition-colors" aria-label={t("team.removeNamed", { name: nombre(pokemon) })}>
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

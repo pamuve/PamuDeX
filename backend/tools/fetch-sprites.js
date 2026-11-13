@@ -1,5 +1,7 @@
 /**
- * Descarga los sprites de los 1025 Pokémon a frontend/public/sprites/<dex>.png.
+ * Descarga los sprites a frontend/public/sprites/: el normal y el variocolor de
+ * los 1025 Pokémon (<dex>.png y shiny/<dex>.png) y el de cada forma de
+ * data/forms.json (forms/<id>.png). Unos 2300 archivos, ~3 MB.
  *
  *   node tools/fetch-sprites.js          # solo los que faltan
  *   node tools/fetch-sprites.js --force  # vuelve a bajarlos todos
@@ -30,16 +32,49 @@ const LAST_DEX = 1025;
 
 const force = process.argv.includes("--force");
 
-async function bajar(dex) {
-  const destino = path.join(OUT_DIR, `${dex}.png`);
+const SHINY = `${BASE}/shiny`;
+// Las formas (megas, regionales…) no existen en el estilo de la 5ª generación:
+// salen del juego de sprites general de PokeAPI.
+const FORMAS = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon";
+
+/**
+ * Todo lo que hay que tener en disco:
+ *   /sprites/<dex>.png          el normal (1025)
+ *   /sprites/shiny/<dex>.png    la versión variocolor (1025)
+ *   /sprites/forms/<id>.png     megas, formas regionales y demás (data/forms.json)
+ */
+function tareas() {
+  const lista = [];
+  for (let dex = 1; dex <= LAST_DEX; dex++) {
+    lista.push({ nombre: `#${dex}`, url: `${BASE}/${dex}.png`, destino: path.join(OUT_DIR, `${dex}.png`) });
+    lista.push({
+      nombre: `shiny #${dex}`,
+      url: `${SHINY}/${dex}.png`,
+      destino: path.join(OUT_DIR, "shiny", `${dex}.png`),
+    });
+  }
+  const formas = path.join(__dirname, "..", "data", "forms.json");
+  if (fs.existsSync(formas)) {
+    for (const f of JSON.parse(fs.readFileSync(formas, "utf-8"))) {
+      if (!f.sprite) continue;
+      lista.push({
+        nombre: `forma ${f.key}`,
+        url: `${FORMAS}/${f.sprite}.png`,
+        destino: path.join(OUT_DIR, "forms", `${f.sprite}.png`),
+      });
+    }
+  }
+  return lista;
+}
+
+async function bajar({ url, destino }) {
   if (!force && fs.existsSync(destino)) return "omitido";
 
-  const res = await fetch(`${BASE}/${dex}.png`);
+  const res = await fetch(url);
   if (!res.ok) return `error ${res.status}`;
 
   const buf = Buffer.from(await res.arrayBuffer());
-  // Un PNG válido empieza por \x89PNG. Si GitHub devuelve una página de error
-  // con código 200, esto lo caza antes de dejar basura en el repo.
+  // Cabecera PNG: si GitHub devuelve una página de error con 200, no la guardamos.
   if (buf.length < 8 || buf.toString("latin1", 1, 4) !== "PNG") return "no es un png";
 
   fs.writeFileSync(destino, buf);
@@ -47,31 +82,30 @@ async function bajar(dex) {
 }
 
 async function main() {
-  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.mkdirSync(path.join(OUT_DIR, "shiny"), { recursive: true });
+  fs.mkdirSync(path.join(OUT_DIR, "forms"), { recursive: true });
 
-  const pendientes = [];
-  for (let dex = 1; dex <= LAST_DEX; dex++) pendientes.push(dex);
+  const pendientes = tareas();
+  const total = pendientes.length;
 
   const fallos = [];
   let ok = 0;
   let omitidos = 0;
   let siguiente = 0;
 
-  // Un pool de CONCURRENCY tareas que van tomando el siguiente número libre.
-  // 1025 peticiones a la vez es una forma rápida de que te corten.
   const trabajador = async () => {
     while (siguiente < pendientes.length) {
-      const dex = pendientes[siguiente++];
+      const tarea = pendientes[siguiente++];
       try {
-        const r = await bajar(dex);
+        const r = await bajar(tarea);
         if (r === "ok") ok++;
         else if (r === "omitido") omitidos++;
-        else fallos.push(`#${dex}: ${r}`);
+        else fallos.push(`${tarea.nombre}: ${r}`);
       } catch (err) {
-        fallos.push(`#${dex}: ${err.message}`);
+        fallos.push(`${tarea.nombre}: ${err.message}`);
       }
       const hechos = ok + omitidos + fallos.length;
-      if (hechos % 100 === 0) process.stdout.write(`  ${hechos}/${LAST_DEX}\n`);
+      if (hechos % 250 === 0) process.stdout.write(`  ${hechos}/${total}\n`);
     }
   };
 
@@ -80,7 +114,9 @@ async function main() {
   console.log(`\n✔ ${ok} descargados, ${omitidos} ya estaban, ${fallos.length} fallidos`);
   if (fallos.length) {
     console.log(fallos.slice(0, 20).join("\n"));
-    process.exitCode = 1;
+    // Una forma sin sprite no es motivo para tumbar el build de Docker: la
+    // ficha cae a la inicial del nombre. Que falte un sprite NORMAL sí lo es.
+    if (fallos.some((f) => f.startsWith("#"))) process.exitCode = 1;
   }
 }
 

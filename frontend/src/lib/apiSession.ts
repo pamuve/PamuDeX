@@ -150,6 +150,58 @@ export const sessionsApi = {
     request<Session>("POST", `/sessions/${id}/duplicate`, undefined, false),
   remove: (id: number) =>
     request<{ ok: boolean; id: number }>("DELETE", `/sessions/${id}`, undefined, false),
+  /** El ROM Hack en un archivo portable (claves naturales, no ids internos). */
+  share: (id: number) => request<SharedRomHack>("GET", `/sessions/${id}/share`, undefined, false),
+  /** Crea una sesión NUEVA desde un archivo compartido. */
+  importShared: (doc: unknown) =>
+    request<Session & { skipped: number }>("POST", "/sessions/import", doc, false),
+};
+
+export interface SharedRomHack {
+  format: string;
+  version: number;
+  name: string;
+  description: string;
+  data: Record<string, unknown>;
+}
+
+/* ------------------------- Fase 9: equipos y capturas ------------------------- */
+
+export interface SavedTeamSummary {
+  id: number;
+  scope: string;
+  name: string;
+  updated_at: string;
+}
+export interface SavedTeam extends SavedTeamSummary {
+  data: Record<string, unknown>;
+}
+
+const conAmbito = (ruta: string, profileId: number, scope?: string) =>
+  `${ruta}?profile=${profileId}${scope ? `&scope=${encodeURIComponent(scope)}` : ""}`;
+
+/** Equipos guardados por perfil y por juego (`scope`, ver lib/scope.ts). */
+export const teamsApi = {
+  list: (profileId: number, scope: string) =>
+    request<{ items: SavedTeamSummary[] }>("GET", conAmbito("/teams", profileId, scope), undefined, false),
+  get: (profileId: number, id: number) =>
+    request<SavedTeam>("GET", conAmbito(`/teams/${id}`, profileId), undefined, false),
+  create: (profileId: number, scope: string, name: string, data: unknown) =>
+    request<SavedTeam>("POST", conAmbito("/teams", profileId, scope), { name, data }, false),
+  update: (profileId: number, id: number, patch: { name?: string; data?: unknown }) =>
+    request<SavedTeam>("PUT", conAmbito(`/teams/${id}`, profileId), patch, false),
+  remove: (profileId: number, id: number) =>
+    request<{ ok: boolean }>("DELETE", conAmbito(`/teams/${id}`, profileId), undefined, false),
+};
+
+/** Seguimiento de partida: Pokémon capturados por perfil y por juego. */
+export const capturesApi = {
+  list: (profileId: number, scope: string) =>
+    request<{ pokemon: number[] }>("GET", conAmbito("/captures", profileId, scope), undefined, false),
+  add: (profileId: number, scope: string, pokemonId: number) =>
+    request<{ ok: boolean }>("POST", conAmbito("/captures", profileId, scope), { pokemon_id: pokemonId }, false),
+  remove: (profileId: number, scope: string, pokemonId: number) =>
+    request<{ ok: boolean }>("DELETE", conAmbito("/captures", profileId, scope), { pokemon_id: pokemonId }, false),
 };
 
 /**

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus } from "lucide-react";
 import { api } from "../lib/api";
 import {
   loadTeam,
@@ -16,116 +15,11 @@ import { TeamSlotCard } from "../components/TeamSlotCard";
 import { RivalSlotCard } from "../components/RivalSlotCard";
 import { RecommendationCard } from "../components/RecommendationCard";
 import { CoverageMap } from "../components/CoverageMap";
-import { useCombobox } from "../hooks/useCombobox";
+import { AddPokemonBox } from "../components/AddPokemonBox";
+import { SavedTeamsPanel, TeamTextPanel } from "../components/TeamTools";
+import { useSessionOptions } from "../lib/sessionOptions";
 import { useI18n } from "../i18n";
 import { Team, RivalTeam, PokemonSummary, PokemonDetail, MoveSummary, TypeDetail, ItemSummary } from "../types";
-
-/**
- * Autocompletado para añadir un Pokémon al equipo.
- *
- * Es el segundo `combobox` de la app (8.2) y comparte el teclado con el
- * buscador global a través de `hooks/useCombobox`: flechas para recorrer,
- * `Enter` para añadir, `Escape` para cerrar y otra vez `Escape` para limpiar.
- * El foco no se mueve del campo, que es lo que distingue este patrón del menú
- * de la barra superior.
- *
- * `label` sustituye al marcador de posición como nombre accesible: el
- * marcador desaparece en cuanto se escribe, y aquí hay DOS campos idénticos en
- * la misma página (equipo propio y rival) que sin nombre no se distinguen.
- */
-function AddPokemonBox({
-  allPokemon,
-  disabled,
-  label,
-  placeholder,
-  onAdd,
-}: {
-  allPokemon: PokemonSummary[];
-  disabled: boolean;
-  label: string;
-  placeholder: string;
-  onAdd: (dex: number, id: number) => void;
-}) {
-  const { t, name } = useI18n();
-  const [q, setQ] = useState("");
-  const nombre = name;
-  const filtered = allPokemon
-    .filter((p) => nombre(p).toLowerCase().includes(q.toLowerCase()))
-    .slice(0, 8);
-
-  function elegir(p: PokemonSummary) {
-    onAdd(p.dex, p.id);
-    setQ("");
-    combo.setOpen(false);
-    combo.setActivo(-1);
-  }
-
-  const combo = useCombobox({
-    count: filtered.length,
-    onSelect: (i) => elegir(filtered[i]),
-    onEscapeClosed: () => setQ(""),
-  });
-
-  const abierta = combo.open && q.length > 0;
-
-  if (disabled) return null;
-
-  return (
-    <div className="relative">
-      <input
-        value={q}
-        onChange={(e) => {
-          setQ(e.target.value);
-          combo.setOpen(true);
-        }}
-        onFocus={() => combo.setOpen(true)}
-        onBlur={() => combo.setOpen(false)}
-        placeholder={placeholder}
-        aria-label={label}
-        {...combo.inputProps}
-        aria-expanded={abierta}
-        className="w-full bg-hover rounded-xl2 px-4 py-3 text-sm text-ink outline-none"
-      />
-      <span className="sr-only" role="status" aria-live="polite">
-        {abierta ? t("search.count", { count: filtered.length }) : ""}
-      </span>
-      {abierta && (
-        <ul
-          ref={combo.listRef}
-          id={combo.listId}
-          role="listbox"
-          aria-label={label}
-          className="popover absolute mt-1 w-full origin-top max-h-56 overflow-auto z-20"
-        >
-          {filtered.map((p, i) => (
-            <li
-              key={p.id}
-              id={combo.optionId(i)}
-              role="option"
-              aria-selected={i === combo.activo}
-              // `onMouseDown`: el `blur` del campo cierra la lista antes de que
-              // llegue el `click`, así que para entonces la fila ya no existe.
-              onMouseDown={(e) => {
-                e.preventDefault();
-                elegir(p);
-              }}
-              onMouseEnter={() => combo.setActivo(i)}
-              className={`flex items-center justify-between px-4 py-2 text-sm text-ink cursor-pointer ${
-                i === combo.activo ? "bg-hover" : ""
-              }`}
-            >
-              <span>{nombre(p)}</span>
-              <Plus size={14} className="text-ink-soft" aria-hidden="true" />
-            </li>
-          ))}
-          {filtered.length === 0 && (
-            <li className="px-4 py-2 text-sm text-ink-soft">{t("empty.results")}</li>
-          )}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 export function TeamBuilder() {
   const { t, name: nombreDe } = useI18n();
@@ -227,6 +121,43 @@ export function TeamBuilder() {
     });
   }, [ownTeam, rivalTeam, pokemonCache]);
 
+  /*
+    MOVIMIENTOS QUE APRENDE CADA POKÉMON (Fase 9)
+    Cada tarjeta ofrecía los 901 movimientos del catálogo. Ahora ofrece los que
+    ese Pokémon aprende, más los que ya tuviera elegidos (un equipo guardado
+    antes de esto, o importado, no debe perderlos de la lista).
+
+    El filtro se quita en dos casos: la casilla «todos los movimientos», y un
+    ROM Hack marcado como «cualquier Pokémon aprende cualquier movimiento»
+    (`options.any_move` de la sesión), donde la lista del dataset no manda.
+    Si no se puede pedir lo que aprende, también se ofrece todo: es mejor una
+    lista larga que una vacía.
+  */
+  const options = useSessionOptions();
+  const [todosLosMovimientos, setTodosLosMovimientos] = useState(false);
+  const [aprende, setAprende] = useState<Record<number, Set<number>>>({});
+  const aprendePedidos = useRef(new Set<number>());
+  const sinFiltroDeMovimientos = todosLosMovimientos || Boolean(options.any_move);
+
+  useEffect(() => {
+    if (sinFiltroDeMovimientos) return;
+    const ids = new Set<number>([...ownTeam.slots, ...rivalTeam.slots].map((s) => s.pokemonId));
+    for (const id of ids) {
+      if (aprende[id] || aprendePedidos.current.has(id)) continue;
+      aprendePedidos.current.add(id);
+      api.extra
+        .pokemon(id)
+        .then((d) => setAprende((prev) => ({ ...prev, [id]: new Set(d.moves.map((m) => m.move_id)) })))
+        .catch(() => aprendePedidos.current.delete(id));
+    }
+  }, [ownTeam, rivalTeam, aprende, sinFiltroDeMovimientos]);
+
+  function movimientosPara(pokemonId: number, elegidos: number[]): MoveSummary[] {
+    const set = aprende[pokemonId];
+    if (sinFiltroDeMovimientos || !set || set.size === 0) return allMoves;
+    return allMoves.filter((m) => set.has(m.id) || elegidos.includes(m.id));
+  }
+
   const movesById = useMemo(() => Object.fromEntries(allMoves.map((m) => [m.id, m])), [allMoves]);
 
   function addOwn(_dex: number, id: number) {
@@ -254,7 +185,8 @@ export function TeamBuilder() {
       rivalTeam.slots
         .map((rival, idx) => {
           const rivalPokemon = pokemonCache[rival.pokemonId];
-          if (!rivalPokemon) return null;
+          // Contra un rival ya derrotado no hay nada que responder.
+          if (!rivalPokemon || rival.defeated) return null;
           return {
             key: `${rival.pokemonId}-${idx}`,
             rival,
@@ -262,7 +194,8 @@ export function TeamBuilder() {
             recommendation: bestResponseAgainst(
               rival,
               rivalPokemon,
-              ownTeam.slots,
+              // Un Pokémon propio derrotado no se puede sacar: no se recomienda.
+              ownTeam.slots.filter((s) => !s.defeated),
               pokemonCache,
               movesById
             ),
@@ -296,6 +229,34 @@ export function TeamBuilder() {
         </p>
       )}
 
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {!options.any_move && (
+          <label className="inline-flex min-h-[2.75rem] items-center gap-2.5 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={todosLosMovimientos}
+              onChange={(e) => setTodosLosMovimientos(e.target.checked)}
+              className="h-4 w-4 accent-[var(--color-accent)]"
+            />
+            {t("team.allMoves")}
+          </label>
+        )}
+        {options.any_move && <p className="text-sm text-ink-soft">{t("learnset.anyMove")}</p>}
+        {(ownTeam.slots.some((s) => s.defeated) || rivalTeam.slots.some((s) => s.defeated)) && (
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => {
+              // Combate nuevo: todos vuelven a estar disponibles.
+              setOwnTeam({ slots: ownTeam.slots.map((s) => ({ ...s, defeated: false })) });
+              setRivalTeam({ slots: rivalTeam.slots.map((s) => ({ ...s, defeated: false })) });
+            }}
+          >
+            {t("team.reviveAll")}
+          </button>
+        )}
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6">
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -323,7 +284,7 @@ export function TeamBuilder() {
                 key={`${slot.pokemonId}-${idx}`}
                 slot={slot}
                 pokemon={pokemonCache[slot.pokemonId] ?? null}
-                allMoves={allMoves}
+                allMoves={movimientosPara(slot.pokemonId, slot.moveIds)}
                 allItems={allItems}
                 onChange={(updated) =>
                   setOwnTeam({ slots: ownTeam.slots.map((s, i) => (i === idx ? updated : s)) })
@@ -360,7 +321,7 @@ export function TeamBuilder() {
                 key={`${slot.pokemonId}-${idx}`}
                 slot={slot}
                 pokemon={pokemonCache[slot.pokemonId] ?? null}
-                allMoves={allMoves}
+                allMoves={movimientosPara(slot.pokemonId, [...slot.knownMoveIds, ...slot.suspectedMoveIds])}
                 allItems={allItems}
                 onChange={(updated) =>
                   setRivalTeam({ slots: rivalTeam.slots.map((s, i) => (i === idx ? updated : s)) })
@@ -413,6 +374,32 @@ export function TeamBuilder() {
           <CoverageMap report={coverage} typesById={typesById} />
         )}
       </section>
+
+      {/* Guardar con nombre e importar/exportar (Fase 9). Al final: son
+          gestión del equipo, no parte del combate que se está mirando. */}
+      {/* `min-w-0` en los hijos: un elemento de rejilla no encoge por debajo
+          del ancho mínimo de su contenido, y a 320px con el texto al 130% el
+          cuadro de texto empujaba la página entera. */}
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+        <SavedTeamsPanel
+          own={ownTeam}
+          rival={rivalTeam}
+          onLoad={(own, rival) => {
+            setOwnTeam(own);
+            setRivalTeam(rival);
+          }}
+        />
+        <TeamTextPanel
+          own={ownTeam}
+          rival={rivalTeam}
+          catalog={{ pokemon: allPokemon, moves: allMoves, items: allItems }}
+          pokemonById={pokemonCache}
+          onImport={(_destino, own, rival) => {
+            setOwnTeam(own);
+            setRivalTeam(rival);
+          }}
+        />
+      </div>
     </div>
   );
 }
