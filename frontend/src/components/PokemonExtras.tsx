@@ -98,9 +98,9 @@ export function EvolutionLine({ extra, currentId }: { extra: PokemonExtra | null
   return (
     <section className="card animate-fadein">
       <h2 className="section-title mb-3">{t("pokemon.evolutions")}</h2>
-      <ol className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-1">
+      <ol className="flex flex-col items-stretch gap-2 overflow-x-auto pb-1 sm:flex-row sm:items-center sm:gap-3">
         {visibles.map((fila, i) => (
-          <li key={i} className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-1 sm:min-w-0">
+          <li key={i} className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
             {i > 0 && (
               <ChevronRight
                 size={18}
@@ -108,13 +108,13 @@ export function EvolutionLine({ extra, currentId }: { extra: PokemonExtra | null
                 className="mx-auto shrink-0 rotate-90 text-ink-soft sm:rotate-0"
               />
             )}
-            <ul className="flex w-full flex-wrap justify-center gap-2 sm:w-auto">
+            <ul className="flex w-full flex-wrap justify-center gap-2 sm:w-auto sm:min-w-[8.5rem] sm:flex-col sm:flex-nowrap">
               {fila.map(({ id, via }) => {
                 const p = pokemon.get(id)!;
                 const actual = id === currentId;
                 const metodo = via ? (lang === "en" && via.method_en ? via.method_en : via.method_es) : null;
                 return (
-                  <li key={id} className="w-[min(8.5rem,47%)]">
+                  <li key={id} className="w-[min(8.5rem,47%)] sm:w-full">
                     <Link
                       to={`/pokemon/${id}`}
                       aria-current={actual ? "page" : undefined}

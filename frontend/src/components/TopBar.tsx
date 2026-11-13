@@ -36,7 +36,7 @@ const BAR_BUTTON =
 
 /** Panel de un menú desplegable, anclado a la esquina de su botón. */
 const MENU_PANEL =
-  "popover absolute right-0 mt-3 origin-top-right p-1.5 z-20";
+  "popover absolute right-0 mt-3 origin-top-right p-1.5 z-20 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain";
 
 /**
  * Menú «Modo» (Tarea 6.3): desde aquí se entra en Pokémon Champions y se vuelve
@@ -150,7 +150,7 @@ function ChampionsBadge() {
       to="/champions"
       title={t("mode.badgeTitle", { name: champions.name })}
       className="pressable glass flex items-center gap-1.5 min-h-[2.5rem] rounded-full px-3 border border-warning/40
-                 text-ink text-xs sm:text-sm transition-colors hover:bg-warning/25 min-w-0 max-w-full"
+                 text-ink text-xs sm:text-sm transition-colors hover:bg-warning/25 shrink-0 max-w-full"
     >
       <Shield size={14} className="shrink-0 text-warning" aria-hidden="true" />
       <span className="font-display font-semibold truncate">{t("mode.champions")}</span>
@@ -320,7 +320,7 @@ export function TopBar() {
     // Sin franja opaca: los controles son cápsulas de vidrio que flotan, y
     // detrás solo hay un velo (`scroll-edge`) que funde el contenido al pasar
     // por debajo. Ver «Borde de desplazamiento» en `index.css`.
-    <header className="sticky top-0 z-30 scroll-edge pt-[env(safe-area-inset-top)]">
+    <header className="sticky top-[env(safe-area-inset-top)] z-30 scroll-edge">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center gap-2 sm:gap-3">
         <Link to="/" className="flex items-center gap-2 shrink-0 rounded-lg" aria-label={t("app.name")}>
           {/* El icono de la app: el mismo del escritorio y de la pantalla de
@@ -372,7 +372,7 @@ export function TopBar() {
 
         {/* Ocupa el hueco flexible: se ve siempre, también en móvil. `min-w-0`
             es lo que le deja encogerse en vez de empujar la fila. */}
-        <span className="flex-1 min-w-0 flex justify-end lg:justify-start">
+        <span className="flex-1 lg:flex-none min-w-0 flex justify-end lg:justify-start">
           <ChampionsBadge />
         </span>
 
