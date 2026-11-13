@@ -149,12 +149,11 @@ function ChampionsBadge() {
     <Link
       to="/champions"
       title={t("mode.badgeTitle", { name: champions.name })}
-      className="pressable glass flex items-center gap-1.5 min-h-[2.5rem] rounded-full px-3 border border-warning/40
-                 text-ink text-xs sm:text-sm transition-colors hover:bg-warning/25 shrink-0 max-w-full"
+      className="pressable glass flex items-center gap-1.5 min-h-[2.5rem] max-w-[9rem] rounded-full px-2.5 border border-warning/40
+                 text-ink text-xs sm:text-sm transition-colors hover:bg-warning/25 shrink lg:shrink-0"
     >
       <Shield size={14} className="shrink-0 text-warning" aria-hidden="true" />
       <span className="font-display font-semibold truncate">{t("mode.champions")}</span>
-      <span className="hidden sm:inline text-ink-soft max-w-[8rem] truncate">· {champions.name}</span>
     </Link>
   );
 }
@@ -357,7 +356,7 @@ export function TopBar() {
                 key={item.to}
                 to={item.to}
                 aria-current={active ? "page" : undefined}
-                className={`pressable shrink-0 flex items-center gap-1.5 min-h-[2.5rem] rounded-full px-3 text-sm ${
+                className={`pressable shrink-0 flex items-center gap-1 min-h-[2.5rem] rounded-full px-2 text-sm ${
                   active
                     ? "bg-ink/10 text-ink font-medium shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]"
                     : "text-ink-soft hover:text-ink hover:bg-ink/10"
