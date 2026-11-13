@@ -10,6 +10,7 @@
 
 import { getActiveSessionId } from "./session";
 import type { Profile } from "./profile";
+import { apiUrl } from "./apiBase";
 
 /** false = forzar datos globales, ignorando la sesión activa. */
 export type SessionParam = number | null | false;
@@ -112,7 +113,7 @@ async function request<T>(
   body?: unknown,
   session?: SessionParam
 ): Promise<T> {
-  const url = `/api${withSession(path, session)}`;
+  const url = apiUrl(`/api${withSession(path, session)}`);
   const res = await fetch(url, {
     method,
     headers: { "Content-Type": "application/json" },

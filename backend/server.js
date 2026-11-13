@@ -94,6 +94,28 @@ app.disable("x-powered-by");
 // demás para envolver también la API y los archivos estáticos.
 app.use(require("compression")());
 
+// La app Android Tauri usa un origen propio. Solo se habilita CORS cuando el
+// administrador declara explícitamente ese origen; la web servida por Express
+// continúa siendo same-origin y no requiere configuración adicional.
+const corsOrigins = new Set(
+  (process.env.PAMUDEX_CORS_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
+if (corsOrigins.size) {
+  app.use((req, res, next) => {
+    const origin = req.get("origin");
+    if (!origin || !corsOrigins.has(origin)) return next();
+    res.set("Access-Control-Allow-Origin", origin);
+    res.vary("Origin");
+    res.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
+}
+
 // El tope del cuerpo y el porqué están en lib/http.js: el de Express por
 // defecto (100 KB) impedía guardar una sesión con muchos overrides.
 app.use(jsonBody());

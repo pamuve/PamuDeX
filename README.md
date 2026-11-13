@@ -15,6 +15,7 @@ El objetivo es ofrecer una herramienta rápida, instalable y que funcione **100%
 *   🕰️ **Multi-generación:** Las fichas que han cambiado entre generaciones lo dicen: un selector para ver los valores de cualquiera de las nueve, etiquetas junto a cada campo modificado y una línea temporal con todo el historial. Solo aparece donde hay cambios reales, así que no ensucia las fichas que nunca se han tocado.
 *   🛡️ **Modo Pokémon Champions:** Un modo aparte con su propia base de reglas — qué Pokémon, movimientos, habilidades y objetos son legales — y multiplicadores de efectividad propios. Reutiliza toda la interfaz de consulta, con un distintivo permanente para no confundirlo con la Pokédex estándar.
 *   🐳 **Autoalojable:** Despliegue en un solo contenedor Docker con persistencia de datos mediante volúmenes, compatible con Docker Compose.
+*   🤖 **App Android:** Paquete Android nativo con Tauri 2 y Rust, reutilizando la interfaz existente y conectándose al servidor autoalojado. Ver [docs/ANDROID.md](docs/ANDROID.md).
 
 ## 🏗️ Arquitectura y Tecnologías
 

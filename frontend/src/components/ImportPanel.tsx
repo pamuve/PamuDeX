@@ -15,6 +15,7 @@
 import { useRef, useState } from "react";
 import { Upload, AlertTriangle, CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import { useI18n } from "../i18n";
+import { apiUrl } from "../lib/apiBase";
 import { inputClass, btnPrimary, btnGhost } from "./forms/FormField";
 import { borrarTodo, invalidarSesion } from "../lib/localCache";
 
@@ -58,7 +59,7 @@ export default function ImportPanel({ sessionId }: { sessionId: number | null })
   const destino = sessionId === null ? "global" : "session";
 
   function url(paso: "preview" | "apply") {
-    const base = esSqlite ? `/api/import/sqlite/${paso}` : `/api/import/${paso}`;
+    const base = apiUrl(esSqlite ? `/api/import/sqlite/${paso}` : `/api/import/${paso}`);
     const p = new URLSearchParams({ target: destino, mode: modo });
     if (sessionId !== null) p.set("session", String(sessionId));
     if (!esSqlite) {

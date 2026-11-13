@@ -6,6 +6,7 @@ import { getActiveSessionId } from "./session";
 import { getActiveChampionsId } from "./champions";
 import { profilesApi, championsApi } from "./apiSession";
 import { leer, guardar, CACHE_EVENT } from "./localCache";
+import { apiUrl } from "./apiBase";
 
 /**
  * Añade el parámetro del modo activo, si hay alguno.
@@ -66,7 +67,7 @@ export function esFalloDeRed(err: unknown): boolean {
 async function get<T>(path: string): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api${withMode(path)}`);
+    res = await fetch(apiUrl(`/api${withMode(path)}`));
   } catch {
     throw new ApiError(0, path);
   }

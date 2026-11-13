@@ -17,6 +17,7 @@ import { useActiveSession } from "../lib/session";
 import { useI18n } from "../i18n";
 import { inputClass } from "../components/forms/FormField";
 import ImportPanel from "../components/ImportPanel";
+import { apiUrl } from "../lib/apiBase";
 
 const ENTITIES = ["pokemon", "moves", "abilities", "types"] as const;
 type Entity = (typeof ENTITIES)[number];
@@ -51,7 +52,7 @@ export default function ImportExport() {
 
   const query = selected === null ? "" : `?session=${selected}`;
   const csvHref = (entity: Entity) =>
-    `/api/export/csv?entity=${entity}${selected === null ? "" : `&session=${selected}`}`;
+    apiUrl(`/api/export/csv?entity=${entity}${selected === null ? "" : `&session=${selected}`}`);
 
   const currentName =
     selected === null ? t("data.global") : sessions.find((s) => s.id === selected)?.name || "";
@@ -105,7 +106,7 @@ export default function ImportExport() {
         </h2>
         <p className="mt-2 text-sm text-ink-soft">{t("data.jsonHint")}</p>
         <a
-          href={`/api/export/json${query}`}
+          href={apiUrl(`/api/export/json${query}`)}
           download
           className="btn-secondary mt-4 justify-center"
         >
@@ -148,7 +149,7 @@ export default function ImportExport() {
         </h2>
         <p className="mt-2 text-sm text-ink-soft">{t("data.sqliteHint")}</p>
         <a
-          href={`/api/export/sqlite${query}`}
+          href={apiUrl(`/api/export/sqlite${query}`)}
           download
           className="btn-secondary mt-4 justify-center"
         >
