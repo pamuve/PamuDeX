@@ -567,3 +567,21 @@ html, body, #root {
   mask-image: none;
   border-bottom: 1px solid var(--color-ink);
 }
+
+/* Al instalarla desde Safari, la navegación pasa a ser una barra del sistema
+   anclada al borde inferior. Así no parece una cápsula flotando sobre la ficha
+   y el fondo cubre también la zona del indicador de inicio de iOS. */
+@media (display-mode: standalone) {
+  .app-bottom-nav {
+    inset-inline: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 1rem 1rem 0 0;
+    padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+  }
+
+  .app-bottom-nav::before {
+    border-radius: inherit;
+    background: var(--color-panel);
+  }
+}

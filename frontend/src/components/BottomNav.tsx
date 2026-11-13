@@ -130,7 +130,7 @@ export function BottomNav() {
     */
     <nav
       aria-label={t("nav.primary")}
-      className="glass-host fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 mx-auto
+      className="app-bottom-nav glass-host fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 mx-auto
                  max-w-md rounded-full lg:hidden"
     >
       <ul className="flex p-1">
